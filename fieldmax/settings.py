@@ -36,8 +36,10 @@ DEBUG = True
 
 # Add your domain names here in production
 ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
+    "localhost",
+    "127.0.0.1",
+    os.getenv("RENDER_EXTERNAL_HOSTNAME", ""),
+    "newfieldmax.onrender.com",
     # Add your production domains here
     # 'yourdomain.com',
     # 'www.yourdomain.com',
