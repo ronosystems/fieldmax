@@ -12,6 +12,8 @@ This configuration includes:
 - Logging and monitoring
 - Company-specific settings
 """
+from dotenv import load_dotenv
+load_dotenv()
 
 from pathlib import Path
 import os
@@ -27,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ============================================
 # SECURITY SETTINGS
 # ============================================
-SECRET_KEY = 'django-insecure--59=5ye(_x%uc&s2q109#oyy7+0jn)8ksm)%)z-sn&yvvm#v_%'
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # WARNING: Set to False in production!
 DEBUG = True
@@ -93,6 +95,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
 ]
 
 
@@ -141,26 +146,15 @@ WSGI_APPLICATION = 'fieldmax.wsgi.application'
 # ============================================
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'OPTIONS': {
-            'timeout': 20,  # Increase timeout for concurrent access
-        }
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv("DB_NAME"),
+        'USER': os.getenv("DB_USER"),
+        'PASSWORD': os.getenv("DB_PASSWORD"),
+        'HOST': os.getenv("DB_HOST"),
+        'PORT': os.getenv("DB_PORT"),
+        'CONN_MAX_AGE': 600,
     }
 }
-
-# For production, use PostgreSQL:
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.getenv('DB_NAME', 'fieldmax_db'),
-#         'USER': os.getenv('DB_USER', 'fieldmax_user'),
-#         'PASSWORD': os.getenv('DB_PASSWORD'),
-#         'HOST': os.getenv('DB_HOST', 'localhost'),
-#         'PORT': os.getenv('DB_PORT', '5432'),
-#         'CONN_MAX_AGE': 600,  # Connection pooling
-#     }
-# }
 
 
 # ============================================
