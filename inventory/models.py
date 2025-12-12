@@ -78,6 +78,7 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='products')
     product_code = models.CharField(max_length=20, unique=True, blank=True, db_index=True)
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2) 
 
     # SKU (IMEI/Serial/Barcode)
     sku_value = models.CharField(

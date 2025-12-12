@@ -9,7 +9,6 @@ from django.db import models, transaction
 from django.db.models import F, Max, Sum
 from django.contrib.auth.models import User
 from django.utils import timezone
-
 from inventory.models import Product, StockEntry
 
 logger = logging.getLogger(__name__)
@@ -83,7 +82,9 @@ class Sale(models.Model):
     - One receipt number per sale
     - One row in sales table per transaction
     """
-    
+
+
+    sale_item = models.ForeignKey('SaleItem', on_delete=models.CASCADE, related_name='sales')
     batch_id = models.CharField(max_length=50, blank=True, null=True)  # Add this
     payment_method = models.CharField(max_length=50, default='Cash')    # Add this
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Add this
@@ -287,13 +288,7 @@ class SaleItem(models.Model):
     - Stores product details at time of sale
     """
     
-    sale = models.ForeignKey(
-        Sale, 
-        on_delete=models.CASCADE, 
-        related_name='items',
-        help_text="Parent sale transaction"
-    )
-    
+    sale = models.ForeignKey('Sale', on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(
         Product, 
         on_delete=models.CASCADE, 
@@ -308,8 +303,8 @@ class SaleItem(models.Model):
     
     # Quantities and pricing
     quantity = models.PositiveIntegerField(default=1)
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    total_price = models.DecimalField(max_digits=12, decimal_places=2)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2,default=0.0)
+    total_price = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     
     # FIFO tracking
     created_at = models.DateTimeField(auto_now_add=True)

@@ -2,6 +2,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.views.generic import ListView, DetailView, UpdateView, DeleteView
+from django.views.decorators.http import require_http_methods
+
 from django.http import JsonResponse, HttpResponse
 from django.db import transaction
 from django.utils import timezone
@@ -986,6 +988,251 @@ class RestockView(LoginRequiredMixin, View):
             messages.error(request, f'Error: {str(e)}')
             return redirect('restock', product_id=product_id)
         
+
+
+
+
+@login_required
+@require_http_methods(["GET"])
+def product_lookup(request):
+    """
+    API endpoint for product lookup by product code
+    Returns product details for cashier dashboard
+    
+    GET /sales/product-lookup/?product_code=ABC123
+    """
+    product_code = request.GET.get('product_code', '').strip().upper()
+    
+    if not product_code:
+        return JsonResponse({
+            'success': False,
+            'message': 'Product code is required'
+        })
+    
+    try:
+        # Search for product by product_code (exact match or contains)
+        product = Product.objects.filter(
+            product_code__iexact=product_code,
+            is_active=True
+        ).select_related('category').first()
+        
+        if not product:
+            # Try partial match if exact match fails
+            product = Product.objects.filter(
+                product_code__icontains=product_code,
+                is_active=True
+            ).select_related('category').first()
+        
+        if not product:
+            return JsonResponse({
+                'success': False,
+                'message': f'Product {product_code} not found'
+            })
+        
+        # Check stock availability
+        if product.category.is_single_item:
+            if product.status != 'available':
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Product {product_code} is not available (Status: {product.status})'
+                })
+        else:
+            if product.quantity <= 0:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Product {product_code} is out of stock'
+                })
+        
+        return JsonResponse({
+            'success': True,
+            'product': {
+                'code': product.product_code,
+                'name': product.name,
+                'unit_price': float(product.selling_price),
+                'quantity_available': product.quantity if not product.category.is_single_item else 1,
+                'is_single_item': product.category.is_single_item,
+                'category': product.category.name
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in product lookup: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': 'Error looking up product'
+        })
+
+
+@login_required
+@require_http_methods(["POST"])
+def batch_create_sale(request):
+    """
+    API endpoint for creating batch sales (cart checkout)
+    Handles multiple items in a single transaction
+    
+    POST /sales/batch-create/
+    Body: {
+        "sales_cart": [
+            {"product_code": "ABC", "quantity": 2, "unit_price": 100.00},
+            {"product_code": "XYZ", "quantity": 1, "unit_price": 50.00}
+        ],
+        "payment_method": "Cash",
+        "amount_paid": 250.00
+    }
+    """
+    try:
+        data = json.loads(request.body)
+        sales_cart = data.get('sales_cart', [])
+        payment_method = data.get('payment_method', 'Cash')
+        amount_paid = Decimal(str(data.get('amount_paid', 0)))
+        
+        if not sales_cart:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Cart is empty'
+            })
+        
+        # Calculate total
+        total_amount = sum(
+            Decimal(str(item['quantity'])) * Decimal(str(item['unit_price'])) 
+            for item in sales_cart
+        )
+        
+        if amount_paid < total_amount:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Insufficient payment. Total: {total_amount}, Paid: {amount_paid}'
+            })
+        
+        # Create sales in a transaction
+        with transaction.atomic():
+            sale_items_created = []
+            batch_id = timezone.now().strftime('%Y%m%d%H%M%S')
+            
+            for item in sales_cart:
+                product_code = item['product_code'].upper()
+                quantity = int(item['quantity'])
+                unit_price = Decimal(str(item['unit_price']))
+                
+                # Get product
+                try:
+                    product = Product.objects.select_for_update().get(
+                        product_code=product_code,
+                        is_active=True
+                    )
+                except Product.DoesNotExist:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': f'Product {product_code} not found'
+                    })
+                
+                # Check stock
+                if product.category.is_single_item:
+                    if product.status != 'available':
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': f'Product {product_code} is not available'
+                        })
+                else:
+                    if product.quantity < quantity:
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': f'Insufficient stock for {product_code}. Available: {product.quantity}'
+                        })
+                
+                # Create sale
+                sale = Sale.objects.create(
+                    seller=request.user,
+                    total_amount=unit_price * quantity,
+                    payment_method=payment_method,
+                    amount_paid=amount_paid if len(sales_cart) == 1 else unit_price * quantity,
+                    sale_date=timezone.now(),
+                    batch_id=batch_id
+                )
+                
+                # Create sale item
+                sale_item = SaleItem.objects.create(
+                    sale=sale,
+                    product=product,
+                    quantity=quantity,
+                    unit_price=unit_price
+                )
+                
+                # Update product stock
+                if product.category.is_single_item:
+                    product.status = 'sold'
+                    product.quantity = 0
+                else:
+                    product.quantity -= quantity
+                    if product.quantity == 0:
+                        product.status = 'outofstock'
+                    elif product.quantity <= 5:
+                        product.status = 'lowstock'
+                
+                product.save(update_fields=['status', 'quantity'])
+                
+                sale_items_created.append({
+                    'sale_id': sale.id,
+                    'product': product_code,
+                    'quantity': quantity
+                })
+            
+            logger.info(f"Batch sale completed: {len(sale_items_created)} items, Batch ID: {batch_id}")
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Sale completed successfully',
+                'batch_id': batch_id,
+                'items_sold': len(sale_items_created),
+                'total_amount': float(total_amount),
+                'amount_paid': float(amount_paid),
+                'change': float(amount_paid - total_amount),
+                'receipt_url': f'/sales/batch-receipt/{batch_id}/'
+            })
+            
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Invalid JSON data'
+        })
+    except Exception as e:
+        logger.error(f"Error in batch sale creation: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error processing sale: {str(e)}'
+        })
+
+
+@login_required
+def batch_receipt(request, batch_id):
+    """
+    Generate receipt view for a batch of sales
+    """
+    sales = Sale.objects.filter(
+        batch_id=batch_id
+    ).prefetch_related('items', 'items__product').order_by('sale_date')
+    
+    if not sales.exists():
+        return render(request, 'sales/receipt_not_found.html', {
+            'batch_id': batch_id
+        })
+    
+    # Calculate totals
+    total_amount = sum(sale.total_amount for sale in sales)
+    total_items = sum(sale.items.count() for sale in sales)
+    
+    context = {
+        'batch_id': batch_id,
+        'sales': sales,
+        'total_amount': total_amount,
+        'total_items': total_items,
+        'sale_date': sales.first().sale_date,
+        'seller': sales.first().seller,
+        'payment_method': sales.first().payment_method,
+        'amount_paid': sales.first().amount_paid,
+    }
+    
+    return render(request, 'sales/batch_receipt.html', context)
 
 
 
