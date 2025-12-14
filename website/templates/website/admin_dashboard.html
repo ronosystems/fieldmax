@@ -1926,6 +1926,7 @@ th.dragging {
         <thead>
           <tr>
             <th><strong style="color:#ff0000;">SALE ID</strong></th>
+            <th><strong style="color:#ff0000;">ETR NUMBER</strong></th>
             <th><strong style="color:#ff0000;">BUYER</strong></th>
             <th><strong style="color:#ff0000;">TOTAL PRICE</strong></th>
             <th><strong style="color:#ff0000;">SOLD BY</strong></th>
@@ -1945,6 +1946,9 @@ th.dragging {
                 </span>
               {% endif %}
             </td>
+
+            <!-- ETR -->
+            <td>{{ sale.etr_receipt_number }}</td>
 
             <!-- buyer -->
             <td>{{ sale.buyer_name|default:"Walk-in" }}</td>
@@ -3143,6 +3147,7 @@ th.dragging {
         <thead>
           <tr>
             <th><strong style="color:#000000;">SALE ID</strong></th>
+            <th><strong style="color:#000000;">ETR NO</strong></th>           
             <th><strong style="color:#000000;">BUYER</strong></th>
             <th><strong style="color:#000000;">TOTAL AMOUNT</strong></th>
             <th><strong style="color:#000000;">SOLD BY</strong></th>
@@ -3169,6 +3174,9 @@ th.dragging {
               </span>
               {% endif %}
             </td>
+
+            <!-- ETR NUMBER -->
+            <td>{{ sale.etr_receipt_number }}</td>
 
             <!-- Buyer -->
             <td>{{ sale.buyer_name|default:"Walk-in" }}</td>
