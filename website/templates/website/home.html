@@ -4,1190 +4,1093 @@
 {% block title %}Home - Fieldmax{% endblock %}
 
 {% block content %}
+<style>
+    /* ===== ANIMATED GRADIENT BACKGROUND ===== */
+    .gradient-bg {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: linear-gradient(45deg, #00b7ff, #00a9fd, #f093fb, #4facfe);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        pointer-events: none;
+    }
+    
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    .gradient-bg::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 50%, rgba(255,255,255,0.1) 0%, transparent 50%);
+        animation: pulse 4s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+    }
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FieldMax - Premium Tech Store</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+    /* ===== FLOATING PARTICLES ===== */
+    .particles {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: rgba(255,255,255,0.5);
+        border-radius: 50%;
+        animation: float 20s infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
+    }
+
+    /* ===== HERO SECTION ===== */
+    .hero {
+        position: relative;
+        z-index: 1;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 140px 5% 180px;
+        color: #00ffccff;
+    }
+
+    .hero-content {
+        max-width: 1400px;
+        width: 100%;
+    }
+
+    /* ===== HERO TOP ROW ===== */
+    .hero-top-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        align-items: center;
+        margin-bottom: 0;
+    }
+
+    .hero-text {
+        animation: fadeInUp 1s ease;
+        position: relative;
+        z-index: 2;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== FLOATING POINTER IMAGE ===== */
+    .floating-pointer {
+        position: absolute;
+        left: -180px;
+        bottom: -20px;
+        width: 350px;
+        height: auto;
+        z-index: 1;
+        animation: floatPoint 3s ease-in-out infinite;
+        filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
+    }
+
+    @keyframes floatPoint {
+        0%, 100% { 
+            transform: translateX(0) rotate(-15deg);
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            overflow-x: hidden;
-            background: #000;
-            color: #fff;
+        50% { 
+            transform: translateX(10px) rotate(-10deg);
         }
+    }
 
-        /* ===== ANIMATED GRADIENT BACKGROUND ===== */
-        .gradient-bg {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #4facfe);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
-        }
+    .floating-pointer img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
 
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-size: 14px;
+        font-weight: 700;
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 30px;
+        animation: glow 2s ease-in-out infinite;
+    }
 
-        .gradient-bg::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 50%, rgba(255,255,255,0.1) 0%, transparent 50%);
-            animation: pulse 4s ease-in-out infinite;
-        }
+    @keyframes glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        50% { box-shadow: 0 0 40px rgba(255,255,255,0.4); }
+    }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
+    .hero-title {
+        font-size: clamp(40px, 7vw, 72px);
+        font-weight: 900;
+        line-height: 1.1;
+        margin-bottom: 25px;
+        letter-spacing: -2px;
+    }
 
-        /* ===== FLOATING PARTICLES ===== */
-        .particles {
-            position: fixed;
-            inset: 0;
-            z-index: 1;
-            pointer-events: none;
-        }
+    .hero-title .highlight {
+        background: linear-gradient(90deg, #f97474ff, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: block;
+        animation: shimmer 3s ease-in-out infinite;
+    }
 
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: rgba(255,255,255,0.5);
-            border-radius: 50%;
-            animation: float 20s infinite;
-        }
+    @keyframes shimmer {
+        0%, 100% { filter: brightness(1); }
+        50% { filter: brightness(1.3); }
+    }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
-        }
+    .hero-subtitle {
+        font-size: 18px;
+        line-height: 1.7;
+        opacity: 0.9;
+        margin-bottom: 35px;
+        max-width: 500px;
+    }
 
-        /* ===== NAVIGATION ===== */
-        nav {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            z-index: 1000;
-            padding: 20px 5%;
-            backdrop-filter: blur(20px);
-            background: rgba(0,0,0,0.3);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            transition: all 0.3s ease;
-        }
+    .hero-buttons {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
 
-        nav.scrolled {
-            padding: 15px 5%;
-            background: rgba(0,0,0,0.8);
-        }
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 32px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 15px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
 
-        .nav-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transform: translateX(-100%);
+        transition: transform 0.6s ease;
+    }
 
-        .logo {
-            font-size: 28px;
-            font-weight: 900;
-            background: linear-gradient(90deg, #fff, #f0f0ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+    .btn:hover::before {
+        transform: translateX(100%);
+    }
 
-        .nav-links {
-            display: flex;
-            gap: 40px;
-            list-style: none;
-        }
+    .btn-primary {
+        background: #667eea;
+        color: #ffffff;
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+    }
 
-        .nav-links a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            position: relative;
-        }
+    .btn-primary:hover {
+        transform: translateY(-4px);
+        background: #5568d3;
+        box-shadow: 0 30px 60px rgba(102, 126, 234, 0.5);
+    }
 
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: #fff;
-            transition: width 0.3s ease;
-        }
+    .btn-secondary {
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+        border: 2px solid rgba(255,255,255,0.3);
+        backdrop-filter: blur(10px);
+    }
 
-        .nav-links a:hover::after {
-            width: 100%;
-        }
+    .btn-secondary:hover {
+        background: rgba(255,255,255,0.2);
+        border-color: rgba(255,255,255,0.5);
+    }
 
-        /* ===== HERO SECTION ===== */
-        .hero {
-            position: relative;
-            z-index: 2;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 120px 5% 140px;
-        }
+    /* ===== SLIDESHOW SECTION ===== */
+    .hero-slideshow {
+        position: relative;
+        width: 100%;
+        height: 500px;
+        border-radius: 30px;
+        overflow: hidden;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+        animation: fadeInRight 1s ease;
+        z-index: 2;
+    }
 
-        .hero-content {
-            max-width: 1400px;
-            width: 100%;
-        }
+    @keyframes fadeInRight {
+        from { opacity: 0; transform: translateX(50px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
 
-        /* ===== HERO TOP ROW - Text + Badge + Slideshow ===== */
-        .hero-top-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 80px;
-            align-items: center;
-            margin-bottom: 0;
-        }
+    .slideshow-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
 
-        .hero-text {
-            animation: fadeInUp 1s ease;
-            position: relative;
-        }
+    .slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transition: opacity 1.5s ease-in-out;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 30px;
+    }
 
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+    .slide.active {
+        opacity: 1;
+        z-index: 2;
+    }
 
-        /* ===== FLOATING POINTER IMAGE ===== */
+    .slide img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 20px;
+        filter: drop-shadow(0 20px 40px rgba(0,0,0,0.3));
+        animation: slideZoom 1.5s ease-in-out;
+    }
+
+    @keyframes slideZoom {
+        0% { transform: scale(0.8); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .slide.active img {
+        animation: slideZoom 1.5s ease-in-out;
+    }
+
+    .slideshow-dots {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+        z-index: 10;
+    }
+
+    .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.3);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid rgba(255,255,255,0.5);
+    }
+
+    .dot.active {
+        background: #fff;
+        transform: scale(1.3);
+        box-shadow: 0 0 20px rgba(255,255,255,0.8);
+    }
+
+    .dot:hover {
+        background: rgba(255,255,255,0.6);
+    }
+
+    .slideshow-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: #fff;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 20px;
+        transition: all 0.3s ease;
+        z-index: 10;
+        user-select: none;
+    }
+
+    .slideshow-arrow:hover {
+        background: rgba(255,255,255,0.2);
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    .slideshow-arrow.prev {
+        left: 15px;
+    }
+
+    .slideshow-arrow.next {
+        right: 15px;
+    }
+
+    /* ===== SCROLLING TEXT MARQUEE ===== */
+    .marquee-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        overflow: hidden;
+        background: rgba(0, 255, 174, 1);
+        backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(60, 0, 255, 1);
+        border-bottom: 1px solid rgba(218, 0, 0, 1);
+        padding: 18px 0;
+        z-index: 3;
+    }
+
+    .marquee {
+        display: flex;
+        animation: scroll 30s linear infinite;
+        white-space: nowrap;
+    }
+
+    .marquee-content {
+        display: flex;
+        align-items: center;
+        gap: 60px;
+        padding-right: 60px;
+    }
+
+    .marquee-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-size: 22px;
+        font-weight: 800;
+        color: #000000ff;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .marquee-icon {
+        font-size: 28px;
+        animation: bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes scroll {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+
+    /* ===== STATS SECTION ===== */
+    .stats {
+        position: relative;
+        z-index: 1;
+        padding: 80px 5%;
+        background: rgba(0,0,0,0.3);
+        backdrop-filter: blur(20px);
+    }
+
+    .stats-grid {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 40px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 40px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+        transform: translateY(-10px);
+        background: rgba(255,255,255,0.1);
+        border-color: rgba(255,255,255,0.3);
+    }
+
+    .stat-number {
+        font-size: 56px;
+        font-weight: 900;
+        background: linear-gradient(90deg, #fff, #667eea);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .stat-label {
+        font-size: 16px;
+        opacity: 0.8;
+        font-weight: 600;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #fff;
+    }
+
+    /* ===== FEATURES SECTION ===== */
+    .features {
+        position: relative;
+        z-index: 1;
+        padding: 120px 5%;
+        background: rgba(0,0,0,0.4);
+        backdrop-filter: blur(20px);
+    }
+
+    .section-header {
+        text-align: center;
+        max-width: 700px;
+        margin: 0 auto 80px;
+    }
+
+    .section-header h2 {
+        font-size: clamp(40px, 6vw, 64px);
+        font-weight: 900;
+        margin-bottom: 20px;
+        line-height: 1.2;
+        color: #fff;
+    }
+
+    .section-header p {
+        font-size: 20px;
+        opacity: 0.8;
+        color: #fff;
+    }
+
+    .features-grid {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px;
+    }
+
+    .feature-card {
+        background: rgba(255,255,255,0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 30px;
+        padding: 50px;
+        transition: all 0.4s ease;
+        cursor: pointer;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        background: rgba(255,255,255,0.1);
+        border-color: rgba(255,255,255,0.3);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+    }
+
+    .feature-icon {
+        font-size: 64px;
+        margin-bottom: 30px;
+        display: block;
+    }
+
+    .feature-card h3 {
+        font-size: 26px;
+        font-weight: 800;
+        margin-bottom: 15px;
+        color: #fff;
+    }
+
+    .feature-card p {
+        font-size: 16px;
+        opacity: 0.8;
+        line-height: 1.7;
+        color: #fff;
+    }
+
+    /* ===== PRODUCTS SECTION ===== */
+    .products {
+        position: relative;
+        z-index: 1;
+        padding: 120px 5% 60px;
+        background: rgba(0,0,0,0.3);
+        backdrop-filter: blur(20px);
+    }
+
+    .products-scroll {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        gap: 30px;
+        overflow-x: auto;
+        padding: 30px 0;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,0.3) transparent;
+    }
+
+    .products-scroll::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .products-scroll::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+    }
+
+    .products-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.3);
+        border-radius: 10px;
+    }
+
+    .product-item {
+        min-width: 340px;
+        background: rgba(255,255,255,0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 25px;
+        padding: 30px;
+        scroll-snap-align: start;
+        transition: all 0.3s ease;
+    }
+
+    .product-item:hover {
+        transform: translateY(-10px);
+        background: rgba(255,255,255,0.1);
+        border-color: rgba(255,255,255,0.3);
+    }
+
+    .product-img {
+        width: 100%;
+        height: 280px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 100px;
+        margin-bottom: 25px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .product-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    .product-img.emoji-only {
+        background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+    }
+
+    .product-item h4 {
+        font-size: 22px;
+        font-weight: 800;
+        margin-bottom: 15px;
+        color: #fff;
+    }
+
+    .product-item .price {
+        font-size: 32px;
+        font-weight: 900;
+        color: #fff;
+        margin-bottom: 20px;
+        display: block;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1400px) {
         .floating-pointer {
-            position: absolute;
-            right: -300px;
-            top: 0;
-            width: 600px;
-            height: auto;
-            z-index: 5;
-            animation: floatPoint 3s ease-in-out infinite;
-            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
+            left: -150px;
+            width: 300px;
+        }
+    }
+
+    @media (max-width: 1200px) {
+        .floating-pointer {
+            left: -120px;
+            width: 250px;
+            bottom: -10px;
+        }
+        
+        .hero-top-row {
+            gap: 40px;
+        }
+    }
+
+    @media (max-width: 1024px) {
+        .hero-top-row {
+            grid-template-columns: 1fr;
+            gap: 50px;
         }
 
-        @keyframes floatPoint {
-            0%, 100% { 
-                transform: translateX(0) rotate(8deg);
-            }
-            50% { 
-                transform: translateX(-20px) rotate(-2deg);
-            }
-        }
-
-        .floating-pointer img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-size: 14px;
-            font-weight: 700;
-            border: 1px solid rgba(255,255,255,0.2);
-            margin-bottom: 30px;
-            animation: glow 2s ease-in-out infinite;
-        }
-
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(255,255,255,0.2); }
-            50% { box-shadow: 0 0 40px rgba(255,255,255,0.4); }
-        }
-
-        .hero-title {
-            font-size: clamp(48px, 8vw, 92px);
-            font-weight: 900;
-            line-height: 1.1;
-            margin-bottom: 30px;
-            letter-spacing: -2px;
-        }
-
-        .hero-title .highlight {
-            background: linear-gradient(90deg, #fff, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            display: block;
-            animation: shimmer 3s ease-in-out infinite;
-        }
-
-        @keyframes shimmer {
-            0%, 100% { filter: brightness(1); }
-            50% { filter: brightness(1.3); }
-        }
-
-        .hero-subtitle {
-            font-size: 20px;
-            line-height: 1.8;
-            opacity: 0.9;
-            margin-bottom: 40px;
-            max-width: 540px;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 18px 36px;
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 16px;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transform: translateX(-100%);
-            transition: transform 0.6s ease;
-        }
-
-        .btn:hover::before {
-            transform: translateX(100%);
-        }
-
-        .btn-primary {
-            background: #fff;
-            color: #667eea;
-            box-shadow: 0 20px 40px rgba(255,255,255,0.2);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 30px 60px rgba(255,255,255,0.3);
-        }
-
-        .btn-secondary {
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-            border: 2px solid rgba(255,255,255,0.3);
-            backdrop-filter: blur(10px);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255,255,255,0.2);
-            border-color: rgba(255,255,255,0.5);
-        }
-
-        /* ===== SLIDESHOW SECTION ===== */
         .hero-slideshow {
-            position: relative;
-            width: 100%;
-            height: 600px;
-            border-radius: 30px;
-            overflow: hidden;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
-            animation: fadeInRight 1s ease;
+            height: 450px;
+        }
+        
+        .hero {
+            padding: 120px 5% 160px;
         }
 
-        @keyframes fadeInRight {
-            from { opacity: 0; transform: translateX(50px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .slideshow-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            transition: opacity 1.5s ease-in-out;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-        }
-
-        .slide.active {
-            opacity: 1;
-            z-index: 2;
-        }
-
-        .slide img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            border-radius: 20px;
-            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.3));
-            animation: slideZoom 1.5s ease-in-out;
-        }
-
-        @keyframes slideZoom {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .slide.active img {
-            animation: slideZoom 1.5s ease-in-out;
-        }
-
-        .slideshow-dots {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 12px;
-            z-index: 10;
-        }
-
-        .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid rgba(255,255,255,0.5);
-        }
-
-        .dot.active {
-            background: #fff;
-            transform: scale(1.3);
-            box-shadow: 0 0 20px rgba(255,255,255,0.8);
-        }
-
-        .dot:hover {
-            background: rgba(255,255,255,0.6);
-        }
-
-        .slideshow-arrow {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: #fff;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 24px;
-            transition: all 0.3s ease;
-            z-index: 10;
-            user-select: none;
-        }
-
-        .slideshow-arrow:hover {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-50%) scale(1.1);
-        }
-
-        .slideshow-arrow.prev {
-            left: 20px;
-        }
-
-        .slideshow-arrow.next {
-            right: 20px;
-        }
-
-        /* ===== SCROLLING TEXT MARQUEE ===== */
-        .marquee-container {
-            position: absolute;
-            bottom: 40px;
-            left: 0;
-            width: 100%;
-            overflow: hidden;
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255,255,255,0.1);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding: 20px 0;
-        }
-
-        .marquee {
-            display: flex;
-            animation: scroll 30s linear infinite;
-            white-space: nowrap;
-        }
-
-        .marquee-content {
-            display: flex;
-            align-items: center;
-            gap: 60px;
-            padding-right: 60px;
-        }
-
-        .marquee-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 24px;
-            font-weight: 800;
-            color: #fff;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .marquee-icon {
-            font-size: 32px;
-            animation: bounce 2s ease-in-out infinite;
-        }
-
-        @keyframes scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        /* ===== STATS SECTION ===== */
-        .stats {
-            position: relative;
-            z-index: 2;
-            padding: 80px 5%;
-            background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(20px);
+        .floating-pointer {
+            display: none;
         }
 
         .stats-grid {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 40px;
-        }
-
-        .stat-item {
-            text-align: center;
-            padding: 40px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .stat-item:hover {
-            transform: translateY(-10px);
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.3);
-        }
-
-        .stat-number {
-            font-size: 56px;
-            font-weight: 900;
-            background: linear-gradient(90deg, #fff, #667eea);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        .stat-label {
-            font-size: 16px;
-            opacity: 0.8;
-            font-weight: 600;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        /* ===== FEATURES SECTION ===== */
-        .features {
-            position: relative;
-            z-index: 2;
-            padding: 120px 5%;
-        }
-
-        .section-header {
-            text-align: center;
-            max-width: 700px;
-            margin: 0 auto 80px;
-        }
-
-        .section-header h2 {
-            font-size: clamp(40px, 6vw, 64px);
-            font-weight: 900;
-            margin-bottom: 20px;
-            line-height: 1.2;
-        }
-
-        .section-header p {
-            font-size: 20px;
-            opacity: 0.8;
+            grid-template-columns: repeat(2, 1fr);
         }
 
         .features-grid {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 40px;
+            grid-template-columns: 1fr;
         }
 
-        .feature-card {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 30px;
-            padding: 50px;
-            transition: all 0.4s ease;
-            cursor: pointer;
+        .marquee-item {
+            font-size: 20px;
         }
 
-        .feature-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.3);
-            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
-        }
-
-        .feature-icon {
-            font-size: 64px;
-            margin-bottom: 30px;
-            display: block;
-        }
-
-        .feature-card h3 {
+        .marquee-icon {
             font-size: 26px;
-            font-weight: 800;
-            margin-bottom: 15px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hero {
+            padding: 100px 5% 140px;
         }
 
-        .feature-card p {
+        .hero-slideshow {
+            height: 350px;
+        }
+
+        .slideshow-arrow {
+            width: 38px;
+            height: 38px;
+            font-size: 18px;
+        }
+
+        .slideshow-arrow.prev {
+            left: 10px;
+        }
+
+        .slideshow-arrow.next {
+            right: 10px;
+        }
+
+        .hero-title {
+            font-size: 40px;
+        }
+
+        .hero-buttons {
+            flex-direction: column;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .marquee-item {
             font-size: 16px;
-            opacity: 0.8;
-            line-height: 1.7;
+            gap: 10px;
         }
 
-        /* ===== PRODUCTS SECTION ===== */
-        .products {
-            position: relative;
-            z-index: 2;
-            padding: 120px 5%;
-            background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(20px);
-        }
-
-        .products-scroll {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            gap: 30px;
-            overflow-x: auto;
-            padding: 30px 0;
-            scroll-snap-type: x mandatory;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255,255,255,0.3) transparent;
-        }
-
-        .products-scroll::-webkit-scrollbar {
-            height: 8px;
-        }
-
-        .products-scroll::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-        }
-
-        .products-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.3);
-            border-radius: 10px;
-        }
-
-        .product-item {
-            min-width: 340px;
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 25px;
-            padding: 30px;
-            scroll-snap-align: start;
-            transition: all 0.3s ease;
-        }
-
-        .product-item:hover {
-            transform: translateY(-10px);
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.3);
-        }
-
-        .product-img {
-            width: 100%;
-            height: 280px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 100px;
-            margin-bottom: 25px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .product-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        .product-img.emoji-only {
-            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
-        }
-
-        .product-item h4 {
+        .marquee-icon {
             font-size: 22px;
-            font-weight: 800;
-            margin-bottom: 15px;
         }
 
-        .product-item .price {
-            font-size: 32px;
-            font-weight: 900;
-            color: #fff;
-            margin-bottom: 20px;
-            display: block;
+        .marquee-content {
+            gap: 40px;
+            padding-right: 40px;
         }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 1400px) {
-            .floating-pointer {
-                left: -120px;
-                width: 160px;
-            }
-        }
-
-        @media (max-width: 1024px) {
-            .hero-top-row {
-                grid-template-columns: 1fr;
-                gap: 60px;
-            }
-
-            .hero-slideshow {
-                height: 500px;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .nav-links {
-                display: none;
-            }
-
-            .marquee-item {
-                font-size: 20px;
-            }
-
-            .marquee-icon {
-                font-size: 28px;
-            }
-
-            .floating-pointer {
-                display: none;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .hero {
-                padding: 100px 5% 180px;
-            }
-
-            .hero-slideshow {
-                height: 400px;
-            }
-
-            .slideshow-arrow {
-                width: 40px;
-                height: 40px;
-                font-size: 20px;
-            }
-
-            .slideshow-arrow.prev {
-                left: 10px;
-            }
-
-            .slideshow-arrow.next {
-                right: 10px;
-            }
-
-            .hero-title {
-                font-size: 48px;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .marquee-item {
-                font-size: 16px;
-                gap: 10px;
-            }
-
-            .marquee-icon {
-                font-size: 24px;
-            }
-
-            .marquee-content {
-                gap: 40px;
-                padding-right: 40px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Animated Background -->
-    <div class="gradient-bg"></div>
-    
-    <!-- Floating Particles -->
-    <div class="particles" id="particles"></div>
-
-    <!-- Hero Section -->
-    <section class="hero" id="home">
-        <div class="hero-content">
-            <!-- TOP ROW: Badge/Text + Slideshow -->
-            <div class="hero-top-row">
-                <div class="hero-text">
-                    <!-- Floating Pointer Image -->
-                    <div class="floating-pointer">
-                        <img src="{% static 'images/ABB.png' %}" alt="Pointer">
-                    </div>
-                    
-                    <div class="hero-badge">
-                        🚀 BEST PRICES GUARANTEED
-                    </div>
-                    <h1 class="hero-title">
-                        PREMIUM TECH
-                        <span class="highlight">AMAZING PRICES</span>
-                    </h1>
-                    <p class="hero-subtitle">
-                        🎯 Discover the latest smartphones, accessories, and gadgets at unbeatable prices with exclusive deals
-                    </p>
-                    <div class="hero-buttons">
-                        <a href="#products" class="btn btn-primary">
-                            🛍️ SHOP NOW
-                        </a>
-                        <a href="#features" class="btn btn-secondary">
-                            🔥 HOT DEALS
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Slideshow Section -->
-                <div class="hero-slideshow">
-                    <div class="slideshow-container">
-                        <div class="slide active">
-                            <img src="{% static 'images/NOKIA.jpg' %}" alt="Nokia Phone">
-                        </div>
-                        <div class="slide">
-                            <img src="{% static 'images/TECNO.jpg' %}" alt="Tecno Phone">
-                        </div>
-                        <div class="slide">
-                            <img src="{% static 'images/OKING.jpg' %}" alt="Oking Phone">
-                        </div>
-                        <div class="slide">
-                            <img src="{% static 'images/ITEL.jpg' %}" alt="Itel Phone">
-                        </div>
-                        <div class="slide">
-                            <img src="{% static 'images/NG.png' %}" alt="Normal Protector">
-                        </div>
-                        <div class="slide">
-                            <img src="{% static 'images/21D.jpg' %}" alt="21D Protector">
-                        </div>
-
-                        <!-- Navigation Arrows -->
-                        <div class="slideshow-arrow prev" onclick="changeSlide(-1)">❮</div>
-                        <div class="slideshow-arrow next" onclick="changeSlide(1)">❯</div>
-
-                        <!-- Navigation Dots -->
-                        <div class="slideshow-dots">
-                            <span class="dot active" onclick="currentSlide(0)"></span>
-                            <span class="dot" onclick="currentSlide(1)"></span>
-                            <span class="dot" onclick="currentSlide(2)"></span>
-                            <span class="dot" onclick="currentSlide(3)"></span>
-                            <span class="dot" onclick="currentSlide(4)"></span>
-                            <span class="dot" onclick="currentSlide(5)"></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Scrolling Marquee -->
-        <div class="marquee-container">
-            <div class="marquee">
-                <div class="marquee-content">
-                    <div class="marquee-item">
-                        <span class="marquee-icon">📱</span>
-                        <span>SMARTPHONES</span>
-                    </div>
-                    <div class="marquee-item">
-                        <span class="marquee-icon">🎧</span>
-                        <span>HEADPHONES</span>
-                    </div>
-                    <div class="marquee-item">
-                        <span class="marquee-icon">⌚</span>
-                        <span>SMARTWATCHES</span>
-                    </div>
-                    <div class="marquee-item">
-                        <span class="marquee-icon">💻</span>
-                        <span>LAPTOPS</span>
-                    </div>
-                    <div class="marquee-item">
-                        <span class="marquee-icon">📷</span>
-                        <span>CAMERAS</span>
-                    </div>
-                    <div class="marquee-item">
-                        <span class="marquee-icon">🎮</span>
-                        <span>GAMING</span>
-                    </div>
-                    <div class="marquee-item">
-                        <span class="marquee-icon">🔋</span>
-                        <span>ACCESSORIES</span>
-                    </div>
-                    <div class="marquee-item">
-                        <span class="marquee-icon">⚡</span>
-                        <span>FAST DELIVERY</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Stats Section -->
-    <section class="stats">
-        <div class="stats-grid">
-            <div class="stat-item">
-                <span class="stat-number">1000+</span>
-                <span class="stat-label">Products</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number">100K+</span>
-                <span class="stat-label">Customers</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number">98%</span>
-                <span class="stat-label">Satisfaction</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number">24/7</span>
-                <span class="stat-label">Support</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features" id="features">
-        <div class="section-header">
-            <h2>Why Choose FieldMax?</h2>
-            <p>Premium features that make your shopping experience exceptional</p>
-        </div>
-        <div class="features-grid">
-            <div class="feature-card">
-                <span class="feature-icon">🚀</span>
-                <h3>Lightning Fast Delivery</h3>
-                <p>Get your orders delivered within 24 hours with our express shipping service nationwide.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">💎</span>
-                <h3>Premium Quality</h3>
-                <p>Only authentic, certified products from trusted manufacturers and brands worldwide.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">🔒</span>
-                <h3>Secure Payments</h3>
-                <p>Shop with confidence using our encrypted payment system with buyer protection.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">💰</span>
-                <h3>Best Prices</h3>
-                <p>Unbeatable competitive pricing with price match guarantee on all products.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">🎁</span>
-                <h3>Exclusive Deals</h3>
-                <p>Access members-only discounts and early bird offers on new product launches.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">📞</span>
-                <h3>24/7 Support</h3>
-                <p>Expert customer service team ready to assist you anytime, anywhere.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Products Section -->
-    <section class="products" id="products">
-        <div class="section-header">
-            <h2>🔥 BEST SELLERS</h2>
-            <p>Most popular products our customers love</p>
-        </div>
-        <div class="products-scroll" id="productsContainer">
-            <!-- Products will be inserted here dynamically -->
-            <div class="product-item">
-                <div class="product-img">📦</div>
-                <h4>No products yet</h4>
-                <span class="price">KSh 0</span>
-                <a href="#" class="btn btn-primary" style="width: 100%;">🛒 ADD TO CART</a>
-            </div>
-        </div>
-    </section>
-
-    <script>
-        // ===== DATA INJECTION POINTS =====
-        const bestSellers = [
-            { 
-                name: "TECNO", 
-                price: 2500, 
-                image: "/static/images/TECNO.jpg",
-                emoji: "📱"
-            },
-            { 
-                name: "OKING", 
-                price: 1500, 
-                image: "/static/images/OKING.jpg",
-                emoji: "🎧"
-            },
-            { 
-                name: "NOKIA", 
-                price: 2000, 
-                image: "/static/images/NOKIA.jpg",
-                emoji: "📱"
-            },
-            { 
-                name: "ACCESSORY", 
-                price: 500, 
-                image: "/static/images/ACCESSORY.jpg",
-                emoji: "🎧"
-            },
-            { 
-                name: "Samsung A56", 
-                price: 50000, 
-                image: "/static/images/A56.jpg",
-                emoji: "📱"
-            },
-            { 
-                name: "Samsung A26", 
-                price: 5000, 
-                image: "/static/images/A26.jpg",
-                emoji: "🎧"
-            }
-        ];
-
-        // ===== POPULATE PRODUCTS SECTION =====
-        const productsContainer = document.getElementById('productsContainer');
-        if (bestSellers.length > 0) {
-            productsContainer.innerHTML = '';
-            bestSellers.forEach(product => {
-                const imageHTML = product.image 
-                    ? `<img src="${product.image}" alt="${product.name}" onerror="this.style.display='none'; this.parentElement.classList.add('emoji-only'); this.parentElement.innerHTML='${product.emoji || '📦'}';">`
-                    : product.emoji || '📦';
-                
-                const productHTML = `
-                    <div class="product-item">
-                        <div class="product-img ${product.image ? '' : 'emoji-only'}">
-                            ${imageHTML}
-                        </div>
-                        <h4>${product.name}</h4>
-                        <span class="price">KSh ${product.price.toLocaleString()}</span>
-                        <a href="#" class="btn btn-primary" style="width: 100%;">🛒 ADD TO CART</a>
-                    </div>
-                `;
-                productsContainer.innerHTML += productHTML;
-            });
-        }
-
-        // ===== ANIMATIONS =====
-        function createParticles() {
-            const container = document.getElementById('particles');
-            for (let i = 0; i < 30; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 20 + 's';
-                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
-                container.appendChild(particle);
-            }
-        }
-
-        // Navbar scroll effect
-        window.addEventListener('scroll', () => {
-            const nav = document.getElementById('nav');
-            if (window.scrollY > 100) {
-                nav.classList.add('scrolled');
-            } else {
-                nav.classList.remove('scrolled');
-            }
-        });
-
-        // Smooth scroll for navigation
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        });
-
-        // Initialize
-        createParticles();
         
-        // ===== SLIDESHOW FUNCTIONALITY =====
-        let currentSlideIndex = 0;
-        const slides = document.querySelectorAll('.slide');
-        const dots = document.querySelectorAll('.dot');
-        let slideInterval;
-
-        function showSlide(index) {
-            slides.forEach(slide => slide.classList.remove('active'));
-            dots.forEach(dot => dot.classList.remove('active'));
-
-            if (index >= slides.length) {
-                currentSlideIndex = 0;
-            } else if (index < 0) {
-                currentSlideIndex = slides.length - 1;
-            } else {
-                currentSlideIndex = index;
-            }
-
-            slides[currentSlideIndex].classList.add('active');
-            dots[currentSlideIndex].classList.add('active');
+        .marquee-container {
+            padding: 15px 0;
         }
+    }
+</style>
 
-        function changeSlide(direction) {
-            showSlide(currentSlideIndex + direction);
-            resetInterval();
-        }
+<!-- Animated Background -->
+<div class="gradient-bg"></div>
 
-        function currentSlide(index) {
-            showSlide(index);
-            resetInterval();
-        }
+<!-- Floating Particles -->
+<div class="particles" id="particles"></div>
 
-        function autoSlide() {
-            showSlide(currentSlideIndex + 1);
-        }
+<!-- Hero Section -->
+<section class="hero" id="home">
+    <div class="hero-content">
+        <!-- TOP ROW: Badge/Text + Slideshow -->
+        <div class="hero-top-row">
+            <div class="hero-text">
+                <!-- Floating Pointer Image -->
+                <div class="floating-pointer">
+                    <img src="{% static 'images/ABB.png' %}" alt="Pointer">
+                </div>
+                
+                <div class="hero-badge">
+                    🚀 BEST PRICES GUARANTEED
+                </div>
+                <h1 class="hero-title">
+                    PREMIUM TECH
+                    <span class="highlight">AMAZING PRICES</span>
+                </h1>
+                <p class="hero-subtitle">
+                    🎯 Discover the latest smartphones, accessories, and gadgets at unbeatable prices with exclusive deals
+                </p>
+                <div class="hero-buttons">
+                    <a href="#products" class="btn btn-primary">
+                        🛍️ SHOP NOW
+                    </a>
+                    <a href="#features" class="btn btn-secondary">
+                        🔥 HOT DEALS
+                    </a>
+                </div>
+            </div>
 
-        function resetInterval() {
-            clearInterval(slideInterval);
-            slideInterval = setInterval(autoSlide, 4000);
-        }
-
-        slideInterval = setInterval(autoSlide, 4000);
-
-        const slideshowContainer = document.querySelector('.slideshow-container');
-        slideshowContainer.addEventListener('mouseenter', () => {
-            clearInterval(slideInterval);
-        });
-
-        slideshowContainer.addEventListener('mouseleave', () => {
-            slideInterval = setInterval(autoSlide, 4000);
-        });
-
-        window.changeSlide = changeSlide;
-        window.currentSlide = currentSlide;
-    </script>
-</body>
-</html>
-
-{% endblock %}>
-                        <span>ACCESSORIES</span>
+            <!-- Slideshow Section -->
+            <div class="hero-slideshow">
+                <div class="slideshow-container">
+                    <div class="slide active">
+                        <img src="{% static 'images/NOKIA.jpg' %}" alt="Nokia Phone">
                     </div>
-                    <div class="marquee-item">
-                        <span class="marquee-icon">⚡</span>
-                        <span>FAST DELIVERY</span>
+                    <div class="slide">
+                        <img src="{% static 'images/TECNO.jpg' %}" alt="Tecno Phone">
+                    </div>
+                    <div class="slide">
+                        <img src="{% static 'images/OKING.jpg' %}" alt="Oking Phone">
+                    </div>
+                    <div class="slide">
+                        <img src="{% static 'images/ITEL.jpg' %}" alt="Itel Phone">
+                    </div>
+                    <div class="slide">
+                        <img src="{% static 'images/NG.png' %}" alt="Normal Protector">
+                    </div>
+                    <div class="slide">
+                        <img src="{% static 'images/21D.jpg' %}" alt="21D Protector">
+                    </div>
+
+                    <!-- Navigation Arrows -->
+                    <div class="slideshow-arrow prev" onclick="changeSlide(-1)">❮</div>
+                    <div class="slideshow-arrow next" onclick="changeSlide(1)">❯</div>
+
+                    <!-- Navigation Dots -->
+                    <div class="slideshow-dots">
+                        <span class="dot active" onclick="currentSlide(0)"></span>
+                        <span class="dot" onclick="currentSlide(1)"></span>
+                        <span class="dot" onclick="currentSlide(2)"></span>
+                        <span class="dot" onclick="currentSlide(3)"></span>
+                        <span class="dot" onclick="currentSlide(4)"></span>
+                        <span class="dot" onclick="currentSlide(5)"></span>
                     </div>
                 </div>
-                <!-- Duplicate for seamless loop -->
-                <div class="marquee-content">
-                    <div class="marquee-item">
-                        <span class="marquee-icon">📱</span>
-                        <span>SMARTPHONES</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scrolling Marquee -->
+    <div class="marquee-container">
+        <div class="marquee">
+            <div class="marquee-content">
+                <div class="marquee-item">
+                    <span class="marquee-icon">📱</span>
+                    <span>SMARTPHONES</span>
+                </div>
+                <div class="marquee-item">
+                    <span class="marquee-icon">🎧</span>
+                    <span>HEADPHONES</span>
+                </div>
+                <div class="marquee-item">
+                    <span class="marquee-icon">⌚</span>
+                    <span>SMARTWATCHES</span>
+                </div>
+                <div class="marquee-item">
+                    <span class="marquee-icon">💻</span>
+                    <span>LAPTOPS</span>
+                </div>
+                <div class="marquee-item">
+                    <span class="marquee-icon">📷</span>
+                    <span>CAMERAS</span>
+                </div>
+                <div class="marquee-item">
+                    <span class="marquee-icon">🎮</span>
+                    <span>GAMING</span>
+                </div>
+                <div class="marquee-item">
+                    <span class="marquee-icon">🔋</span>
+                    <span>ACCESSORIES</span>
+                </div>
+                <div class="marquee-item">
+                    <span class="marquee-icon">⚡</span>
+                    <span>FAST DELIVERY</span>
+                </div>
+            </div>
+            <!-- Duplicate for seamless loop -->
+            <div class="marquee-content">
+                <div class="marquee-item">
+                    <span class="marquee-icon">📱</span>
+                    <span>SMARTPHONES</span>
+                </div>
+                <div class="marquee-item">
+                    <span class="marquee-icon">🎧</span>
+                    <span>HEADPHONES</span>
+                </div>
+                <div class="marquee-item">
+                    <span class="marquee-icon">⌚</span>
+                    <span>SMARTWATCHES</span>
+                </div>
+                <div class="marquee-item">
+                    <span class="marquee-icon">💻</span>
+                    <span>LAPTOPS</span>
+                </div>
+                <div class="marquee-item">
+                    <span class="marquee-icon">📷</span>
+                    <span>CAMERAS</span>
+                </div>
+                <div class="marquee-item">
+                    <span class="marquee-icon">🎮</span>
+                    <span>GAMING</span>
+                </div>
+                <div class="marquee-item">
+                    <span class="marquee-icon">🔋</span>
+                    <span>ACCESSORIES</span>
+                </div>
+                <div class="marquee-item">
+                    <span class="marquee-icon">⚡</span>
+                    <span>FAST DELIVERY</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats">
+    <div class="stats-grid">
+        <div class="stat-item">
+            <span class="stat-number">1000+</span>
+            <span class="stat-label">Products</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">100K+</span>
+            <span class="stat-label">Customers</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">98%</span>
+            <span class="stat-label">Satisfaction</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">24/7</span>
+            <span class="stat-label">Support</span>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features" id="features">
+    <div class="section-header">
+        <h2>Why Choose FieldMax?</h2>
+        <p>Premium features that make your shopping experience exceptional</p>
+    </div>
+    <div class="features-grid">
+        <div class="feature-card">
+            <span class="feature-icon">🚀</span>
+            <h3>Lightning Fast Delivery</h3>
+            <p>Get your orders delivered within 24 hours with our express shipping service nationwide.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">💎</span>
+            <h3>Premium Quality</h3>
+            <p>Only authentic, certified products from trusted manufacturers and brands worldwide.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🔒</span>
+            <h3>Secure Payments</h3>
+            <p>Shop with confidence using our encrypted payment system with buyer protection.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">💰</span>
+            <h3>Best Prices</h3>
+            <p>Unbeatable competitive pricing with price match guarantee on all products.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🎁</span>
+            <h3>Exclusive Deals</h3>
+            <p>Access members-only discounts and early bird offers on new product launches.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">📞</span>
+            <h3>24/7 Support</h3>
+            <p>Expert customer service team ready to assist you anytime, anywhere.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Products Section -->
+<section class="products" id="products">
+    <div class="section-header">
+        <h2>🔥 BEST SELLERS</h2>
+        <p>Most popular products our customers love</p>
+    </div>
+    <div class="products-scroll" id="productsContainer">
+        <!-- Products will be inserted here dynamically -->
+        <div class="product-item">
+            <div class="product-img">📦</div>
+            <h4>No products yet</h4>
+            <span class="price">KSh 0</span>
+            <a href="#" class="btn btn-primary" style="width: 100%;">🛒 ADD TO CART</a>
+        </div>
+    </div>
+</section>
+
+<script>
+    // ===== DATA INJECTION POINTS =====
+    const bestSellers = [
+        { name: "TECNO", price: 2500, image: "/static/images/TECNO.jpg", emoji: "📱" },
+        { name: "OKING", price: 1500, image: "/static/images/OKING.jpg", emoji: "🎧" },
+        { name: "NOKIA", price: 2000, image: "/static/images/NOKIA.jpg", emoji: "📱" },
+        { name: "ACCESSORY", price: 500, image: "/static/images/ACCESSORY.jpg", emoji: "🎧" },
+        { name: "Samsung A56", price: 50000, image: "/static/images/A56.jpg", emoji: "📱" },
+        { name: "Samsung A26", price: 5000, image: "/static/images/A26.jpg", emoji: "🎧" }
+    ];
+
+    // ===== POPULATE PRODUCTS SECTION =====
+    const productsContainer = document.getElementById('productsContainer');
+    if (bestSellers.length > 0) {
+        productsContainer.innerHTML = '';
+        bestSellers.forEach(product => {
+            const imageHTML = product.image 
+                ? `<img src="${product.image}" alt="${product.name}" onerror="this.style.display='none'; this.parentElement.classList.add('emoji-only'); this.parentElement.innerHTML='${product.emoji || '📦'}';">`
+                : product.emoji || '📦';
+            
+            const productHTML = `
+                <div class="product-item">
+                    <div class="product-img ${product.image ? '' : 'emoji-only'}">
+                        ${imageHTML}
                     </div>
-                    <div class="marquee-item">
-                        <span class="marquee-icon">🎧</span>
-                        <span>HEADPHONES</span>
-                    </div>
-                    <div class="marquee-item">
-                        <span class="marquee-icon">⌚</span>
-                        <span>SMARTWATCHES</span>
-                    </div>
-                    <div class="marquee-item">
-                        <span class="marquee-icon">💻</span>
-                        <span>LAPTOPS</span>
-                    </div>
-                    <div class="marquee-item">
-                        <span class="marquee-icon">📷</span>
-                        <span>CAMERAS</span>
-                    </div>
-                    <div class="marquee-item">
-                        <span class="marquee-icon">🎮</span>
-                        <span>GAMING</span>
-                    </div>
-                    <div class="marquee-item">
-                        <span class="marquee-icon">🔋</span
+                    <h4>${product.name}</h4>
+                    <span class="price">KSh ${product.price.toLocaleString()}</span>
+                    <a href="#" class="btn btn-primary" style="width: 100%;">🛒 ADD TO CART</a>
+                </div>
+            `;
+            productsContainer.innerHTML += productHTML;
+        });
+    }
+
+    // ===== ANIMATIONS =====
+    function createParticles() {
+        const container = document.getElementById('particles');
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 20 + 's';
+            particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+            container.appendChild(particle);
+        }
+    }
+
+    // Smooth scroll for navigation
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+
+    // Initialize
+    createParticles();
+    
+    // ===== SLIDESHOW FUNCTIONALITY =====
+    let currentSlideIndex = 0;
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.dot');
+    let slideInterval;
+
+    function showSlide(index) {
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+
+        if (index >= slides.length) {
+            currentSlideIndex = 0;
+        } else if (index < 0) {
+            currentSlideIndex = slides.length - 1;
+        } else {
+            currentSlideIndex = index;
+        }
+
+        slides[currentSlideIndex].classList.add('active');
+        dots[currentSlideIndex].classList.add('active');
+    }
+
+    function changeSlide(direction) {
+        showSlide(currentSlideIndex + direction);
+        resetInterval();
+    }
+
+    function currentSlide(index) {
+        showSlide(index);
+        resetInterval();
+    }
+
+    function autoSlide() {
+        showSlide(currentSlideIndex + 1);
+    }
+
+    function resetInterval() {
+        clearInterval(slideInterval);
+        slideInterval = setInterval(autoSlide, 4000);
+    }
+
+    slideInterval = setInterval(autoSlide, 4000);
+
+    const slideshowContainer = document.querySelector('.slideshow-container');
+    slideshowContainer.addEventListener('mouseenter', () => {
+        clearInterval(slideInterval);
+    });
+
+    slideshowContainer.addEventListener('mouseleave', () => {
+        slideInterval = setInterval(autoSlide, 4000);
+    });
+
+    window.changeSlide = changeSlide;
+    window.currentSlide = currentSlide;
+</script>
+
+{% endblock %}
