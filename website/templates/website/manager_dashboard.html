@@ -6922,35 +6922,85 @@ function filterProducts() {
 
 
 
+
+
+
+
+
+
 /* ============================================================
     SEARCH BUTTON AND ENTRIES
    ============================================================ */
 
 // Search functionality
 function searchProducts() {
-  const searchTerm = document.getElementById('productSearch').value.toLowerCase();
-  const rows = document.querySelectorAll('.product-row');
-  
-  rows.forEach(row => {
-    const text = row.textContent.toLowerCase();
-    row.style.display = text.includes(searchTerm) ? '' : 'none';
-  });
+  applyAllFilters();
 }
 
 // Entries selection functionality
 function changeEntries() {
-  const entriesValue = document.getElementById('entriesSelect').value;
-  const rows = document.querySelectorAll('.product-row');
-  
-  if (entriesValue === 'all') {
-    rows.forEach(row => row.style.display = '');
-  } else {
-    const limit = parseInt(entriesValue);
-    rows.forEach((row, index) => {
-      row.style.display = index < limit ? '' : 'none';
-    });
-  }
+  applyAllFilters();
 }
+
+// Master filter function that applies all filters together
+function applyAllFilters() {
+  const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+  const entriesValue = document.getElementById('entriesSelect').value;
+  const statusFilter = document.getElementById('productStatusFilter').value;
+  const categoryFilter = document.getElementById('productCategoryFilter').value;
+  const typeFilter = document.getElementById('productTypeFilter').value;
+  
+  const rows = document.querySelectorAll('.product-row');
+  let visibleCount = 0;
+  const limit = entriesValue === 'all' ? Infinity : parseInt(entriesValue);
+  
+  rows.forEach(row => {
+    // Skip rows without data-product-id (empty state rows)
+    if (!row.dataset.productId) {
+      row.style.display = 'none';
+      return;
+    }
+    
+    // Check search filter
+    const matchesSearch = searchTerm === '' || row.textContent.toLowerCase().includes(searchTerm);
+    
+    // Check status filter
+    const stockStatus = row.dataset.stockStatus;
+    const matchesStatus = statusFilter === 'all' || stockStatus === statusFilter;
+    
+    // Check category filter
+    const category = row.dataset.category;
+    const matchesCategory = categoryFilter === 'all' || category === categoryFilter;
+    
+    // Check type filter
+    const type = row.dataset.type;
+    const matchesType = typeFilter === 'all' || type === typeFilter;
+    
+    // Check entries limit
+    const withinLimit = visibleCount < limit;
+    
+    // Show row only if it passes ALL filters AND is within the entries limit
+    if (matchesSearch && matchesStatus && matchesCategory && matchesType && withinLimit) {
+      row.style.display = '';
+      visibleCount++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+}
+
+// Update the filterProducts function to use the master filter
+function filterProducts() {
+  applyAllFilters();
+}
+
+
+
+
+
+
+
+
 
 
 
