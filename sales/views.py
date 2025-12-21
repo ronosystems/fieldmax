@@ -1,9 +1,10 @@
-# Django core imports
+#====================================
+#SALES IMPORTS
+#====================================
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.views.generic import ListView, DetailView, UpdateView, DeleteView
 from django.views.decorators.http import require_http_methods
-
 from django.http import JsonResponse, HttpResponse
 from django.db import transaction
 from django.utils import timezone
@@ -21,27 +22,15 @@ import json
 import logging
 from decimal import Decimal
 from . import models
-
 from django.http import JsonResponse
 from django.db.models import Count
 from django.contrib.auth.models import User
-
-def get_sellers(request):
-    """Return all users who have made sales"""
-    sellers = User.objects.filter(
-        sales_made__isnull=False
-    ).distinct().values('id', 'username', 'first_name', 'last_name')
-    
-    return JsonResponse({
-        'sellers': list(sellers)
-    })
 
 # App imports
 from .models import Sale, SaleReversal, SaleItem
 from .forms import SaleForm
 from .serializers import SaleSerializer
 from inventory.models import Product, StockEntry
-
 try:
     from .etr import process_fieldmax_etr_for_sale, process_etr_for_sale
 except ImportError:
@@ -52,8 +41,23 @@ try:
     import pdfkit
 except ImportError:
     pdfkit = None
+from django.contrib.auth import get_user_model
 
+
+
+
+
+
+
+User = get_user_model()
 logger = logging.getLogger(__name__)
+
+
+
+
+
+
+
 
 
 
@@ -62,6 +66,7 @@ logger = logging.getLogger(__name__)
 # =========================================
 # GET SELLER
 # =========================================
+
 def get_sellers(request):
     """Return all users who have made sales"""
     sellers = User.objects.filter(
@@ -71,6 +76,14 @@ def get_sellers(request):
     return JsonResponse({
         'sellers': list(sellers)
     })
+
+
+
+
+
+
+
+
 
 
 
@@ -377,10 +390,18 @@ class SaleCreateView(View):
 
 
 
+
+
+
+
+
+
+
+
 # =========================================
-# SALE REVERSAL VIEW (CALLS Sale.reverse_sale)
+# SALE REVERSAL VIEW 
 # =========================================
-# views.py
+
 class SaleReverseView(LoginRequiredMixin, View):
     def post(self, request, sale_id):
         sale = get_object_or_404(Sale, sale_id=sale_id)
@@ -400,14 +421,16 @@ class SaleReverseView(LoginRequiredMixin, View):
 
 
 
-# sales/views.py
-from django.http import JsonResponse
-from django.db.models import Sum
-from sales.models import Sale
-from inventory.models import Category
-from django.contrib.auth import get_user_model
 
-User = get_user_model()
+
+
+
+
+
+
+# ============================================
+# SALES REPORT API
+# ============================================
 
 def sales_report_api(request):
     seller_id = request.GET.get('seller')
@@ -440,8 +463,20 @@ def sales_report_api(request):
     return JsonResponse({"results": results})
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 # =========================================
-# PRODUCT LOOKUP FOR SALES
+# PRODUCT LOOKUP VIEW
 # =========================================
 
 class ProductLookupView(View):
@@ -534,53 +569,15 @@ class ProductLookupView(View):
 
 
 
-# ============================================
-# EXAMPLE FRONTEND USAGE
-# ============================================
-"""
-JavaScript example for handling sold products:
 
-// In your sale form
-async function lookupProduct(productCode) {
-    const response = await fetch(`/sales/product-lookup/?product_code=${productCode}`);
-    const data = await response.json();
-    
-    if (!data.success) {
-        if (data.is_sold) {
-            // Show special message for sold products
-            showError(data.message);
-            
-            // Optionally offer to reverse sale
-            if (data.product.sale_id) {
-                showReversalOption(data.product.sale_id);
-            }
-        } else {
-            showError(data.message);
-        }
-        return;
-    }
-    
-    // Check if product can be sold
-    if (!data.product.can_sell) {
-        showError(`Cannot sell ${data.product.name}: ${data.product.status}`);
-        return;
-    }
-    
-    // Populate form with product details
-    document.getElementById('product_name').value = data.product.name;
-    document.getElementById('unit_price').value = data.product.unit_price;
-    document.getElementById('stock_info').textContent = data.product.stock_display;
-}
 
-function showReversalOption(saleId) {
-    const reversalLink = `<a href="/sales/sale/${saleId}/reverse/">Reverse this sale</a>`;
-    showMessage(`This item was sold. ${reversalLink} to make it available again.`);
-}
-"""
+
+
 
 # =========================================
 # CLIENT LOOKUP (Auto-fill)
 # =========================================
+
 class ClientLookupView(View):
     """Auto-fill client details from previous sales"""
     
@@ -606,9 +603,22 @@ class ClientLookupView(View):
             "nok_phone": sale.nok_phone or "",
         })
 
+
+
+
+
+
+
+
+
+
+
+
+
 # =========================================
-# RECEIPT VIEWS
+# SALE ETR VIEWS
 # =========================================
+
 @login_required
 def sale_etr_view(request, sale_id):
     """Display ETR receipt for a sale (supports multiple items)"""
@@ -658,6 +668,20 @@ def sale_etr_view(request, sale_id):
 
 
 
+
+
+
+
+
+
+
+
+
+
+# ============================================
+# DOWNLOAD RECEIPT VIEW
+# ============================================
+
 @login_required
 def download_receipt_view(request, sale_id):
     """Download receipt as PDF"""
@@ -701,6 +725,19 @@ def download_receipt_view(request, sale_id):
     
     # Fallback to HTML
     return HttpResponse(html_string)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -788,8 +825,21 @@ def batch_receipt_view(request, batch_id):
     })
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ============================================
-# OPTIONAL: Add download batch receipt as PDF
+# DOWNLOAD RECEIPT VIEW
 # ============================================
 
 @login_required
@@ -865,36 +915,19 @@ def download_batch_receipt_view(request, batch_id):
     return HttpResponse(html_string)
 
 
-# ============================================
-# UPDATE YOUR urls.py TO INCLUDE THESE VIEWS
-# ============================================
-"""
-In sales/urls.py, add these paths:
 
-from django.urls import path
-from . import views
 
-urlpatterns = [
-    # ... your existing URLs ...
-    
-    # Batch receipt views
-    path('batch-receipt/<str:batch_id>/', 
-         views.batch_receipt_view, 
-         name='batch-receipt'),
-    
-    path('batch-receipt/<str:batch_id>/download/', 
-         views.download_batch_receipt_view, 
-         name='download-batch-receipt'),
-]
-"""
+
+
 
 
 
 
 
 # =========================================
-# LIST VIEWS
+# SALE LIST VIEW
 # =========================================
+
 class SaleListView(LoginRequiredMixin, ListView):
     model = Sale
     template_name = 'sales/sale_list.html'
@@ -909,11 +942,42 @@ class SaleListView(LoginRequiredMixin, ListView):
         ).order_by('-sale_date')
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+# ============================================
+# SALE DETAIL VIEW
+# ============================================
+
 class SaleDetailView(LoginRequiredMixin, DetailView):
     model = Sale
     template_name = 'sales/sale_detail.html'
     pk_url_kwarg = 'sale_id'
 
+
+
+
+
+
+
+
+
+
+
+
+
+# ============================================
+# SALE UPDATE VIEW
+# ============================================
 
 class SaleUpdateView(LoginRequiredMixin, UpdateView):
     model = Sale
@@ -922,28 +986,73 @@ class SaleUpdateView(LoginRequiredMixin, UpdateView):
     success_url = '/admin-dashboard/'
 
 
+
+
+
+
+
+
+
+
+# ============================================
+# SALE DELETE VIEW
+# ============================================
+
 class SaleDeleteView(LoginRequiredMixin, DeleteView):
     model = Sale
     template_name = 'sales/sale_confirm_delete.html'
     success_url = '/admin-dashboard/'
 
 
+
+
+
+
+
+
+
+
 # =========================================
 # DRF API VIEWS
 # =========================================
+
 class SaleViewSet(viewsets.ModelViewSet):
     queryset = Sale.objects.all().order_by('-sale_date')
     serializer_class = SaleSerializer
 
+
+
+
+
+
+
+
+
+
+
+# ============================================
+# SALE LIST CREATE VIEW
+# ============================================
 
 class SaleListCreateView(generics.ListCreateAPIView):
     queryset = Sale.objects.all()
     serializer_class = SaleSerializer
 
 
+
+
+
+
+
+
+
+
+
+
 # =========================================
 # RESTOCK VIEW
 # =========================================
+
 class RestockView(LoginRequiredMixin, View):
     """Handle bulk product restocking"""
     
@@ -990,6 +1099,17 @@ class RestockView(LoginRequiredMixin, View):
         
 
 
+
+
+
+
+
+
+
+
+# ============================================
+# PRODUCT LOOKUP
+# ============================================
 
 
 @login_required
@@ -1062,6 +1182,20 @@ def product_lookup(request):
             'message': 'Error looking up product'
         })
 
+
+
+
+
+
+
+
+
+
+
+
+# ============================================
+# BATCH CREATE SALE
+# ============================================
 
 @login_required
 @require_http_methods(["POST"])
@@ -1203,6 +1337,19 @@ def batch_create_sale(request):
         })
 
 
+
+
+
+
+
+
+
+
+
+# ============================================
+# BATCH RECEIPT
+# ============================================
+
 @login_required
 def batch_receipt(request, batch_id):
     """
@@ -1238,8 +1385,15 @@ def batch_receipt(request, batch_id):
 
 
 
+
+
+
+
+
+
+
 # ============================================
-# CORRECTED BATCH SALE VIEW - Uses Rcpt_No:0001 Format
+# BATCH SALE CREATE VIEW
 # ============================================
 
 @method_decorator(login_required, name='dispatch')
@@ -1417,6 +1571,15 @@ class BatchSaleCreateView(View):
             }, status=500)
 
 
+
+
+
+
+
+
+
+
+
 # ============================================
 # RECEIPT VIEW
 # ============================================
@@ -1472,16 +1635,15 @@ def sale_receipt_view(request, sale_id):
 
 
 
-# Add this to your sales/views.py (replace the existing product_search function)
 
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from django.db.models import Q
-from inventory.models import Product
-import logging
 
-logger = logging.getLogger(__name__)
 
+
+
+
+# ============================================
+# PRODUCT SEARCH
+# ============================================
 
 @require_http_methods(["GET"])
 def product_search(request):
@@ -1561,6 +1723,21 @@ def product_search(request):
         }, status=500)
 
 
+
+
+
+
+
+
+
+
+
+
+
+# ============================================
+# RECORD SALE
+# ============================================
+
 @require_http_methods(["POST"])
 def record_sale(request):
     """
@@ -1635,51 +1812,3 @@ def record_sale(request):
             'message': f'Error: {str(e)}'
         }, status=500)
     
-
-
-
-
-
-    
-
-# ============================================
-# COMPARISON: BEFORE vs AFTER
-# ============================================
-"""
-BEFORE (WRONG):
---------------
-Database:
-  Sale #1: Product A, Qty 1, Total 1000  [batch_id: ABC123, batch_seq: 1]
-  Sale #2: Product B, Qty 2, Total 2000  [batch_id: ABC123, batch_seq: 2]
-  Sale #3: Product C, Qty 1, Total 500   [batch_id: ABC123, batch_seq: 3]
-  
-Sales Table View:
-  3 rows shown (one per product)
-  
-Issues:
-  ❌ Sales table cluttered with item-level entries
-  ❌ Hard to see transactions at a glance
-  ❌ Confusing for reports
-
-
-AFTER (CORRECT):
----------------
-Database:
-  Sale #SL20251201120000ABC123:
-    - Total items: 3
-    - Total amount: 3500
-    - Receipt: Rcpt_No:0001
-    
-  SaleItem #1: Product A, Qty 1, Total 1000  [sale_id: SL20251201120000ABC123]
-  SaleItem #2: Product B, Qty 2, Total 2000  [sale_id: SL20251201120000ABC123]
-  SaleItem #3: Product C, Qty 1, Total 500   [sale_id: SL20251201120000ABC123]
-  
-Sales Table View:
-  1 row shown (one per transaction)
-  
-Benefits:
-  ✅ Clean sales table (one row = one transaction)
-  ✅ Easy to track receipts and totals
-  ✅ Items viewable in detail view
-  ✅ Standard e-commerce pattern
-"""

@@ -1,23 +1,41 @@
-# sales/models.py - CORRECTED VERSION
-# One Sale record per transaction, items stored in SaleItem model
+# ==============================
+# SALE IMPORTS
+# ==============================
 
 from decimal import Decimal
 import uuid
 import logging
-
 from django.db import models, transaction
 from django.db.models import F, Max, Sum
 from django.contrib.auth.models import User
 from django.utils import timezone
 from inventory.models import Product, StockEntry
 
+
+
+
+
+
+
+
+
 logger = logging.getLogger(__name__)
 
 
 
+
+
+
+
+
+
+
+
+
 # ============================================
-# SALE COUNTER MODEL (Add this to your models.py)
+# SALE COUNTER MODEL
 # ============================================
+
 class SaleCounter(models.Model):
     """
     Tracks sale counters per year for generating sequential sale IDs
@@ -35,9 +53,20 @@ class SaleCounter(models.Model):
         return f"Year {self.year}: {self.counter} sales"
 
 
+
+
+
+
+
+
+
+
+
+
 # ============================================
 # UPDATED SALE ID GENERATOR
 # ============================================
+
 def generate_custom_sale_id() -> str:
     """
     Generate sale ID using dedicated counter table
@@ -74,6 +103,15 @@ def generate_custom_sale_id() -> str:
 
 
 
+
+
+
+
+
+
+# ==================================
+# SALE MODEL
+# ==================================
 
 class Sale(models.Model):
     """
@@ -279,6 +317,18 @@ class Sale(models.Model):
         return self.is_reversed
 
 
+
+
+
+
+
+
+
+
+#======================================
+# SALE ITEM MODEL
+#======================================
+
 class SaleItem(models.Model):
     """
     ✅ NEW MODEL: Individual items within a sale
@@ -368,6 +418,18 @@ class SaleItem(models.Model):
             )
 
 
+
+
+
+
+
+
+
+
+#======================================
+#SALE REVERSAL MODEL
+#======================================
+
 class SaleReversal(models.Model):
     """Reversal record for entire sale (all items)"""
     
@@ -446,6 +508,18 @@ class SaleReversal(models.Model):
 
 
 
+
+
+
+
+
+
+
+
+#=======================================
+#FISCAL RECEIPT MODEL
+#=======================================
+
 class FiscalReceipt(models.Model):
     """Fiscal receipt for entire sale"""
     
@@ -464,44 +538,3 @@ class FiscalReceipt(models.Model):
     def __str__(self) -> str:
         return f"Receipt {self.receipt_number} for Sale #{self.sale.sale_id}"
 
-
-# ============================================
-# USAGE EXAMPLE
-# ============================================
-"""
-# CREATE A SALE WITH MULTIPLE ITEMS:
-
-with transaction.atomic():
-    # 1. Create the sale
-    sale = Sale.objects.create(
-        seller=request.user,
-        buyer_name="John Doe",
-        buyer_phone="0712345678"
-    )
-    
-    # 2. Add items to the sale
-    for item_data in cart_items:
-        product = Product.objects.get(product_code=item_data['product_code'])
-        
-        sale_item = SaleItem.objects.create(
-            sale=sale,
-            product=product,
-            product_code=product.product_code,
-            product_name=product.name,
-            sku_value=product.sku_value,
-            quantity=item_data['quantity'],
-            unit_price=item_data['unit_price']
-        )
-        
-        # Process the sale (deducts stock)
-        sale_item.process_sale()
-    
-    # 3. Assign receipt number (ONE for entire sale)
-    sale.assign_etr_receipt_number(fiscal_receipt_number="FR-12345")
-
-# RESULT:
-# - 1 Sale record
-# - Multiple SaleItem records linked to it
-# - 1 ETR receipt number for the entire sale
-# - Sales table shows 1 row per transaction
-"""

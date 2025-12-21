@@ -4,6 +4,15 @@ from django import forms
 from .models import Sale, SaleItem
 
 
+
+
+
+
+
+
+
+
+
 class SaleForm(forms.ModelForm):
     """
     Form for Sale model (transaction-level, not item-level)
@@ -43,6 +52,13 @@ class SaleForm(forms.ModelForm):
         }
 
 
+
+
+
+
+
+
+
 class SaleItemForm(forms.ModelForm):
     """
     Form for individual sale items
@@ -73,6 +89,17 @@ class SaleItemForm(forms.ModelForm):
         }
 
 
+
+
+
+
+
+
+
+
+
+
+
 # ============================================
 # FORMSETS FOR INLINE ITEM EDITING
 # ============================================
@@ -89,6 +116,17 @@ SaleItemFormSet = inlineformset_factory(
     min_num=1,  # At least one item required
     validate_min=True
 )
+
+
+
+
+
+
+
+
+
+
+
 
 
 # ============================================
@@ -187,81 +225,12 @@ class QuickSaleForm(forms.Form):
     )
 
 
-# ============================================
-# USAGE EXAMPLES
-# ============================================
-"""
-# 1. CREATE SALE WITH FORMSET (Admin/Staff Interface)
-# ===================================================
-
-# In your view:
-def create_sale_with_items(request):
-    if request.method == 'POST':
-        sale_form = SaleForm(request.POST)
-        item_formset = SaleItemFormSet(request.POST)
-        
-        if sale_form.is_valid() and item_formset.is_valid():
-            sale = sale_form.save(commit=False)
-            sale.seller = request.user
-            sale.save()
-            
-            items = item_formset.save(commit=False)
-            for item in items:
-                item.sale = sale
-                item.save()
-                item.process_sale()  # Deduct stock
-            
-            sale.assign_etr_receipt_number()
-            return redirect('sale-detail', sale_id=sale.sale_id)
-    else:
-        sale_form = SaleForm()
-        item_formset = SaleItemFormSet()
-    
-    return render(request, 'sales/create_sale.html', {
-        'sale_form': sale_form,
-        'item_formset': item_formset
-    })
 
 
-# In your template:
-<form method="post">
-    {% csrf_token %}
-    {{ sale_form.as_p }}
-    
-    <h3>Items</h3>
-    {{ item_formset.management_form }}
-    {% for form in item_formset %}
-        {{ form.as_p }}
-    {% endfor %}
-    
-    <button type="submit">Create Sale</button>
-</form>
 
 
-# 2. QUICK SALE FORM (POS Interface)
-# ==================================
-
-# In your view:
-def quick_sale(request):
-    if request.method == 'POST':
-        form = QuickSaleForm(request.POST)
-        
-        if form.is_valid():
-            # Process the sale (similar to your current BatchSaleCreateView)
-            # ... your existing logic
-            pass
-    else:
-        form = QuickSaleForm()
-    
-    return render(request, 'sales/quick_sale.html', {'form': form})
 
 
-# 3. AJAX-BASED CART SYSTEM (Your Current Setup)
-# ==============================================
-# Continue using your current JavaScript cart system
-# Just update the backend to create Sale + SaleItem records
-# (as shown in the BatchSaleCreateView artifact)
-"""
 
 
 # ============================================

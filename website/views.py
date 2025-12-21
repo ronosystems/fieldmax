@@ -18,12 +18,11 @@ from django.http import JsonResponse
 import json
 from django.db import transaction
 from sales.models import Sale, SaleItem
-from decimal import Decimal
-import json
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from .models import PendingOrder, PendingOrderItem
+
+
+
 
 
 
@@ -31,17 +30,89 @@ from .models import PendingOrder, PendingOrderItem
 logger = logging.getLogger(__name__)
 
 
+
+
+
+
+
+
+
+
+# ============================================
+# HOME PAGE
+# ============================================
+
 def home(request):
     """
     Render the home page with featured products
     Template will fetch data via AJAX
     """
+    # Determine dashboard URL based on user role
+    dashboard_url = '#'
+    if request.user.is_authenticated:
+        if hasattr(request.user, 'profile') and request.user.profile:
+            role = request.user.profile.role
+            if role == 'admin':
+                dashboard_url = '/admin-dashboard/'
+            elif role == 'manager':
+                dashboard_url = '/manager-dashboard/'
+            elif role == 'agent':
+                dashboard_url = '/agent-dashboard/'
+            elif role == 'cashier':
+                dashboard_url = '/cashier-dashboard/'
+        elif request.user.is_superuser:
+            dashboard_url = '/admin-dashboard/'
+    
     context = {
-        'page_title': 'Home - Fieldmax | Premium Tech at Unbeatable Prices'
+        'page_title': 'Home - Fieldmax | Premium Tech at Unbeatable Prices',
+        'dashboard_url': dashboard_url
     }
     return render(request, 'website/home.html', context)
 
 
+
+
+
+
+
+
+
+
+
+# ============================================
+# DASHBOARD URL
+# ============================================
+
+def dashboard_url(request):
+    """Make dashboard URL available globally in all templates"""
+    url = '#'
+    
+    if request.user.is_authenticated:
+        if hasattr(request.user, 'profile') and request.user.profile:
+            role = request.user.profile.role
+            if role == 'admin':
+                url = '/admin-dashboard/'
+            elif role == 'manager':
+                url = '/manager-dashboard/'
+            elif role == 'agent':
+                url = '/agent-dashboard/'
+            elif role == 'cashier':
+                url = '/cashier-dashboard/'
+        elif request.user.is_superuser:
+            url = '/admin-dashboard/'
+    
+    return {'dashboard_url': url}
+
+
+
+
+
+
+
+
+# ============================================
+# PRODUCT PAGE
+# ============================================
 
 @require_http_methods(["GET"])
 def products_page(request):
@@ -66,6 +137,13 @@ def products_page(request):
 
 
 
+
+
+
+
+# ============================================
+# API FEATURED PRODUCT
+# ============================================
 
 @require_http_methods(["GET"])
 def api_featured_products(request):
@@ -140,6 +218,17 @@ def api_featured_products(request):
         }, status=500)
 
 
+
+
+
+
+
+
+
+# ============================================
+# API  HOME STATS
+# ============================================
+
 @require_http_methods(["GET"])
 def api_home_stats(request):
     """
@@ -193,6 +282,15 @@ def api_home_stats(request):
         })
 
 
+
+
+
+
+
+# ============================================
+# API PRODUCTS  CATEGORY
+# ============================================
+
 @require_http_methods(["GET"])
 def api_product_categories(request):
     """
@@ -227,6 +325,16 @@ def api_product_categories(request):
             'categories': []
         }, status=500)
 
+
+
+
+
+
+
+
+# ============================================
+# API QUICK SEARCH
+# ============================================
 
 @require_http_methods(["POST"])
 def api_quick_search(request):
@@ -294,12 +402,29 @@ def api_quick_search(request):
 
 
 
+
+
+
+# ============================================
+# SHOPING CART
+# ============================================
+
 def shopping_cart(request):
     """Display shopping cart page"""
     return render(request, 'website/cart.html', {
         'page_title': 'Shopping Cart - Fieldmax'
     })
 
+
+
+
+
+
+
+
+# ============================================
+# VALIDATE CART
+# ============================================
 
 @require_http_methods(["POST"])
 def validate_cart(request):
@@ -381,6 +506,17 @@ def validate_cart(request):
         }, status=500)
 
 
+
+
+
+
+
+
+
+# ============================================
+# CHECKOUT
+# ============================================
+
 @require_http_methods(["POST"])
 def checkout(request):
     """
@@ -437,40 +573,11 @@ def checkout(request):
 
 
 
-# ============================================
-# 2. UPDATED VIEW: website/views.py
-# ============================================
 
-from django.db import transaction
-from django.contrib.auth.decorators import login_required
-from sales.models import Sale, SaleItem
-from inventory.models import Product, StockEntry
-from .models import PendingOrder
-import json
-import logging
-# ============================================
-# FIXED VIEWS.PY - PENDING ORDERS SECTION
-# ============================================
-# Add these to your website/views.py file
-
-from django.db import transaction
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from django.shortcuts import render, redirect
-from django.utils import timezone
-from sales.models import Sale, SaleItem
-from inventory.models import Product
-from .models import PendingOrder, PendingOrderItem
-import json
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 # ============================================
-# 1. CUSTOMER SUBMITS ORDER (Creates PendingOrder)
+# CREATE PENDING ORDER
 # ============================================
 
 @csrf_exempt  # Remove this if you're properly handling CSRF tokens
@@ -557,6 +664,13 @@ def create_pending_order(request):
         }, status=500)
 
 
+
+
+
+
+
+
+
 # ============================================
 # 2. CHECKOUT PAGE
 # ============================================
@@ -574,13 +688,15 @@ def checkout_page(request):
 
 
 
+
+
+
+
+
+
 # ============================================
 # 3. STAFF VIEW: LIST PENDING ORDERS
 # ============================================
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
-from django.shortcuts import render
-from .models import PendingOrder
 
 @login_required
 @require_http_methods(["GET"])
@@ -601,6 +717,10 @@ def pending_orders_list(request):
     }
 
     return render(request, 'website/pending_orders.html', context)
+
+
+
+
 
 
 
@@ -630,6 +750,12 @@ def pending_orders_count(request):
             'count': 0,
             'error': str(e)
         })
+
+
+
+
+
+
 
 
 # ============================================
@@ -753,6 +879,12 @@ def approve_order(request, order_id):
         }, status=500)
 
 
+
+
+
+
+
+
 # ============================================
 # 6. STAFF ACTION: REJECT ORDER
 # ============================================
@@ -810,6 +942,12 @@ def reject_order(request, order_id):
 
 
 
+
+
+
+# ============================================
+# PROCESS ORDER
+# ============================================
 
 @require_http_methods(["POST"])
 def process_order(request):
@@ -996,6 +1134,16 @@ def process_order(request):
         }, status=500)
 
 
+
+
+
+
+
+
+# ============================================
+# ORDER SUCCESS
+# ============================================
+
 @require_http_methods(["GET"])
 def order_success(request):
     """
@@ -1026,7 +1174,9 @@ def order_success(request):
 
 
 
-
+# ============================================
+# ROLE BASED LOGIN VIEW
+# ============================================
 
 class RoleBasedLoginView(LoginView):
     template_name = 'registration/login.html'
@@ -1049,6 +1199,14 @@ class RoleBasedLoginView(LoginView):
 
 
 
+
+
+
+
+# ============================================
+# CAHIER DASHBOARD
+# ============================================
+
 @login_required
 def cashier_dashboard(request):
     """
@@ -1059,6 +1217,17 @@ def cashier_dashboard(request):
 
 
 
+
+
+
+
+
+
+
+
+# ============================================
+# ADMIN DASHBOARD
+# ============================================
 
 @login_required
 def admin_dashboard(request):
@@ -1368,8 +1537,17 @@ def admin_dashboard(request):
     return render(request, "website/admin_dashboard.html", context)
 
 
+
+
+
+
+
+
+
+
+
 # ============================================
-# HELPER FUNCTION: Fix Inconsistent Statuses
+# FIX PRODUCT STATUSES
 # ============================================
 def fix_product_statuses():
     """
@@ -1453,8 +1631,13 @@ def fix_product_statuses():
     return fixed_count
 
 
+
+
+
+
+
 # ============================================
-# DEBUGGING VIEW (Optional - for development)
+# DEBUG PRODUCT STATUS
 # ============================================
 @login_required
 def debug_product_status(request, product_code):
@@ -1519,7 +1702,9 @@ def debug_product_status(request, product_code):
 
 
 
-
+# ============================================
+# MANAGER DASHBOARD
+# ============================================
 
 @login_required
 def manager_dashboard(request):
@@ -1716,7 +1901,9 @@ def manager_dashboard(request):
 
 
 
-
+# ============================================
+# AGENT DASHBOARD
+# ============================================
 
 @login_required(login_url='/accounts/login/')
 def agent_dashboard(request):

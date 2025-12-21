@@ -1,13 +1,20 @@
-# ============================================
-# ADD TO website/models.py
-# ============================================
-
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
 import json
 
+
+
+
+
+
+
+
+
+# ============================================
+# PEMDING ORDER
+# ============================================
 
 class PendingOrder(models.Model):
     """
@@ -104,6 +111,16 @@ class PendingOrder(models.Model):
     def can_be_rejected(self):
         return self.status == 'pending'
 
+
+
+
+
+
+
+
+# ============================================
+# PENDING ORDER ITEM 
+# ============================================
 
 class PendingOrderItem(models.Model):
     """

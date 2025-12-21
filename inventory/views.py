@@ -20,12 +20,33 @@ from .models import Category, Product, StockEntry
 from .serializers import CategorySerializer, ProductSerializer, StockEntrySerializer
 from .forms import CategoryForm, ProductForm, StockEntryForm, ProductFormSet
 import logging
+from django.views.generic import TemplateView
+
+
+
+
+
+
+
+
+
 
 
 logger = logging.getLogger(__name__)
 
+
+
+
+
+
+
+
+
+
+
+
 # ====================================
-# REST API VIEWSETS
+#  CATEG0RY VIEW SET
 # ====================================
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -33,6 +54,17 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
+
+
+
+
+
+
+
+
+# ====================================
+# PRODUCT VIEW SET
+# ====================================
 
 class ProductViewSet(viewsets.ModelViewSet):
     """API endpoint for products"""
@@ -70,6 +102,19 @@ class ProductViewSet(viewsets.ModelViewSet):
         return queryset
 
 
+
+
+
+
+
+
+
+
+
+# ====================================
+#STOCK ENTRY VIEW SET
+# ====================================
+
 class StockEntryViewSet(viewsets.ModelViewSet):
     """API endpoint for stock entries"""
     queryset = StockEntry.objects.all()
@@ -92,8 +137,17 @@ class StockEntryViewSet(viewsets.ModelViewSet):
         return queryset
 
 
+
+
+
+
+
+
+
+
+
 # ====================================
-# CATEGORY VIEWS
+# CATEGORY LIST VIEWS
 # ====================================
 
 class CategoryListView(LoginRequiredMixin, ListView):
@@ -108,6 +162,20 @@ class CategoryListView(LoginRequiredMixin, ListView):
             category.product_count = category.products.filter(is_active=True).count()
         return context
 
+
+
+
+
+
+
+
+
+
+
+
+# ====================================
+# CATEGORY DETAIL VIEW
+# ====================================
 
 class CategoryDetailView(LoginRequiredMixin, DetailView):
     model = Category
@@ -137,6 +205,15 @@ class CategoryDetailView(LoginRequiredMixin, DetailView):
 
 
 
+
+
+
+
+
+
+# ====================================
+# CATEGORY CREATE VIEW
+# ====================================
 
 class CategoryCreateView(LoginRequiredMixin, CreateView):
     """
@@ -342,12 +419,30 @@ class CategoryCreateView(LoginRequiredMixin, CreateView):
 
 
 
+
+# ====================================
+# CATEGORY UPDATE VIEW
+# ====================================
+
 class CategoryUpdateView(LoginRequiredMixin, UpdateView):
     model = Category
     form_class = CategoryForm
     template_name = "inventory/category_form.html"
     success_url = reverse_lazy("category-list")
 
+
+
+
+
+
+
+
+
+
+
+# ====================================
+# CATEGORY DELETE VIEW
+# ====================================
 
 class CategoryDeleteView(LoginRequiredMixin, DeleteView):
     model = Category
@@ -368,8 +463,20 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteView):
         return super().post(request, *args, **kwargs)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 # ====================================
-# PRODUCT VIEWS
+# PRODUCT LIST VIEWS
 # ====================================
 
 class ProductListView(LoginRequiredMixin, ListView):
@@ -408,6 +515,19 @@ class ProductListView(LoginRequiredMixin, ListView):
         context['total_products'] = self.get_queryset().count()
         return context
 
+
+
+
+
+
+
+
+
+
+
+# ====================================
+# PRODUCT DETAIL VIEW
+# ====================================
 
 class ProductDetailView(LoginRequiredMixin, View):
     def get(self, request, pk):
@@ -477,6 +597,14 @@ class ProductDetailView(LoginRequiredMixin, View):
 
 
 
+
+
+
+
+
+# ====================================
+# PRODUCT CREATE VIEW
+# ====================================
 
 class ProductCreateView(LoginRequiredMixin, CreateView):
     model = Product
@@ -633,32 +761,17 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
             }, status=400)
         return super().form_invalid(form)
 
-    
 
 
 
 
 
 
-# views.py
 
-from django.views.generic import TemplateView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
-from django.http import JsonResponse
-from django.db import transaction
-from django.core.exceptions import ValidationError
-from django.contrib import messages
-from django.shortcuts import redirect, get_object_or_404
-from django.db.models import Q
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
-import logging
-import traceback
-import json
 
-logger = logging.getLogger(__name__)
-
+# ===========================================
+# PRODUCT RESTOCT VIEW
+#============================================
 
 class ProductRestockView(LoginRequiredMixin, TemplateView):
     """View for restocking products - search first, then restock"""
@@ -669,6 +782,20 @@ class ProductRestockView(LoginRequiredMixin, TemplateView):
         context['title'] = 'Restock Products'
         return context
 
+
+
+
+
+
+
+
+
+
+
+
+# ===========================================
+# SEARCH PRODUCT FOR RESTOCK
+#============================================
 
 @login_required
 @require_http_methods(["GET"])
@@ -752,6 +879,22 @@ def search_product_for_restock(request):
             'message': f'Search error: {str(e)}'
         }, status=500)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ===========================================
+# PROCESS RESTOCK VIEW
+#============================================
 
 @login_required
 @require_http_methods(["POST"])
@@ -856,6 +999,16 @@ def process_restock(request):
 
 
 
+
+
+
+
+
+
+# ===========================================
+# PRODUCT EDIT VIEW
+#============================================
+
 class ProductEditView(LoginRequiredMixin, UpdateView):
     """Handle product editing"""
     model = Product
@@ -925,6 +1078,19 @@ class ProductEditView(LoginRequiredMixin, UpdateView):
             }, status=400)
         return super().form_invalid(form)
 
+
+
+
+
+
+
+
+
+
+
+# ===========================================
+# PRODUCT UPDATE VIEW
+#============================================
 
 class ProductUpdateView(LoginRequiredMixin, View):
     """AJAX-only quick update for product fields"""
@@ -1010,6 +1176,19 @@ class ProductUpdateView(LoginRequiredMixin, View):
             }, status=400)
 
 
+
+
+
+
+
+
+
+
+
+# ===========================================
+# PRODUCT DELETE VIEW
+#============================================
+
 class ProductDeleteView(LoginRequiredMixin, View):
     """Handle AJAX product deletion"""
     
@@ -1047,8 +1226,12 @@ class ProductDeleteView(LoginRequiredMixin, View):
 
 
 
+
+
+
+
 # ============================================
-# PRODUCT TRANSFER VIEWS (FIXED & SIMPLIFIED)
+# GET TRANSFER USERS
 # ============================================
 
 @login_required
@@ -1077,6 +1260,19 @@ def get_transfer_users(request):
             'message': 'Error loading users'
         }, status=500)
 
+
+
+
+
+
+
+
+
+
+
+# ===========================================
+# PRODUCT TRANSFER SEARCH
+#============================================
 
 @login_required
 @require_http_methods(["GET"])
@@ -1208,6 +1404,22 @@ def product_transfer_search(request):
             'success': False,
             'message': f'Search error: {str(e)}'
         }, status=500)
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ===========================================
+# PRODUCT TRANSFER PROCESS
+#============================================
 
 @login_required
 @require_http_methods(["POST"])
@@ -1455,6 +1667,19 @@ def product_transfer_process(request):
 
 
 
+
+
+
+
+
+
+
+
+
+# ===========================================
+# INVENTORY PRODUCT LOOKUP VIEW
+#============================================
+
 class InventoryProductLookupView(LoginRequiredMixin, View):
     """
     Search for products by product_code or SKU value
@@ -1507,8 +1732,16 @@ class InventoryProductLookupView(LoginRequiredMixin, View):
         })
 
 
+
+
+
+
+
+
+
+
 # ====================================
-# STOCK ENTRY VIEWS
+# STOCK ENTRY LIST VIEWS
 # ====================================
 
 class StockEntryListView(LoginRequiredMixin, ListView):
@@ -1549,6 +1782,23 @@ class StockEntryListView(LoginRequiredMixin, ListView):
         return context
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ===========================================
+# STOCK ENTRY CREATE VIEW
+#============================================
+
 class StockEntryCreateView(LoginRequiredMixin, CreateView):
     model = StockEntry
     form_class = StockEntryForm
@@ -1584,8 +1834,20 @@ class StockEntryCreateView(LoginRequiredMixin, CreateView):
             raise
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 # ====================================
-# UTILITY VIEWS
+# GET PRODUCT BY SKU
 # ====================================
 
 @login_required
@@ -1617,6 +1879,20 @@ def get_product_by_sku(request):
         }
     })
 
+
+
+
+
+
+
+
+
+
+
+
+# ===========================================
+# DASHBOARD STATS
+#============================================
 
 @login_required
 def dashboard_stats(request):
@@ -1666,7 +1942,22 @@ def dashboard_stats(request):
 
 
 
-from .models import Product, Category
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ===============================
+# PRODUCT LIST
+# ===============================
 
 def product_list(request):
     # Get filters from the request (GET params)

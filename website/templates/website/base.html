@@ -844,62 +844,61 @@
       }
     });
 
-    //====================
-    // PENDING ORDERS COUNT (For Staff)
-    //====================
-   // {% if user.is_authenticated %}
-    function updatePendingOrdersCount() {
-      fetch('/api/pending-orders-count/')
-        .then(response => response.json())
-        .then(data => {
-          const badge = document.getElementById('pendingOrdersBadge');
-          if (badge && data.count !== undefined) {
-            badge.textContent = data.count;
-            if (data.count === 0) {
-              badge.classList.add('empty');
-            } else {
-              badge.classList.remove('empty');
-            }
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching pending orders count:', error);
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', updatePendingOrdersCount);
-    setInterval(updatePendingOrdersCount, 30000);
-   // {% endif %}
-
-    //====================
-    // CART COUNT (For Customers)
-    //====================
-   // {% if not user.is_authenticated %}
-    function updateCartCount() {
-      const cart = JSON.parse(localStorage.getItem('fieldmax_cart') || '[]');
-      const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-      
-      const cartBadge = document.getElementById('cartBadge');
-      if (cartBadge) {
-        cartBadge.textContent = totalItems;
-        if (totalItems === 0) {
-          cartBadge.classList.add('empty');
+//====================
+// PENDING ORDERS COUNT (For Staff)
+//====================
+{% if user.is_authenticated %}
+function updatePendingOrdersCount() {
+  fetch('/api/pending-orders-count/')
+    .then(response => response.json())
+    .then(data => {
+      const badge = document.getElementById('pendingOrdersBadge');
+      if (badge && data.count !== undefined) {
+        badge.textContent = data.count;
+        if (data.count === 0) {
+          badge.classList.add('empty');
         } else {
-          cartBadge.classList.remove('empty');
+          badge.classList.remove('empty');
         }
       }
-    }
-
-    document.addEventListener('DOMContentLoaded', updateCartCount);
-
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'fieldmax_cart') {
-        updateCartCount();
-      }
+    })
+    .catch(error => {
+      console.error('Error fetching pending orders count:', error);
     });
+}
 
-    window.addEventListener('cartUpdated', updateCartCount);
-   // {% endif %}
+document.addEventListener('DOMContentLoaded', updatePendingOrdersCount);
+setInterval(updatePendingOrdersCount, 30000);
+{% else %}
+
+//====================
+// CART COUNT (For Customers)
+//====================
+function updateCartCount() {
+  const cart = JSON.parse(localStorage.getItem('fieldmax_cart') || '[]');
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  
+  const cartBadge = document.getElementById('cartBadge');
+  if (cartBadge) {
+    cartBadge.textContent = totalItems;
+    if (totalItems === 0) {
+      cartBadge.classList.add('empty');
+    } else {
+      cartBadge.classList.remove('empty');
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', updateCartCount);
+
+window.addEventListener('storage', function(e) {
+  if (e.key === 'fieldmax_cart') {
+    updateCartCount();
+  }
+});
+
+window.addEventListener('cartUpdated', updateCartCount);
+{% endif %}
   </script>
 </body>
 </html>

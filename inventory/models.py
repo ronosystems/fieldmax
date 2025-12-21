@@ -1,4 +1,6 @@
-# inventory/models.py - FIXED VERSION
+# ====================================
+# INVENTORY IMPORTS
+# ====================================
 
 from django.db import models
 from django.db.models import Max
@@ -7,8 +9,27 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 import logging
 
+
+
+
+
+
+
+
+
 logger = logging.getLogger(__name__)
 
+
+
+
+
+
+
+
+
+# ====================================
+# CATEGORY  MODELS
+# ====================================
 
 class Category(models.Model):
     """Product categories that define item types"""
@@ -58,6 +79,22 @@ class Category(models.Model):
     def is_bulk_item(self):
         return self.item_type == 'bulk'
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ====================================
+#  PRODUCT MODELS
+# ====================================
 
 class Product(models.Model):
     """
@@ -240,6 +277,10 @@ class Product(models.Model):
 
 
 
+
+# ====================================
+# STOCK ENTRY MODELS
+# ====================================
 
 class StockEntry(models.Model):
     """
