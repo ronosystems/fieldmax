@@ -32,6 +32,7 @@ urlpatterns = [
     # ============================================
     # SHOPPING CART & CHECKOUT
     # ============================================
+    path('shop/', views.shop_view, name='shop'),
     path('cart/', shopping_cart, name='shopping-cart'),
     path('api/validate-cart/', validate_cart, name='validate-cart'),
     path('checkout/', views.checkout_page, name='checkout'),

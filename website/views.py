@@ -20,7 +20,7 @@ from django.db import transaction
 from sales.models import Sale, SaleItem
 from django.views.decorators.csrf import csrf_exempt
 from .models import PendingOrder, PendingOrderItem
-
+from django.views.generic import ListView
 
 
 
@@ -1166,6 +1166,73 @@ def order_success(request):
     }
     
     return render(request, 'website/order_success.html', context)
+
+
+
+
+
+
+
+
+
+# ============================================
+# SHOP VIEW
+# ============================================
+
+def shop_view(request):
+    """
+    Display all products organized by category
+    Shows: Product image, name, price, status, and add to cart button
+    """
+    # Get all categories with their active products
+    categories = Category.objects.prefetch_related(
+        'products'
+    ).all()
+    
+    categories_with_products = []
+    for category in categories:
+        # Filter to include only active products
+        active_products = category.products.filter(is_active=True).order_by('-created_at')
+        # Attach filtered products as an attribute
+        category.filtered_products = active_products
+        # Only include categories that have products
+        if active_products.exists():
+            categories_with_products.append(category)
+    
+    context = {
+        'categories': categories_with_products,
+    }
+    
+    return render(request, 'website/shop.html', context)
+
+
+# Alternative: Class-based view
+from django.views.generic import ListView
+
+class ShopListView(ListView):
+    """
+    Class-based view for shop page
+    """
+    model = Category
+    template_name = 'shop/shop.html'
+    context_object_name = 'categories'
+    
+    def get_queryset(self):
+        """Get all categories with their active products"""
+        categories = Category.objects.prefetch_related(
+            'products'
+        ).all()
+        
+        # Filter products for each category
+        filtered_categories = []
+        for category in categories:
+            active_products = category.products.filter(is_active=True).order_by('-created_at')
+            category.filtered_products = active_products
+            if active_products.exists():
+                filtered_categories.append(category)
+        return filtered_categories
+    
+
 
 
 
