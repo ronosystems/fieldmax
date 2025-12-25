@@ -251,6 +251,13 @@
     cursor: not-allowed;
   }
 
+  .low-stock-indicator {
+    font-size: 0.7rem;
+    opacity: 0.9;
+    display: block;
+    margin-top: 0.25rem;
+  }
+
   .no-products {
     text-align: center;
     padding: 3rem;
@@ -403,17 +410,7 @@
                 <!-- Product Image -->
                 <div class="product-image-wrapper">
                   {% if product.image %}
-                    {% if product.image.url %}
-                      <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image" 
-                           onerror="console.error('Image failed to load:', this.src); this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                      <div class="no-image-placeholder" style="display: none;">
-                        <i class="bi bi-image"></i>
-                      </div>
-                    {% else %}
-                      <div class="no-image-placeholder">
-                        <i class="bi bi-image"></i>
-                      </div>
-                    {% endif %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image" />
                   {% else %}
                     <div class="no-image-placeholder">
                       <i class="bi bi-image"></i>
@@ -447,13 +444,28 @@
                       </div>
                     {% endif %}
 
-                    <!-- Add to Cart Button (Only for guests) -->
+                    <!-- ✅ FIXED: Add to Cart Button (Only for guests) -->
                     {% if not user.is_authenticated %}
-                      {% if product.status == 'available' %}
+                      {% if product.status == 'available' or product.status == 'lowstock' %}
                         <button class="add-to-cart-btn" 
-                                onclick="addToCart('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.selling_price }}', '{{ product.product_code }}', '{% if product.image and product.image.url %}{{ product.image.url }}{% endif %}')">
+                                onclick="addToCart('{{ product.id }}', '{{ product.name }}', '{{ product.selling_price }}', '{{ product.product_code }}', '{% if product.image %}{{ product.image.url }}{% endif %}')">
                           <i class="bi bi-cart-plus"></i>
-                          Add to Cart
+                          <span>
+                            Add to Cart
+                            {% if product.status == 'lowstock' %}
+                              <span class="low-stock-indicator">(Low Stock!)</span>
+                            {% endif %}
+                          </span>
+                        </button>
+                      {% elif product.status == 'outofstock' %}
+                        <button class="add-to-cart-btn" disabled>
+                          <i class="bi bi-inbox"></i>
+                          Out of Stock
+                        </button>
+                      {% elif product.status == 'sold' %}
+                        <button class="add-to-cart-btn" disabled>
+                          <i class="bi bi-x-circle"></i>
+                          Sold Out
                         </button>
                       {% else %}
                         <button class="add-to-cart-btn" disabled>
@@ -513,28 +525,37 @@
     });
   });
 
-  // Add to Cart functionality (for guests)
+  // ✅ FIXED: Add to Cart functionality (for guests)
   {% if not user.is_authenticated %}
   function addToCart(productId, productName, price, productCode, imageUrl) {
-    let cart = JSON.parse(localStorage.getItem('fieldmax_cart') || '[]');
+    try {
+      let cart = JSON.parse(localStorage.getItem('fieldmax_cart') || '[]');
 
-    const existingItem = cart.find(item => item.id === productId);
-    if (existingItem) {
-      existingItem.quantity += 1;
-    } else {
-      cart.push({
-        id: productId,
-        name: productName,
-        price: parseFloat(price),
-        code: productCode,
-        image: imageUrl,
-        quantity: 1
-      });
+      const existingItem = cart.find(item => item.id === productId);
+      if (existingItem) {
+        existingItem.quantity += 1;
+        alert(`${productName} quantity increased in cart!`);
+      } else {
+        cart.push({
+          id: productId,
+          name: productName,
+          price: parseFloat(price),
+          code: productCode,
+          image: imageUrl,
+          quantity: 1
+        });
+        alert(`${productName} added to cart!`);
+      }
+
+      localStorage.setItem('fieldmax_cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('cartUpdated'));
+      
+      // Log for debugging
+      console.log('Cart updated:', cart);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Failed to add item to cart. Please try again.');
     }
-
-    localStorage.setItem('fieldmax_cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('cartUpdated'));
-    alert(`${productName} added to cart!`);
   }
   {% endif %}
 </script>
