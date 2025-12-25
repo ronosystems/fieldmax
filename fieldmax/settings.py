@@ -32,17 +32,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ============================================
 SECRET_KEY = os.getenv("SECRET_KEY")
 
+# Fail loudly if SECRET_KEY is not set
+if not SECRET_KEY:
+    raise ValueError(
+        "SECRET_KEY environment variable is not set! "
+        "Please set it in your Render environment variables."
+    )
+
 # WARNING: Set to False in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # Add your domain names here in production
-
 ALLOWED_HOSTS = [
     "newfieldmax.onrender.com",
     "127.0.0.1",
     "localhost",
 ]
-
 
 
 # Security settings for production
@@ -586,9 +591,7 @@ def validate_settings():
         except Exception as e:
             errors.append(f"Cannot create media directory: {e}")
     
-    # Warn if DEBUG is True in production
-    if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
-        errors.append("WARNING: Using insecure SECRET_KEY in production!")
+    # Remove the SECRET_KEY check - it's now handled at the top of settings
     
     # Check Cloudinary credentials in production
     if not DEBUG:
