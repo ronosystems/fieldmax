@@ -410,7 +410,11 @@
                 <!-- Product Image -->
                 <div class="product-image-wrapper">
                   {% if product.image %}
-                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image" />
+                    {% load cloudinary %}
+                    <img src="{% if product.image.url %}{{ product.image.url }}{% endif %}" 
+                         alt="{{ product.name }}" 
+                         class="product-image"
+                         onerror="this.parentElement.innerHTML='<div class=\'no-image-placeholder\'><i class=\'bi bi-image\'></i></div>'" />
                   {% else %}
                     <div class="no-image-placeholder">
                       <i class="bi bi-image"></i>
