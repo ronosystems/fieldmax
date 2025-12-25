@@ -7,6 +7,7 @@ This configuration includes:
 - Security settings
 - Database configuration
 - Static/Media files handling
+- Cloudinary for media storage
 - REST Framework API setup
 - Inventory management configuration
 - Logging and monitoring
@@ -32,7 +33,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # WARNING: Set to False in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # Add your domain names here in production
 
@@ -70,6 +71,11 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    
+    # Cloudinary (must be before staticfiles)
+    'cloudinary_storage',
+    'cloudinary',
+    
     'django.contrib.staticfiles',
     'django.contrib.humanize',  # For number formatting in templates
     'django_extensions',
@@ -204,7 +210,6 @@ DECIMAL_SEPARATOR = '.'
 
 # URL to access static files
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Directories where Django looks for static files
@@ -222,6 +227,21 @@ STATICFILES_FINDERS = [
 ]
 
 
+# ============================================
+# CLOUDINARY CONFIGURATION (Media Storage)
+# ============================================
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET')
+}
+
+# Use Cloudinary for media files in production
+if not DEBUG:
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+else:
+    # Use local storage in development
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 # ============================================
 # MEDIA FILES (User Uploads)
@@ -377,17 +397,18 @@ FIELDMAX_BUSINESS_HOURS = {
 # EMAIL CONFIGURATION
 # ============================================
 # For development (console backend)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# For production (SMTP)
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-# EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-# DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@fieldmax.co.ke')
-# SERVER_EMAIL = DEFAULT_FROM_EMAIL
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    # For production (SMTP)
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@fieldmax.co.ke')
+    SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 
 # ============================================
@@ -558,8 +579,8 @@ def validate_settings():
         except Exception as e:
             errors.append(f"Cannot create logs directory: {e}")
     
-    # Check if media directory exists
-    if not MEDIA_ROOT.exists():
+    # Check if media directory exists (only for local storage)
+    if DEBUG and not MEDIA_ROOT.exists():
         try:
             MEDIA_ROOT.mkdir(parents=True)
         except Exception as e:
@@ -568,6 +589,15 @@ def validate_settings():
     # Warn if DEBUG is True in production
     if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
         errors.append("WARNING: Using insecure SECRET_KEY in production!")
+    
+    # Check Cloudinary credentials in production
+    if not DEBUG:
+        if not all([
+            os.getenv('CLOUDINARY_CLOUD_NAME'),
+            os.getenv('CLOUDINARY_API_KEY'),
+            os.getenv('CLOUDINARY_API_SECRET')
+        ]):
+            errors.append("WARNING: Cloudinary credentials not set! Media uploads will fail.")
     
     if errors:
         print("\n⚠️  SETTINGS VALIDATION ERRORS:")
