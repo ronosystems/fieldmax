@@ -734,8 +734,33 @@ body {
     width: calc(100% - 1rem);
   }
 
+  /* Login dropdown on mobile - show below navbar like categories */
   .login-dropdown-wrapper {
-    position: static;
+    position: relative;
+  }
+
+  .login-dropdown {
+    position: fixed;
+    top: 60px;
+    right: 0.5rem;
+    left: auto;
+    margin-top: 0;
+    max-width: calc(100vw - 1rem);
+    width: 320px;
+    padding: 1.5rem;
+    border: none;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    display: block;
+  }
+
+  .login-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
   }
 
   .footer-grid {
@@ -816,6 +841,18 @@ body {
     margin-top: 0;
     max-width: none;
     width: calc(100% - 1rem);
+  }
+
+  /* Login dropdown on small mobile - full width like categories */
+  .login-dropdown {
+    position: fixed;
+    top: 56px;
+    right: 0.5rem;
+    left: 0.5rem;
+    margin-top: 0;
+    max-width: none;
+    width: calc(100% - 1rem);
+    padding: 1.25rem;
   }
 
   .navbar-menu {
@@ -1362,9 +1399,6 @@ togglePasswordIcons.forEach(icon => {
     }
   });
 });
-
-
-
 
 
 </script>
