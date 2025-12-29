@@ -275,6 +275,7 @@ body {
   background: #e6f7fb;
 }
 
+/* FIXED: Changed from fixed to absolute for proper positioning */
 .login-dropdown {
   position: absolute;
   top: 100%;
@@ -660,6 +661,7 @@ body {
     color: #ffffff;
   }
 
+  /* FIXED: Tablet styles for login dropdown */
   .login-dropdown {
     position: static;
     box-shadow: none;
@@ -698,14 +700,12 @@ body {
     right: -5px;
   }
 
-  /* Categories dropdown on tablets - show below navbar */
+  /* Categories dropdown on tablets */
   .categories-dropdown {
-    position: fixed;
-    top: 64px;
-    left: 1rem;
-    right: auto;
-    margin-top: 0;
-    max-width: calc(100vw - 2rem);
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 0.5rem;
   }
 }
 
@@ -723,62 +723,25 @@ body {
     padding: 0.875rem 1rem;
   }
 
-  /* Categories dropdown on mobile - show below navbar */
+  /* Categories dropdown on mobile */
   .categories-dropdown {
-    position: fixed;
-    top: 60px;
-    left: 0.5rem;
-    right: 0.5rem;
-    margin-top: 0;
-    max-width: none;
-    width: calc(100% - 1rem);
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 0.5rem;
+    width: 100%;
   }
 
-/* Staff Login Dropdown Styles */
-.login-dropdown-wrapper {
-  position: relative;
-}
-
-.login-btn {
-  background: #ffffff;
-  color: #0dcaf0;
-  font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.login-btn:hover {
-  background: #f8f9fa;
-  color: #0dcaf0;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.login-btn.active {
-  background: #e6f7fb;
-}
-
-.login-dropdown {
-  position: fixed;
-  top: 70px; /* Below desktop navbar */
-  right: 2rem;
-  margin-top: 0;
-  background: #ffffff;
-  border-radius: 0.5rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  min-width: 300px;
-  padding: 1.5rem;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-10px);
-  transition: all 0.3s ease;
-  z-index: 1002;
-}
-
-.login-dropdown.show {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
+  /* FIXED: Mobile styles for login dropdown */
+  .login-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.5rem;
+    width: 100%;
+    padding: 1rem;
+  }
 
   .footer-grid {
     grid-template-columns: 1fr;
@@ -849,27 +812,24 @@ body {
     font-size: 1.2rem;
   }
 
-  /* Categories dropdown on small mobile - show below navbar */
+  /* Categories dropdown on small mobile */
   .categories-dropdown {
-    position: fixed;
-    top: 56px;
-    left: 0.5rem;
-    right: 0.5rem;
-    margin-top: 0;
-    max-width: none;
-    width: calc(100% - 1rem);
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 0.5rem;
+    width: 100%;
   }
 
-  /* Login dropdown on small mobile - FIXED BELOW NAVBAR full width */
+  /* FIXED: Login dropdown on small mobile */
   .login-dropdown {
-    position: fixed;
-    top: 56px; /* Below the fixed navbar */
-    right: 0.5rem;
-    left: 0.5rem;
-    margin-top: 0;
-    width: calc(100% - 1rem);
-    max-width: none;
-    padding: 1.25rem;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.5rem;
+    width: 100%;
+    padding: 1rem;
   }
 
   .navbar-menu {
@@ -1086,9 +1046,6 @@ body {
   </div>
 </nav>
 
-
-  
-
   <!-- Main Content -->
   <main class="main-content">
     {% block content %}
@@ -1213,8 +1170,6 @@ body {
     </div>
   </footer>
 
-
-
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -1224,182 +1179,127 @@ body {
 // ========================================
 // MOBILE MENU FUNCTIONALITY
 // ========================================
-  const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-  const navbarMenu = document.getElementById('navbarMenu');
-  const menuOverlay = document.getElementById('menuOverlay');
+const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+const navbarMenu = document.getElementById('navbarMenu');
+const menuOverlay = document.getElementById('menuOverlay');
 
-  function toggleMenu() {
-    navbarMenu.classList.toggle('active');
-    menuOverlay.classList.toggle('active');
-    const icon = mobileMenuToggle.querySelector('i');
-    icon.classList.toggle('bi-list');
-    icon.classList.toggle('bi-x');
-    
-    if (navbarMenu.classList.contains('active')) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-  }
-
-  function closeMenu() {
-    navbarMenu.classList.remove('active');
-    menuOverlay.classList.remove('active');
-    const icon = mobileMenuToggle.querySelector('i');
-    icon.classList.remove('bi-x');
-    icon.classList.add('bi-list');
+function toggleMenu() {
+  navbarMenu.classList.toggle('active');
+  menuOverlay.classList.toggle('active');
+  const icon = mobileMenuToggle.querySelector('i');
+  icon.classList.toggle('bi-list');
+  icon.classList.toggle('bi-x');
+  
+  if (navbarMenu.classList.contains('active')) {
+    document.body.style.overflow = 'hidden';
+  } else {
     document.body.style.overflow = '';
   }
+}
 
-  if (mobileMenuToggle) {
-    mobileMenuToggle.addEventListener('click', toggleMenu);
-  }
+function closeMenu() {
+  navbarMenu.classList.remove('active');
+  menuOverlay.classList.remove('active');
+  const icon = mobileMenuToggle.querySelector('i');
+  icon.classList.remove('bi-x');
+  icon.classList.add('bi-list');
+  document.body.style.overflow = '';
+}
 
-  if (menuOverlay) {
-    menuOverlay.addEventListener('click', closeMenu);
-  }
+if (mobileMenuToggle) {
+  mobileMenuToggle.addEventListener('click', toggleMenu);
+}
 
-  const navLinks = navbarMenu.querySelectorAll('.nav-link, .nav-form button');
-  navLinks.forEach(link => {
-    link.addEventListener('click', function() {
-      if (window.innerWidth <= 992) {
-        closeMenu();
-      }
-    });
-  });
+if (menuOverlay) {
+  menuOverlay.addEventListener('click', closeMenu);
+}
 
-  let resizeTimer;
-  window.addEventListener('resize', function() {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(function() {
-      if (window.innerWidth > 992) {
-        closeMenu();
-      }
-    }, 250);
-  });
-
-  window.addEventListener('orientationchange', function() {
-    if (window.innerWidth <= 992 && navbarMenu.classList.contains('active')) {
+const navLinks = navbarMenu.querySelectorAll('.nav-link, .nav-form button');
+navLinks.forEach(link => {
+  link.addEventListener('click', function() {
+    if (window.innerWidth <= 992) {
       closeMenu();
     }
   });
+});
 
-  // Check if user is authenticated (staff)
-  const isAuthenticated = "{{ user.is_authenticated }}" === "True";
-
-  if (isAuthenticated) {
-    // STAFF: Update pending orders count
-    function updatePendingOrdersCount() {
-      fetch('/api/pending-orders-count/')
-        .then(response => response.json())
-        .then(data => {
-          const badge = document.getElementById('pendingOrdersBadge');
-          if (badge && data.count !== undefined) {
-            badge.textContent = data.count;
-            if (data.count === 0) {
-              badge.classList.add('empty');
-            } else {
-              badge.classList.remove('empty');
-            }
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching pending orders count:', error);
-        });
+let resizeTimer;
+window.addEventListener('resize', function() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function() {
+    if (window.innerWidth > 992) {
+      closeMenu();
     }
+  }, 250);
+});
 
-    document.addEventListener('DOMContentLoaded', updatePendingOrdersCount);
-    setInterval(updatePendingOrdersCount, 30000); // Update every 30 seconds
-  } else {
-    // CUSTOMER: Update cart count
-    function updateCartCount() {
-      const cart = JSON.parse(localStorage.getItem('fieldmax_cart') || '[]');
-      const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-      
-      const cartBadge = document.getElementById('cartBadge');
-      if (cartBadge) {
-        cartBadge.textContent = totalItems;
-        if (totalItems === 0) {
-          cartBadge.classList.add('empty');
-        } else {
-          cartBadge.classList.remove('empty');
-        }
-      }
+window.addEventListener('orientationchange', function() {
+  if (window.innerWidth <= 992 && navbarMenu.classList.contains('active')) {
+    closeMenu();
+  }
+});
+
+// ========================================
+// CATEGORIES DROPDOWN FUNCTIONALITY
+// ========================================
+const categoriesToggle = document.getElementById('categoriesToggle');
+const categoriesDropdown = document.getElementById('categoriesDropdown');
+
+if (categoriesToggle && categoriesDropdown) {
+  categoriesToggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    categoriesDropdown.classList.toggle('show');
+    categoriesToggle.classList.toggle('active');
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!categoriesToggle.contains(e.target) && !categoriesDropdown.contains(e.target)) {
+      categoriesDropdown.classList.remove('show');
+      categoriesToggle.classList.remove('active');
     }
+  });
 
-    // Update on page load
-    document.addEventListener('DOMContentLoaded', updateCartCount);
+  categoriesDropdown.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
 
-    // Listen for storage changes (when cart is updated in another tab)
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'fieldmax_cart') {
-        updateCartCount();
-      }
+  const categoryLinks = categoriesDropdown.querySelectorAll('.category-item');
+  categoryLinks.forEach(link => {
+    link.addEventListener('click', function() {
+      categoriesDropdown.classList.remove('show');
+      categoriesToggle.classList.remove('active');
     });
+  });
+}
 
-    // Listen for custom cart update event (when cart is updated in same tab)
-    window.addEventListener('cartUpdated', updateCartCount);
-
-    // Make updateCartCount available globally for shop page
-    window.updateCartCount = updateCartCount;
-  }
-
-  // ========================================
-  // CATEGORIES DROPDOWN FUNCTIONALITY
-  // ========================================
-  const categoriesToggle = document.getElementById('categoriesToggle');
-  const categoriesDropdown = document.getElementById('categoriesDropdown');
-
-  if (categoriesToggle && categoriesDropdown) {
-    // Toggle dropdown on click
-    categoriesToggle.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      categoriesDropdown.classList.toggle('show');
-      categoriesToggle.classList.toggle('active');
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-      if (!categoriesToggle.contains(e.target) && !categoriesDropdown.contains(e.target)) {
-        categoriesDropdown.classList.remove('show');
-        categoriesToggle.classList.remove('active');
-      }
-    });
-
-    // Prevent dropdown from closing when clicking inside it
-    categoriesDropdown.addEventListener('click', function(e) {
-      e.stopPropagation();
-    });
-
-    // Close dropdown when clicking a category link
-    const categoryLinks = categoriesDropdown.querySelectorAll('.category-item');
-    categoryLinks.forEach(link => {
-      link.addEventListener('click', function() {
-        categoriesDropdown.classList.remove('show');
-        categoriesToggle.classList.remove('active');
-      });
-    });
-  }
-
-// STAFF LOGIN DROPDOWN TOGGLE
+// ========================================
+// STAFF LOGIN DROPDOWN FUNCTIONALITY
+// ========================================
 const loginToggle = document.getElementById('loginToggle');
 const loginDropdown = document.getElementById('loginDropdown');
 
 if (loginToggle && loginDropdown) {
   loginToggle.addEventListener('click', function(e) {
     e.preventDefault();
+    e.stopPropagation();
     loginDropdown.classList.toggle('show');
   });
 
-  // Optional: close dropdown when clicking outside
   document.addEventListener('click', function(e) {
     if (!loginToggle.contains(e.target) && !loginDropdown.contains(e.target)) {
       loginDropdown.classList.remove('show');
     }
   });
+
+  loginDropdown.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
 }
-// Toggle password visibility
+
+// ========================================
+// PASSWORD VISIBILITY TOGGLE
+// ========================================
 const togglePasswordIcons = document.querySelectorAll('.toggle-password');
 
 togglePasswordIcons.forEach(icon => {
@@ -1417,7 +1317,75 @@ togglePasswordIcons.forEach(icon => {
   });
 });
 
+// ========================================
+// CART & PENDING ORDERS FUNCTIONALITY
+// ========================================
+const isAuthenticated = "{{ user.is_authenticated }}" === "True";
 
+if (isAuthenticated) {
+  // STAFF: Update pending orders count
+  function updatePendingOrdersCount() {
+    fetch('/api/pending-orders-count/')
+      .then(response => response.json())
+      .then(data => {
+        const badge = document.getElementById('pendingOrdersBadge');
+        if (badge && data.count !== undefined) {
+          badge.textContent = data.count;
+          if (data.count === 0) {
+            badge.classList.add('empty');
+          } else {
+            badge.classList.remove('empty');
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching pending orders count:', error);
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', updatePendingOrdersCount);
+  setInterval(updatePendingOrdersCount, 30000); // Update every 30 seconds
+} else {
+  // CUSTOMER: Update cart count
+  function updateCartCount() {
+    const cart = JSON.parse(localStorage.getItem('fieldmax_cart') || '[]');
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    
+    const cartBadge = document.getElementById('cartBadge');
+    if (cartBadge) {
+      cartBadge.textContent = totalItems;
+      if (totalItems === 0) {
+        cartBadge.classList.add('empty');
+      } else {
+        cartBadge.classList.remove('empty');
+      }
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', updateCartCount);
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'fieldmax_cart') {
+      updateCartCount();
+    }
+  });
+  window.addEventListener('cartUpdated', updateCartCount);
+  window.updateCartCount = updateCartCount;
+}
+
+// ========================================
+// CLOSE DROPDOWNS ON ESCAPE KEY
+// ========================================
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (categoriesDropdown && categoriesDropdown.classList.contains('show')) {
+      categoriesDropdown.classList.remove('show');
+      categoriesToggle.classList.remove('active');
+    }
+    if (loginDropdown && loginDropdown.classList.contains('show')) {
+      loginDropdown.classList.remove('show');
+    }
+  }
+});
 </script>
 </body>
 </html>
