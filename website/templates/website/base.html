@@ -44,8 +44,7 @@ body {
   top: 0;
   z-index: 1001;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  height: auto;
-  min-height: 70px;
+  height: 70px; /* Fixed height for desktop */
 }
 
 .navbar-content {
@@ -55,6 +54,7 @@ body {
   padding: 1rem 2rem;
   gap: 1rem;
   max-width: 100%;
+  height: 100%;
 }
 
 .navbar-brand-section {
@@ -594,7 +594,7 @@ body {
   }
 
   .main-navbar {
-    min-height: 64px;
+    height: 64px; /* Fixed height for tablets */
   }
 
   .navbar-content {
@@ -716,7 +716,7 @@ body {
   }
 
   .main-navbar {
-    min-height: 60px;
+    height: 60px; /* Fixed height for mobile */
   }
 
   .navbar-content {
@@ -734,19 +734,25 @@ body {
     width: calc(100% - 1rem);
   }
 
-  /* Login dropdown on mobile - show below navbar like categories */
+  /* Login dropdown on mobile - FIXED BELOW NAVBAR like categories */
   .login-dropdown-wrapper {
     position: relative;
   }
 
+  .login-btn {
+    background: #ffffff;
+    color: #0dcaf0;
+    padding: 0.5rem;
+  }
+
   .login-dropdown {
     position: fixed;
-    top: 60px;
+    top: 60px; /* Below the fixed navbar */
     right: 0.5rem;
     left: auto;
     margin-top: 0;
-    max-width: calc(100vw - 1rem);
     width: 320px;
+    max-width: calc(100vw - 1rem);
     padding: 1.5rem;
     border: none;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
@@ -754,7 +760,7 @@ body {
     visibility: hidden;
     transform: translateY(-10px);
     transition: all 0.3s ease;
-    display: block;
+    z-index: 1002;
   }
 
   .login-dropdown.show {
@@ -805,7 +811,7 @@ body {
   }
 
   .main-navbar {
-    min-height: 56px;
+    height: 56px; /* Fixed height for small mobile */
   }
 
   .categories-toggle {
@@ -843,15 +849,15 @@ body {
     width: calc(100% - 1rem);
   }
 
-  /* Login dropdown on small mobile - full width like categories */
+  /* Login dropdown on small mobile - FIXED BELOW NAVBAR full width */
   .login-dropdown {
     position: fixed;
-    top: 56px;
+    top: 56px; /* Below the fixed navbar */
     right: 0.5rem;
     left: 0.5rem;
     margin-top: 0;
-    max-width: none;
     width: calc(100% - 1rem);
+    max-width: none;
     padding: 1.25rem;
   }
 
