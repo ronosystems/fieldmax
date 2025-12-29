@@ -796,30 +796,33 @@
 
 <body>
 
-  <!-- Mobile Menu Overlay -->
-  <div class="menu-overlay" id="menuOverlay"></div>
+<!-- Mobile Menu Overlay -->
+<div class="menu-overlay" id="menuOverlay"></div>
 
-  <!-- Navigation Bar -->
-  <nav class="main-navbar">
-    <div class="navbar-content">
-      <!-- Logo & Brand -->
-      <a href="{% url 'home' %}" class="navbar-brand-section">
-        <img src="{% static 'images/LOGO.jpg' %}" alt="Fieldmax Logo" class="brand-logo">
-        <span class="brand-text">FIELDMAX SHOP</span>
+<!-- Navigation Bar -->
+<nav class="main-navbar">
+  <div class="navbar-content">
+    
+    <!-- Logo & Brand -->
+    <a href="{% url 'home' %}" class="navbar-brand-section">
+      <img src="{% static 'images/LOGO.jpg' %}" alt="Fieldmax Logo" class="brand-logo">
+      <span class="brand-text">FIELDMAX SHOP</span>
+    </a>
+
+    <!-- Categories Dropdown -->
+    <div class="categories-dropdown-wrapper">
+      <a href="#" class="categories-toggle" id="categoriesToggle">
+        <i class="bi bi-grid-3x3-gap"></i>
+        <span>ALL CATEGORIES</span>
+        <i class="bi bi-chevron-down"></i>
       </a>
-
-      <!-- Categories Dropdown (Next to Brand Name) -->
-      <div class="categories-dropdown-wrapper">
-        <a href="#" class="categories-toggle" id="categoriesToggle">
-          <i class="bi bi-grid-3x3-gap"></i>
-          <span>ALL CATEGORIES</span>
-          <i class="bi bi-chevron-down"></i>
-        </a>
-        <div class="categories-dropdown" id="categoriesDropdown">
-          <div class="categories-dropdown-header">
-            <i class="bi bi-tag"></i> Browse Categories
-          </div>
-          {% for category in categories %}
+      
+      <div class="categories-dropdown" id="categoriesDropdown">
+        <div class="categories-dropdown-header">
+          <i class="bi bi-tag"></i> Browse Categories
+        </div>
+        
+        {% for category in categories %}
           <a href="{% url 'shop' %}?category={{ category.id }}" class="category-item">
             <div class="category-icon">
               <i class="bi bi-{% if category.item_type == 'single' %}phone{% else %}box-seam{% endif %}"></i>
@@ -828,123 +831,137 @@
               <div class="category-name">{{ category.name }}</div>
             </div>
           </a>
-          {% empty %}
+        {% empty %}
           <div class="category-item" style="color: #6b7280; justify-content: center;">
             <i class="bi bi-inbox"></i>
             <span>No categories available</span>
           </div>
-          {% endfor %}
-        </div>
+        {% endfor %}
       </div>
+    </div>
 
-      <!-- Staff Login Dropdown -->
-      <div class="login-dropdown-wrapper">
-        <button class="nav-link login-btn" id="loginToggle">
-           <i class="bi bi-person-circle"></i>
-        </button>
-          <div class="login-dropdown" id="loginDropdown">
-            <div class="login-dropdown-header">
-              <i class="bi bi-shield-lock"></i>
-              <h3 class="login-dropdown-title">STAFF LOGIN</h3>
-            </div>
-              
-            <div class="login-error" id="loginError">
-                Invalid username or password
-            </div>
-              
-            <form method="post" action="{% url 'login' %}" id="staffLoginForm">
-                {% csrf_token %}
-              <div class="login-form-group">
-                  <label for="username" class="login-form-label">Username</label>
-                  <input 
-                    type="text" 
-                    id="username" 
-                    name="username" 
-                    class="login-form-input" 
-                    placeholder="Enter your username"
-                    required
-                  >
-              </div>
-                
-              <div class="login-form-group" style="position: relative;">
-                  <label for="password" class="login-form-label">Password</label>
-                  <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
-                    class="login-form-input" 
-                    placeholder="Enter your password"
-                    required
-                    style="padding-right: 2.5rem;" 
-                  >
-                  <i class="bi bi-eye-fill toggle-password" style="position: absolute; top: 75%; right: 10px; transform: translateY(-50%); cursor: pointer; font-size: 1.2rem; color: #6b7280;">
-                </i>
-              </div>
-                
-                <button type="submit" class="login-submit-btn">
-                  <i class="bi bi-box-arrow-in-right"></i>
-                  <span>Login</span>
-                </button>
-            </form>
-        </div>
-      </div>
-
-      <!-- Mobile Menu Toggle -->
-      <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
-        <i class="bi bi-list"></i>
+    <!-- Staff Login Dropdown -->
+    <div class="login-dropdown-wrapper">
+      <button class="nav-link login-btn" id="loginToggle">
+        <i class="bi bi-person-circle"></i>
       </button>
-
-      <!-- Navigation Links -->
-      <div class="navbar-menu" id="navbarMenu">
-        <a href="{% url 'home' %}" class="nav-link">
-          <i class="bi bi-house-door"></i>
-          <span>Home</span>
-        </a>
+      
+      <div class="login-dropdown" id="loginDropdown">
+        <div class="login-dropdown-header">
+          <i class="bi bi-shield-lock"></i>
+          <h3 class="login-dropdown-title">STAFF LOGIN</h3>
+        </div>
         
-        <!-- Hide Shop button when user is authenticated (staff) -->
-        {% if not user.is_authenticated %}
+        <div class="login-error" id="loginError">
+          Invalid username or password
+        </div>
+        
+        <form method="post" action="{% url 'login' %}" id="staffLoginForm">
+          {% csrf_token %}
+          
+          <div class="login-form-group">
+            <label for="username" class="login-form-label">Username</label>
+            <input 
+              type="text" 
+              id="username" 
+              name="username" 
+              class="login-form-input" 
+              placeholder="Enter your username"
+              required
+            >
+          </div>
+          
+          <div class="login-form-group" style="position: relative;">
+            <label for="password" class="login-form-label">Password</label>
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              class="login-form-input" 
+              placeholder="Enter your password"
+              required
+              style="padding-right: 2.5rem;"
+            >
+            <i class="bi bi-eye-fill toggle-password" 
+               style="position: absolute; top: 75%; right: 10px; transform: translateY(-50%); cursor: pointer; font-size: 1.2rem; color: #6b7280;">
+            </i>
+          </div>
+          
+          <button type="submit" class="login-submit-btn">
+            <i class="bi bi-box-arrow-in-right"></i>
+            <span>Login</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+      <i class="bi bi-list"></i>
+    </button>
+
+    <!-- Navigation Links -->
+    <div class="navbar-menu" id="navbarMenu">
+      
+      <!-- Home Link -->
+      <a href="{% url 'home' %}" class="nav-link">
+        <i class="bi bi-house-door"></i>
+        <span>Home</span>
+      </a>
+      
+      <!-- Shop Link (Hidden for authenticated users) -->
+      {% if not user.is_authenticated %}
         <a href="{% url 'shop' %}" class="nav-link">
           <i class="bi bi-shop"></i>
           <span>Shop</span>
         </a>
-        {% endif %}
+      {% endif %}
+      
+      <!-- Contact Link -->
+      <a href="#" class="nav-link">
+        <i class="bi bi-envelope"></i>
+        <span>Contact</span>
+      </a>
+      
+      <!-- Authenticated User Links (Staff) -->
+      {% if user.is_authenticated %}
         
-        <a href="#" class="nav-link">
-          <i class="bi bi-envelope"></i>
-          <span>Contact</span>
+        <!-- Pending Orders -->
+        <a href="{% url 'pending-orders-list' %}" class="nav-link cart-link">
+          <i class="bi bi-clock-history"></i>
+          <span>Pending Orders</span>
+          <span class="cart-badge pending-orders-badge" id="pendingOrdersBadge">0</span>
         </a>
         
-        {% if user.is_authenticated %}
-          <!-- STAFF: Show Pending Orders instead of Cart -->
-          <a href="{% url 'pending-orders-list' %}" class="nav-link cart-link">
-            <i class="bi bi-clock-history"></i>
-            <span>Pending Orders</span>
-            <span class="cart-badge pending-orders-badge" id="pendingOrdersBadge">0</span>
-          </a>
-          <a href="{{ dashboard_url }}" class="nav-link">
-            <i class="bi bi-speedometer2"></i>
-            <span>Dashboard</span>
-          </a>
-          <form method="post" action="{% url 'logout' %}" class="nav-form">
-            {% csrf_token %}
-            <button type="submit" class="nav-link logout-btn">
-              <i class="bi bi-box-arrow-right"></i>
-              <span>Logout</span>
-            </button>
-          </form>
-        {% else %}
-          <!-- CUSTOMER: Show Cart -->
-          <a href="{% url 'shopping-cart' %}" class="nav-link cart-link">
-            <i class="bi bi-cart3"></i>
-            <span>Cart</span>
-            <span class="cart-badge" id="cartBadge">0</span>
-          </a>
-          
-        {% endif %}
-      </div>
+        <!-- Dashboard -->
+        <a href="{{ dashboard_url }}" class="nav-link">
+          <i class="bi bi-speedometer2"></i>
+          <span>Dashboard</span>
+        </a>
+        
+        <!-- Logout -->
+        <form method="post" action="{% url 'logout' %}" class="nav-form">
+          {% csrf_token %}
+          <button type="submit" class="nav-link logout-btn">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Logout</span>
+          </button>
+        </form>
+        
+      {% else %}
+        
+        <!-- Shopping Cart (Customers Only) -->
+        <a href="{% url 'shopping-cart' %}" class="nav-link cart-link">
+          <i class="bi bi-cart3"></i>
+          <span>Cart</span>
+          <span class="cart-badge" id="cartBadge">0</span>
+        </a>
+        
+      {% endif %}
+      
     </div>
-  </nav>
-
+  </div>
+</nav>
 
 
   
