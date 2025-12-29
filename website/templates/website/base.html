@@ -44,6 +44,8 @@ body {
   top: 0;
   z-index: 1001;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  height: auto;
+  min-height: 70px;
 }
 
 .navbar-content {
@@ -119,8 +121,9 @@ body {
 
 .categories-dropdown {
   position: absolute;
-  top: calc(100% + 0.5rem);
+  top: 100%;
   left: 0;
+  margin-top: 0.5rem;
   background: #ffffff;
   border-radius: 0.5rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
@@ -274,8 +277,9 @@ body {
 
 .login-dropdown {
   position: absolute;
-  top: calc(100% + 0.5rem);
+  top: 100%;
   right: 0;
+  margin-top: 0.5rem;
   background: #ffffff;
   border-radius: 0.5rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
@@ -589,12 +593,14 @@ body {
     display: block;
   }
 
-  /* FIXED: Create a flex container for login button and mobile toggle */
+  .main-navbar {
+    min-height: 64px;
+  }
+
   .navbar-content {
     padding: 1rem 1.5rem;
   }
 
-  /* FIXED: Ensure all navbar items align properly */
   .navbar-brand-section,
   .categories-dropdown-wrapper,
   .login-dropdown-wrapper,
@@ -661,6 +667,14 @@ body {
     padding: 1rem;
     margin-top: 0.5rem;
     border: 2px solid #e5e7eb;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    display: none;
+  }
+
+  .login-dropdown.show {
+    display: block;
   }
 
   .logout-btn {
@@ -684,12 +698,14 @@ body {
     right: -5px;
   }
 
+  /* Categories dropdown on tablets - show below navbar */
   .categories-dropdown {
     position: fixed;
-    top: auto;
+    top: 64px;
     left: 1rem;
-    right: 1rem;
-    max-width: none;
+    right: auto;
+    margin-top: 0;
+    max-width: calc(100vw - 2rem);
   }
 }
 
@@ -699,8 +715,27 @@ body {
     font-size: 1.2rem;
   }
 
+  .main-navbar {
+    min-height: 60px;
+  }
+
   .navbar-content {
     padding: 0.875rem 1rem;
+  }
+
+  /* Categories dropdown on mobile - show below navbar */
+  .categories-dropdown {
+    position: fixed;
+    top: 60px;
+    left: 0.5rem;
+    right: 0.5rem;
+    margin-top: 0;
+    max-width: none;
+    width: calc(100% - 1rem);
+  }
+
+  .login-dropdown-wrapper {
+    position: static;
   }
 
   .footer-grid {
@@ -744,12 +779,15 @@ body {
     letter-spacing: 0.3px;
   }
 
+  .main-navbar {
+    min-height: 56px;
+  }
+
   .categories-toggle {
     font-size: 0.7rem;
     padding: 0.4rem 0.6rem;
   }
 
-  /* FIXED: Ensure proper vertical alignment on small screens */
   .navbar-content {
     padding: 0.75rem 0.875rem;
     gap: 0.5rem;
@@ -761,13 +799,23 @@ body {
     padding: 0.25rem;
   }
 
-  /* FIXED: Adjust login button size on mobile */
   .login-btn {
     padding: 0.4rem 0.6rem;
   }
 
   .login-btn i {
     font-size: 1.2rem;
+  }
+
+  /* Categories dropdown on small mobile - show below navbar */
+  .categories-dropdown {
+    position: fixed;
+    top: 56px;
+    left: 0.5rem;
+    right: 0.5rem;
+    margin-top: 0;
+    max-width: none;
+    width: calc(100% - 1rem);
   }
 
   .navbar-menu {
