@@ -1479,7 +1479,10 @@ def admin_dashboard(request):
         else:
             total_products += product.quantity or 0
     
-    context["total_products"] = total_products
+    # Total products (sum of quantities)
+    context["total_products"] = Product.objects.filter(is_active=True).aggregate(
+        total=Sum('quantity', output_field=DecimalField())
+    )['total'] or 0
 
     # Total product value (quantity × selling price)
     context["total_product_value"] = Product.objects.filter(is_active=True).aggregate(
