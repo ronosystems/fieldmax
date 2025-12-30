@@ -67,4 +67,11 @@ urlpatterns = [
     path('manager-dashboard/', manager_dashboard, name='manager-dashboard'),
     path('agent-dashboard/', agent_dashboard, name='agent-dashboard'),
     path('cashier-dashboard/', cashier_dashboard, name='cashier-dashboard'),
+
+    path('home-stats/', views.home_stats, name='home_stats'),
+    path('featured-products/', views.featured_products, name='featured_products'),
+    path('trending-stats/', views.trending_stats, name='trending_stats'),
+    
+    # Product interactions
+    path('products/<int:product_id>/view/', views.increment_product_view, name='increment_view'),
 ]

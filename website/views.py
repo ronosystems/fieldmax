@@ -23,6 +23,13 @@ from .models import PendingOrder, PendingOrderItem
 from django.views.generic import ListView
 from django.conf import settings  
 from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Count, Q, Avg
+from django.utils import timezone
+from datetime import timedelta
+from .models import Order, Customer
 
 
 
@@ -117,6 +124,277 @@ def home(request):
 
 
 
+
+
+
+
+# ============================================
+# HOME STATS -
+# ============================================
+
+@require_http_methods(["GET"])
+def home_stats(request):
+    """
+    API endpoint to fetch homepage statistics
+    Returns: JSON with total products, customers, and satisfaction rate
+    """
+    try:
+        # Get total products (only available and low stock)
+        total_products = Product.objects.filter(
+            Q(status='available') | Q(status='lowstock')
+        ).count()
+        
+        # Get total customers (or use total orders as proxy)
+        # If you have a Customer model:
+        total_customers = Customer.objects.filter(is_active=True).count()
+        # OR if you're counting unique customers from orders:
+        # total_customers = Order.objects.values('customer_email').distinct().count()
+        
+        # Calculate satisfaction rate from completed orders
+        # Assuming you have a rating field or feedback system
+        completed_orders = Order.objects.filter(status='completed')
+        if completed_orders.exists():
+            # If you have a rating field:
+            # satisfaction = completed_orders.aggregate(Avg('rating'))['rating__avg']
+            # satisfaction = round(satisfaction * 20) if satisfaction else 98  # Convert to percentage
+            
+            # OR use successful delivery rate:
+            total_orders = Order.objects.count()
+            successful_orders = completed_orders.count()
+            satisfaction = round((successful_orders / total_orders) * 100) if total_orders > 0 else 98
+        else:
+            satisfaction = 98  # Default value
+        
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                'total_products': total_products,
+                'total_customers': total_customers,
+                'satisfaction': satisfaction
+            }
+        })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'stats': {
+                'total_products': 0,
+                'total_customers': 0,
+                'satisfaction': 0
+            }
+        }, status=500)
+
+
+
+
+
+# ============================================
+# FEATURED PRODUCTS -
+# ============================================
+
+@require_http_methods(["GET"])
+def featured_products(request):
+    """
+    API endpoint to fetch featured/best-selling products
+    Returns: JSON with product details including emoji representation
+    """
+    try:
+        # Get featured products (most sold or marked as featured)
+        # Option 1: Get products with most orders
+        # You'll need to have a way to track sales
+        
+        # Option 2: Get products marked as featured
+        products = Product.objects.filter(
+            Q(status='available') | Q(status='lowstock'),
+            is_featured=True  # Add this field to your model
+        ).order_by('-created_at')[:8]  # Limit to 8 products
+        
+        # OR get best sellers by counting related orders
+        # products = Product.objects.filter(
+        #     Q(status='available') | Q(status='lowstock')
+        # ).annotate(
+        #     order_count=Count('orderitem')
+        # ).order_by('-order_count')[:8]
+        
+        product_list = []
+        for product in products:
+            # Determine badge based on status
+            badge = None
+            if product.status == 'lowstock':
+                badge = 'LOW STOCK'
+            elif product.status == 'available' and product.quantity < 5:
+                badge = 'HURRY UP!'
+            
+            # Get emoji based on category or product type
+            emoji = get_product_emoji(product)
+            
+            product_list.append({
+                'id': product.id,
+                'name': product.name,
+                'price': float(product.selling_price),
+                'code': product.product_code,
+                'emoji': emoji,
+                'badge': badge,
+                'is_single_item': product.category.is_single_item if hasattr(product, 'category') else False,
+                'quantity': product.quantity,
+                'image_url': product.image.url if product.image else None
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'products': product_list,
+            'count': len(product_list)
+        })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'products': []
+        }, status=500)
+
+
+
+
+
+# ============================================
+# PRODUCT EMOJI-
+# ============================================
+
+def get_product_emoji(product):
+    """
+    Helper function to return emoji based on product category or type
+    """
+    # You can customize this based on your product categories
+    emoji_map = {
+        'phone': '📱',
+        'smartphone': '📱',
+        'laptop': '💻',
+        'tablet': '📲',
+        'headphone': '🎧',
+        'earphone': '🎧',
+        'speaker': '🔊',
+        'smartwatch': '⌚',
+        'watch': '⌚',
+        'camera': '📷',
+        'charger': '🔌',
+        'cable': '🔌',
+        'case': '📦',
+        'cover': '📦',
+        'protector': '🛡️',
+        'power bank': '🔋',
+        'battery': '🔋',
+        'mouse': '🖱️',
+        'keyboard': '⌨️',
+        'gaming': '🎮',
+        'console': '🎮',
+    }
+    
+    # Check product name or category for keywords
+    product_name = product.name.lower()
+    for keyword, emoji in emoji_map.items():
+        if keyword in product_name:
+            return emoji
+    
+    # Check category if available
+    if hasattr(product, 'category') and product.category:
+        category_name = product.category.name.lower()
+        for keyword, emoji in emoji_map.items():
+            if keyword in category_name:
+                return emoji
+    
+    # Default emoji
+    return '📦'
+
+
+
+
+
+
+# ============================================
+# TRENDING STATS -
+# ============================================
+
+@require_http_methods(["GET"])
+def trending_stats(request):
+    """
+    API endpoint to get trending products and recent activity stats
+    """
+    try:
+        # Get recent orders (last 7 days)
+        week_ago = timezone.now() - timedelta(days=7)
+        recent_orders = Order.objects.filter(
+            created_at__gte=week_ago
+        ).count()
+        
+        # Get trending products (most viewed/ordered in last 7 days)
+        # This assumes you have a view_count or order tracking
+        trending = Product.objects.filter(
+            Q(status='available') | Q(status='lowstock')
+        ).order_by('-view_count')[:5]  # Add view_count field to track views
+        
+        trending_list = [{
+            'id': p.id,
+            'name': p.name,
+            'price': float(p.selling_price),
+            'views': getattr(p, 'view_count', 0)
+        } for p in trending]
+        
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'recent_orders': recent_orders,
+                'trending_products': trending_list
+            }
+        })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+
+
+
+
+
+
+# ============================================
+# PRODUCT INCREAMENT -
+# ============================================
+
+# Optional: View to increment product view count
+@require_http_methods(["POST"])
+@csrf_exempt
+def increment_product_view(request, product_id):
+    """
+    Increment view count when a product is viewed
+    """
+    try:
+        product = Product.objects.get(id=product_id)
+        if hasattr(product, 'view_count'):
+            product.view_count += 1
+            product.save(update_fields=['view_count'])
+        
+        return JsonResponse({
+            'success': True,
+            'view_count': getattr(product, 'view_count', 0)
+        })
+    
+    except Product.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Product not found'
+        }, status=404)
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 
 
