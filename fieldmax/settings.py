@@ -35,6 +35,14 @@ ALLOWED_HOSTS = [
     "localhost",
 ]
 
+# ✅ CRITICAL: CSRF Trusted Origins for Render
+CSRF_TRUSTED_ORIGINS = [
+    "https://newfieldmax.onrender.com",
+]
+
+# ✅ CRITICAL: Proxy SSL Header for Render
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Security settings for production
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
@@ -143,8 +151,11 @@ DATABASES = {
         'USER': os.getenv("DB_USER"),
         'PASSWORD': os.getenv("DB_PASSWORD"),
         'HOST': os.getenv("DB_HOST"),
-        'PORT': os.getenv("DB_PORT"),
+        'PORT': os.getenv("DB_PORT", "5432"),
         'CONN_MAX_AGE': 600,
+        'OPTIONS': {
+            'connect_timeout': 10,
+        },
     }
 }
 
@@ -186,10 +197,22 @@ DECIMAL_SEPARATOR = '.'
 
 
 # ============================================
+# ✅ STORAGE CONFIGURATION (Django 4.2+ Style)
+# ============================================
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+
+# ============================================
 # STATIC FILES (CSS, JavaScript, Images)
 # ============================================
 STATIC_URL = '/static/'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",
@@ -210,24 +233,13 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
-# Cloudinary settings dictionary
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
-    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
-    'SECURE': True,  # Always use HTTPS
-}
-
-# Configure cloudinary module directly
+# Configure cloudinary module
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
     api_key=os.getenv('CLOUDINARY_API_KEY'),
     api_secret=os.getenv('CLOUDINARY_API_SECRET'),
     secure=True
 )
-
-# ✅ Use Cloudinary for all media files (user uploads)
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
 # ============================================
@@ -310,7 +322,7 @@ INVENTORY_CONFIG = {
     'ENABLE_EMAIL_ALERTS': True,
     'ENABLE_SMS_ALERTS': False,
     'LOW_STOCK_ALERT_EMAILS': [
-        'inventory@fieldmax.com',
+        'fieldmaxlimited@gmail.com',
     ],
     
     'ALLOW_NEGATIVE_STOCK': False,
@@ -338,7 +350,7 @@ FIELDMAX_COMPANY_NAME = "FIELDMAX SUPPLIERS LTD"
 FIELDMAX_COMPANY_SHORT_NAME = "FIELDMAX"
 FIELDMAX_ADDRESS = "Nairobi, Kenya"
 FIELDMAX_TEL = "+254722558544"
-FIELDMAX_EMAIL = "info@fieldmax.co.ke"
+FIELDMAX_EMAIL = "fieldmaxlimited@gmail.com"
 FIELDMAX_WEBSITE = "www.fieldmax.co.ke"
 FIELDMAX_PIN = "-"
 FIELDMAX_VAT_RATE = 0.16
@@ -469,11 +481,15 @@ LOGS_DIR.mkdir(exist_ok=True)
 
 
 # ============================================
-# CACHING
+# ✅ IMPROVED CACHING
 # ============================================
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'fieldmax-cache',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
     }
 }
 
@@ -493,7 +509,7 @@ ADMIN_INDEX_TITLE = "Welcome to FIELDMAX Administration"
 
 
 # ============================================
-# CUSTOM SETTINGS VALIDATION
+# ✅ ENHANCED SETTINGS VALIDATION
 # ============================================
 def validate_settings():
     """Validate critical settings on startup"""
@@ -510,34 +526,40 @@ def validate_settings():
             errors.append(f"Cannot create logs directory: {e}")
     
     # Check Cloudinary credentials
-    cloudinary_vars = [
-        os.getenv('CLOUDINARY_CLOUD_NAME'),
-        os.getenv('CLOUDINARY_API_KEY'),
-        os.getenv('CLOUDINARY_API_SECRET')
-    ]
+    cloudinary_vars = {
+        'CLOUDINARY_CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+        'CLOUDINARY_API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+        'CLOUDINARY_API_SECRET': os.getenv('CLOUDINARY_API_SECRET')
+    }
     
-    if not all(cloudinary_vars):
+    missing_cloudinary = [name for name, val in cloudinary_vars.items() if not val]
+    
+    if missing_cloudinary:
         warnings.append("⚠️  Cloudinary credentials not fully configured!")
-        warnings.append("   Missing: " + ", ".join([
-            name for name, val in [
-                ('CLOUDINARY_CLOUD_NAME', cloudinary_vars[0]),
-                ('CLOUDINARY_API_KEY', cloudinary_vars[1]),
-                ('CLOUDINARY_API_SECRET', cloudinary_vars[2])
-            ] if not val
-        ]))
+        warnings.append(f"   Missing: {', '.join(missing_cloudinary)}")
         warnings.append("   Media uploads will fail. Set these in Render environment variables.")
     else:
         print("✅ Cloudinary configured successfully")
         print(f"   Cloud Name: {os.getenv('CLOUDINARY_CLOUD_NAME')}")
     
     # Check database connection
-    if not all([
-        os.getenv("DB_NAME"),
-        os.getenv("DB_USER"),
-        os.getenv("DB_PASSWORD"),
-        os.getenv("DB_HOST")
-    ]):
-        errors.append("❌ Database credentials incomplete!")
+    db_vars = ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST']
+    missing_db = [var for var in db_vars if not os.getenv(var)]
+    
+    if missing_db:
+        errors.append(f"❌ Database credentials incomplete! Missing: {', '.join(missing_db)}")
+    
+    # Check email configuration
+    if INVENTORY_CONFIG['ENABLE_EMAIL_ALERTS'] and not DEBUG:
+        if not all([os.getenv('EMAIL_HOST_USER'), os.getenv('EMAIL_HOST_PASSWORD')]):
+            warnings.append("⚠️  Email alerts enabled but credentials missing!")
+            warnings.append("   Set EMAIL_HOST_USER and EMAIL_HOST_PASSWORD in environment variables.")
+    
+    # Check static directory
+    static_dir = BASE_DIR / "static"
+    if not static_dir.exists():
+        warnings.append(f"⚠️  Static directory not found: {static_dir}")
+        warnings.append("   Create it or remove from STATICFILES_DIRS")
     
     if errors:
         print("\n" + "="*70)
@@ -552,6 +574,9 @@ def validate_settings():
         for warning in warnings:
             print(f"   {warning}")
         print("="*70 + "\n")
+    
+    if not errors and not warnings:
+        print("\n✅ All settings validated successfully!\n")
 
 # Run validation on startup
 if 'runserver' in sys.argv or 'migrate' in sys.argv or 'collectstatic' in sys.argv:
