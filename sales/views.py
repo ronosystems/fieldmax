@@ -427,19 +427,11 @@ class SaleReverseView(LoginRequiredMixin, View):
 
 
 
-
-# ============================================
-# SALES REPORT API
 # ============================================
 # ============================================
-# FIXED SALES REPORT API
+# SALES REPORT API  
 # ============================================
-
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, F
-from .models import Sale, SaleItem
-from inventory.models import Category
+# ============================================
 
 @login_required
 def sales_report_api(request):
@@ -477,15 +469,26 @@ def sales_report_api(request):
         if end_date:
             sale_items = sale_items.filter(sale__sale_date__lte=end_date)
         
-        # Build results list
+        # Build results list with COMPLETE product data
         results = []
         for item in sale_items:
             results.append({
                 "date": item.sale.sale_date.strftime("%Y-%m-%d"),
                 "seller": item.sale.seller.username if item.sale.seller else "N/A",
+                "buyer_name": item.sale.buyer_name or "Walk-in Customer", 
                 "category": item.product.category.name if item.product.category else "N/A",
-                "product": item.product_name,
+                
+                # ✅ FIX: Return product as OBJECT with all needed fields
+                "product": {
+                    "name": item.product_name,
+                    "etr_number": item.sale.etr_receipt_number or f"RCPT-{item.sale.sale_id}",
+                    "sku_value": item.sku_value or item.product_code or "N/A",
+                    "selling_price": float(item.unit_price),
+                    "product_code": item.product_code
+                },
+                
                 "quantity": item.quantity,
+                "unit_price": float(item.unit_price),
                 "total": float(item.total_price)
             })
         
@@ -504,8 +507,89 @@ def sales_report_api(request):
         }, status=500)
 
 
+# ============================================
+# GET SELLERS FOR REPORT FILTER
+# ============================================
+@login_required
+def get_sellers_api(request):
+    """
+    Return all users who have made sales
+    URL: /sales/api/get-sellers/
+    """
+    try:
+        # Get all users who have made at least one sale
+        sellers = User.objects.filter(
+            sales_made__isnull=False
+        ).distinct().values('id', 'username', 'first_name', 'last_name')
+        
+        sellers_list = []
+        for seller in sellers:
+            full_name = f"{seller['first_name']} {seller['last_name']}".strip()
+            display_name = full_name if full_name else seller['username']
+            
+            sellers_list.append({
+                'id': seller['id'],
+                'username': seller['username'],
+                'display_name': display_name
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'sellers': sellers_list,
+            'count': len(sellers_list)
+        })
+    
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error fetching sellers: {e}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'message': str(e),
+            'sellers': []
+        }, status=500)
 
 
+# ============================================
+# ALTERNATIVE: GET ALL ACTIVE USERS AS SELLERS
+# ============================================
+@login_required
+def get_all_sellers_api(request):
+    """
+    Return ALL active users (alternative if above returns empty)
+    URL: /sales/api/get-all-sellers/
+    """
+    try:
+        sellers = User.objects.filter(
+            is_active=True
+        ).values('id', 'username', 'first_name', 'last_name').order_by('username')
+        
+        sellers_list = []
+        for seller in sellers:
+            full_name = f"{seller['first_name']} {seller['last_name']}".strip()
+            display_name = full_name if full_name else seller['username']
+            
+            sellers_list.append({
+                'id': seller['id'],
+                'username': seller['username'],
+                'display_name': display_name
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'sellers': sellers_list,
+            'count': len(sellers_list)
+        })
+    
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error fetching sellers: {e}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'message': str(e),
+            'sellers': []
+        }, status=500)
 
 
 

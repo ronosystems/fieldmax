@@ -19,6 +19,7 @@ urlpatterns = [
     # ====================================
     # CATEGORY URLS
     # ====================================
+    path('api/get-categories/', views.get_categories_api, name='get-categories-api'),
     path('api/get-categories/', views.get_categories_api, name='get-categories'),
     path('categories/', views.CategoryListView.as_view(), name='category-list'),
     path('category/<int:pk>/', views.CategoryDetailView.as_view(), name='category-detail'),

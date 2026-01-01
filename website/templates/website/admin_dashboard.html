@@ -2011,6 +2011,9 @@ strong[style*="background-color"] {
 
 <div class="dashboard-wrapper">
   
+<!-- ======================================== -->
+<!-- ============SIDEBAR NAVIGATION ========= -->
+<!-- ======================================== -->
   <!-- Sidebar Navigation -->
   <aside class="dashboard-sidebar" id="dashboardSidebar">
     <div class="sidebar-header">
@@ -2077,6 +2080,10 @@ strong[style*="background-color"] {
           <i class="bi bi-plus-circle"></i>
           <span>Record Sale</span>
         </a>
+        <a href="#generate-report" class="submenu-item" data-section="generate-report">
+          <i class="bi bi-plus-circle"></i>
+          <span>Generate Report</span>
+        </a>       
       </div>
 
       <button class="nav-item" data-bs-toggle="collapse" data-bs-target="#usersSubmenu" aria-expanded="false">
@@ -2110,6 +2117,13 @@ strong[style*="background-color"] {
 
 
 
+
+
+
+
+<!-- ======================================== -->
+<!-- ========MAIN DASHBOARD CONTENTS========= -->
+<!-- ======================================== -->
 <!-- Main Dashboard Content -->
   <main class="dashboard-content">
     
@@ -2224,9 +2238,78 @@ strong[style*="background-color"] {
 
       
 
-<!-- ========================================
-     RECENT PRODUCTS
-========================================= -->
+
+
+
+
+
+<!-- ======================================== -->
+<!-- ========== SALES STATISTICS ========== -->
+<!-- ======================================== -->
+<section class="dashboard-section" style="margin-bottom: 2rem;">
+  
+  <!-- Section Header -->
+  <div class="section-header">
+    <div class="section-title-wrapper">
+      <h2 class="section-title">Sales Statistics</h2>
+      <span class="section-subtitle">Visual breakdown of sales performance</span>
+    </div>
+  </div>
+
+  <!-- Two Column Layout -->
+  <div class="row g-4">
+    
+    <!-- ==========================================
+         COLUMN A: BAR CHART - SALES TRENDS
+    ========================================== -->
+    <div class="col-lg-6">
+      <div class="data-card">
+        <div class="card-header" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 1rem 1.5rem;">
+          <h5 class="mb-0">
+            <i class="bi bi-bar-chart-line-fill"></i> Sales Trends (Last 7 Days)
+          </h5>
+        </div>
+        <div class="card-body" style="padding: 1.5rem;">
+          <canvas id="salesBarChart" style="max-height: 300px;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         COLUMN B: DONUT CHART - SALES BY CATEGORY
+    ========================================== -->
+    <div class="col-lg-6">
+      <div class="data-card">
+        <div class="card-header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1rem 1.5rem;">
+          <h5 class="mb-0">
+            <i class="bi bi-pie-chart-fill"></i> Sales by Category
+          </h5>
+        </div>
+        <div class="card-body" style="padding: 1.5rem;">
+          <canvas id="salesDonutChart" style="max-height: 300px;"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- End Row -->
+  
+</section>
+
+
+
+
+      
+
+
+
+
+
+
+
+      
+<!-- ======================================== -->
+<!-- ============== RECENT PRODUCTS ========= -->
+<!-- ======================================== -->
 <section class="dashboard-section">
 
   <!-- Section Header -->
@@ -2408,6 +2491,20 @@ strong[style*="background-color"] {
 </section>
 
 
+
+
+
+
+
+
+
+
+
+
+
+<!-- ======================================== -->
+<!-- ==========RECENT SALES SECTION ========= -->
+<!-- ======================================== -->
 <!-- Recent Sales -->
 <section class="dashboard-section">
   <div class="section-header">
@@ -2504,7 +2601,12 @@ strong[style*="background-color"] {
 
 
 
-<!-- ==================== ENHANCED PRODUCTS LIST SECTION ==================== -->
+
+
+
+<!-- ======================================== -->
+<!-- ENHANCED PRODUCTS LIST SECTION ========= -->
+<!-- ======================================== -->
 
 <div id="product-list" class="content-section">
   <div class="content-header">
@@ -3684,9 +3786,19 @@ strong[style*="background-color"] {
 
 
 
-<!-- ======================================-->
-    <!-- RECORD SALE SECTION -->
-<!--======================================== -->
+
+
+
+
+
+
+
+
+<!--================================= -->
+<!-- =================================-->
+<!-- RECORD SALE SECTION     🛒🛒🛒 -->
+<!--================================= -->
+<!--================================= -->
 
 <!-- Two-Column Record Sale Section -->
 <div id="record-sale" class="content-section">
@@ -3947,6 +4059,178 @@ strong[style*="background-color"] {
 
 
 
+
+
+
+
+<!--=======================================-->
+<!-- ======================================-->
+<!-- REPORTS GENERATOR SECTION     👁️👁️   -->
+<!--=======================================-->
+<!--=======================================-->
+
+<div id="generate-report" class="content-section">
+
+  <!-- Header -->
+  <div class="content-header">
+    <button class="mobile-sidebar-toggle" id="mobileSidebarToggle3">
+      <i class="bi bi-list"></i>
+    </button>
+    <h1 class="page-title">
+      <i class="bi bi-bar-chart-line"></i> Sales Reports
+      <small class="text-muted" style="font-size: 0.6em; display: block; margin-top: 0.5rem;">
+        Filtered Sales Reports
+      </small>
+    </h1>
+  </div>
+
+  <!-- Two Column Layout -->
+  <div class="row g-4">
+    
+    <!-- ==========================================
+         COLUMN A: FILTER FORM
+    ========================================== -->
+    <div class="col-lg-6">
+      <div class="data-card h-100">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-funnel"></i> Report Filters
+          </h5>
+        </div>
+        <div class="card-body" style="padding: 2rem;">
+          
+          <form id="reportFilterForm">
+
+            <!-- Seller -->
+            <div class="mb-4">
+              <label for="seller" class="form-label required">
+                <i class="bi bi-person-badge"></i> Seller
+              </label>
+              <select id="seller" name="seller" class="form-select form-select-lg">
+                <option value="">All Sellers</option>
+              </select>
+            </div>
+
+            <!-- Category -->
+            <div class="mb-4">
+              <label for="category" class="form-label required">
+                <i class="bi bi-tags"></i> Category
+              </label>
+              <select id="category" name="category" class="form-select form-select-lg">
+                <option value="">All Categories</option>
+              </select>
+            </div>
+
+            <!-- Date Range -->
+            <div class="mb-4">
+              <label class="form-label">
+                <i class="bi bi-calendar-range"></i> Date Range
+              </label>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <input type="date" id="startDate" name="start_date" class="form-control form-control-lg">
+                </div>
+                <div class="col-md-6">
+                  <input type="date" id="endDate" name="end_date" class="form-control form-control-lg">
+                </div>
+              </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="d-grid gap-2 mt-4">
+              <button type="button" id="generateReportBtn" class="btn btn-success btn-lg">
+                <i class="bi bi-file-earmark-bar-graph"></i> Generate Report
+              </button>
+              <button type="button" id="exportReportBtn" class="btn btn-secondary btn-lg" disabled>
+                <i class="bi bi-download"></i> Export Report
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         COLUMN B: REPORT DISPLAY
+    ========================================== -->
+    <div class="col-lg-6">
+      <div class="data-card h-100">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-table"></i> Report Results
+          </h5>
+        </div>
+        <div class="card-body" style="padding: 2rem;">
+          
+          <!-- Empty State -->
+          <div id="reportEmptyState" class="text-center py-5">
+            <i class="bi bi-clipboard-data" style="font-size: 4rem; color: #cbd5e1;"></i>
+            <h5 class="text-muted mt-3">No Report Generated</h5>
+            <p class="text-muted">
+              Select filters and click "Generate Report"
+            </p>
+          </div>
+
+          <!-- Report Table -->
+          <div id="reportResults" style="display: none;">
+            <div class="table-responsive">
+              <table class="table table-bordered table-striped">
+                <thead class="table-light">
+                  <tr>
+                    <th>DATE</th>
+                    <th>SELLER</th>
+                    <th>CUSTOMER</th>
+                    <th>ETR</th>
+                    <th>PRODUCT</th>
+                    <th>SKU/IMEI</th>
+                    <th>QTY</th>
+                    <th>PRICE</th>
+                    <th>TOTALS</th>
+                  </tr>
+                </thead>
+                <tbody id="reportTableBody"></tbody>
+              </table>
+            </div>
+
+            <!-- Summary -->
+            <div class="mt-3 alert alert-success">
+              <div class="row">
+                  <div class="col-md-6">
+                    <strong>Total Items Sold:</strong> <span id="reportItemCount">0</span>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>Total Revenue:</strong> KSH <span id="reportTotal">0.00</span>
+                 </div>
+              </div>
+            </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <!-- Users List Section -->
     <div id="users-list" class="content-section">
       <div class="content-header">
@@ -4121,13 +4405,16 @@ strong[style*="background-color"] {
 
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
-
-// ============================================
+// ======================================
+// ======================================
+// ======================================
 // DASHBOARD SIDEBAR MOBILE ENHANCEMENT
-// Add this JavaScript at the end of your dashboard template
-// ============================================
+// ======================================
+// ======================================
+// ======================================
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Dashboard Sidebar Mobile Enhancement Loaded');
@@ -4334,17 +4621,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
+// ====================================
+// ====================================
 // =========================
 // UTILITY FUNCTIONS
 // =========================
+// ====================================
+// ====================================
 function csrfToken() {
   return document.querySelector('[name=csrfmiddlewaretoken]').value;
 }
 
+
+
+
+
+
+
+
+
+
+// ====================================
+// ====================================
 // =========================
 // SECTION NAVIGATION SYSTEM
 // =========================
+// ====================================
+// ====================================
+
 function showSection(sectionId) {
   document.querySelectorAll('.content-section').forEach(section => {
     section.classList.remove('active');
@@ -4389,17 +4693,43 @@ window.addEventListener('DOMContentLoaded', () => {
   if (hash) showSection(hash);
 });
 
+
+
+
+
+
+
+
+// ====================================
+// ====================================
 // ===================
 // MOBILE SIDEBAR TOGGLE
 // ===================
+// ====================================
+// ====================================
+
 const toggleBtn = document.getElementById('mobileSidebarToggle');
 if (toggleBtn) {
   toggleBtn.addEventListener('click', () => sidebar.classList.toggle('active'));
 }
 
+
+
+
+
+
+
+
+
+
+// ====================================
+// ====================================
 // ==============================
 // COLLAPSE ICON ROTATION HANDLER
 // ==============================
+// ====================================
+// ====================================
+
 document.querySelectorAll('.nav-item[data-bs-toggle="collapse"]').forEach(item => {
   item.addEventListener('click', () => {
     const expanded = item.getAttribute('aria-expanded') === 'true';
@@ -4409,9 +4739,17 @@ document.querySelectorAll('.nav-item[data-bs-toggle="collapse"]').forEach(item =
 
 
 
+
+
+
+
+// ====================================
+// ====================================
 // ================================
 // FILTER PRODUCTS
 // ================================
+// ====================================
+// ====================================
 function filterProducts() {
   const statusFilter = document.getElementById('productStatusFilter').value;
   const categoryFilter = document.getElementById('productCategoryFilter').value;
@@ -4448,9 +4786,18 @@ function filterProducts() {
 
 
 
+
+
+
+
+// ====================================
+// ====================================
 // ================================
 // LOAD SELLERS FROM DATABASE
 // ================================
+// ====================================
+// ====================================
+
 async function loadSellers() {
   try {
     // Replace with your actual API endpoint that returns users who have made sales
@@ -4478,9 +4825,21 @@ async function loadSellers() {
   }
 }
 
+
+
+
+
+
+
+
+// ====================================
+// ====================================
 // ================================
 // FILTER SALES (Like filterProducts)
 // ================================
+// ====================================
+// ====================================
+
 function filterSales() {
   const statusFilter = document.getElementById('statusFilter').value;
   const sellerFilter = document.getElementById('sellerFilter').value;
@@ -4517,9 +4876,24 @@ function filterSales() {
   updateSalesStats(visibleCount, totalActive, totalReversed);
 }
 
+
+
+
+
+
+
+
+
+
+
+// ====================================
+// ====================================
 // ================================
 // UPDATE STATS AFTER FILTERING
 // ================================
+// ====================================
+// ====================================
+
 function updateSalesStats(visibleCount, activeCount, reversedCount) {
   // Update total visible sales
   const totalSalesElement = document.getElementById('totalSalesCount');
@@ -4540,9 +4914,19 @@ function updateSalesStats(visibleCount, activeCount, reversedCount) {
   }
 }
 
+
+
+
+
+
+// ====================================
+// ====================================
 // ================================
 // INITIALIZE ON PAGE LOAD
 // ================================
+// ====================================
+// ====================================
+
 document.addEventListener('DOMContentLoaded', function() {
   // Load sellers from database
   loadSellers();
@@ -4558,9 +4942,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ====================================
+// ====================================
 // ================================
 // UPDATE STATISTICS
 // ================================
+// ====================================
+// ====================================
+
 function updateProductStats() {
   const allRows = document.querySelectorAll('.product-row');
   const inStockRows = document.querySelectorAll('.product-row[data-stock-status="instock"]');
@@ -4672,8 +5074,283 @@ function closeProductDetails() {
 
 
 
+
+
+
+
+
+
+
+// ====================================
+// ====================================
+// ====================================
+// BAR  AND   CHART STATISTICS
+// ====================================
+// ====================================
+// ====================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('📊 Initializing Sales Statistics Charts...');
+  
+  // ==========================================
+  // DATA FROM DJANGO (or fallback to sample)
+  // ==========================================
+  
+  let barChartData, donutChartData;
+  
+
+  // ==========================================
+  // BAR CHART - SALES TRENDS (Last 7 Days)
+  // ==========================================
+  const barCtx = document.getElementById('salesBarChart');
+  
+  if (barCtx) {
+    new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: barChartData.labels,
+        datasets: [
+          {
+            label: 'Sales Count',
+            data: barChartData.sales,
+            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 2,
+            borderRadius: 8,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Revenue (KSH)',
+            data: barChartData.revenue,
+            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+            borderColor: 'rgba(16, 185, 129, 1)',
+            borderWidth: 2,
+            borderRadius: 8,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              usePointStyle: true,
+              padding: 15,
+              font: {
+                size: 12,
+                weight: '600'
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 12,
+            titleFont: {
+              size: 14,
+              weight: 'bold'
+            },
+            bodyFont: {
+              size: 13
+            },
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.dataset.yAxisID === 'y1') {
+                  label += 'KSH ' + context.parsed.y.toLocaleString();
+                } else {
+                  label += context.parsed.y + ' sales';
+                }
+                return label;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              font: {
+                size: 12,
+                weight: '600'
+              }
+            }
+          },
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            },
+            ticks: {
+              font: {
+                size: 11
+              },
+              callback: function(value) {
+                return value + ' sales';
+              }
+            },
+            title: {
+              display: true,
+              text: 'Sales Count',
+              font: {
+                size: 12,
+                weight: 'bold'
+              }
+            }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            grid: {
+              drawOnChartArea: false
+            },
+            ticks: {
+              font: {
+                size: 11
+              },
+              callback: function(value) {
+                return 'KSH ' + (value / 1000) + 'k';
+              }
+            },
+            title: {
+              display: true,
+              text: 'Revenue (KSH)',
+              font: {
+                size: 12,
+                weight: 'bold'
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    console.log('✅ Bar Chart Initialized');
+  }
+
+  // ==========================================
+  // DONUT CHART - SALES BY CATEGORY
+  // ==========================================
+  const donutCtx = document.getElementById('salesDonutChart');
+  
+  if (donutCtx) {
+    new Chart(donutCtx, {
+      type: 'doughnut',
+      data: {
+        labels: donutChartData.labels,
+        datasets: [{
+          data: donutChartData.sales,
+          backgroundColor: donutChartData.colors,
+          borderColor: '#ffffff',
+          borderWidth: 3,
+          hoverOffset: 15
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'right',
+            labels: {
+              usePointStyle: true,
+              padding: 20,
+              font: {
+                size: 13,
+                weight: '600'
+              },
+              generateLabels: function(chart) {
+                const data = chart.data;
+                if (data.labels.length && data.datasets.length) {
+                  return data.labels.map((label, i) => {
+                    const value = data.datasets[0].data[i];
+                    const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    
+                    return {
+                      text: `${label} (${percentage}%)`,
+                      fillStyle: data.datasets[0].backgroundColor[i],
+                      hidden: false,
+                      index: i
+                    };
+                  });
+                }
+                return [];
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 12,
+            titleFont: {
+              size: 14,
+              weight: 'bold'
+            },
+            bodyFont: {
+              size: 13
+            },
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label}: ${value} sales (${percentage}%)`;
+              }
+            }
+          }
+        },
+        cutout: '60%',
+        animation: {
+          animateRotate: true,
+          animateScale: true
+        }
+      }
+    });
+    
+    console.log('✅ Donut Chart Initialized');
+  }
+
+  console.log('✅ Sales Statistics Charts Ready');
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ====================================
+// ====================================
 // ====================================
 // ADD CATEORY AREA
+// ====================================
+// ====================================
 // ====================================
 
   // JS: Add new product row dynamically
@@ -4734,11 +5411,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-// ====================================
-// ADD CATEORY AREA
+
+
+
+
 // ====================================
 // ====================================
 // ADD CATEGORY SECTION - FIXED VERSION
+// ====================================
 // ====================================
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -5064,9 +5744,10 @@ function showToast(message, type = 'success') {
 
 
 
-
+// ====================================
 // ====================================
 // ADD PRODUCT  SECTION
+// ====================================
 // ====================================
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -5317,9 +5998,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-// ============================
+
+
+
+
+
+
+
+// ====================================
+// ====================================
 // RESTOCK PRODUCT JAVASCRIPT
-// ============================
+// ====================================
+// ====================================
 
 document.addEventListener('DOMContentLoaded', function() {
   // Elements
@@ -5637,10 +6327,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
-// ============================
-// ENHANCED TRANSFER PRODUCT JAVASCRIPT - WITH LIVE PREVIEW
-// ============================
+// ====================================
+// ====================================
+// TRANSFER PRODUCT JAVASCRIPT 
+// ====================================
+// ====================================
 
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🔧 Enhanced Transfer Product Module Initializing...');
@@ -6472,9 +7163,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-// ===============================
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ====================================
+// =====================================
 // BUTTON CLICK HANDLERS FOR ROW ACTIONS
-// ===============================
+// ====================================
+// ====================================
 function editProduct(btn) {
     const id = btn.dataset.id;
     const name = btn.dataset.name;
@@ -6508,9 +7214,13 @@ function transferProduct(btn) {
 
 
 
-// ================================
-// RECORD SALE FUNCTIONALITY - FINAL CLEAN VERSION
-// ================================
+
+
+// ====================================
+// ====================================
+// RECORD SALE FUNCTIONALITY 🛒🛒🛒
+// ====================================
+// ====================================
 
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('saleForm');
@@ -7151,10 +7861,273 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-/* ======================================================
+
+
+
+
+
+
+
+// ================================
+// ================================
+// GENERATE REPORT SECTION  👁️👁️
+// ================================
+// ================================
+
+document.addEventListener("DOMContentLoaded", function () {
+
+  // --- DOM Elements ---
+  const sellerSelect = document.getElementById("seller");
+  const categorySelect = document.getElementById("category");
+  const startDateInput = document.getElementById("startDate");
+  const endDateInput = document.getElementById("endDate");
+  const generateBtn = document.getElementById("generateReportBtn");
+  const exportBtn = document.getElementById("exportReportBtn");
+  const emptyState = document.getElementById("reportEmptyState");
+  const reportResults = document.getElementById("reportResults");
+  const reportTableBody = document.getElementById("reportTableBody");
+  const reportTotal = document.getElementById("reportTotal");
+
+  let currentReportData = [];
+
+  // --- Initialize Sellers & Categories ---
+  function loadFilterOptions() {
+    // Fetch sellers
+    console.log("📡 Loading sellers...");
+    fetch("/sales/api/get-sellers/")
+      .then(res => {
+        console.log("✅ Sellers response status:", res.status);
+        return res.json();
+      })
+      .then(data => {
+        console.log("📦 Sellers data:", data);
+        
+        if (data.success && data.sellers && data.sellers.length > 0) {
+          console.log(`✅ Found ${data.sellers.length} sellers`);
+          data.sellers.forEach(seller => {
+            const opt = document.createElement("option");
+            opt.value = seller.id;
+            opt.textContent = seller.display_name || seller.username;
+            sellerSelect.appendChild(opt);
+          });
+        } else {
+          console.warn("⚠️ No sellers found or API returned empty");
+          // Try alternative endpoint if first one fails
+          fetch("/sales/api/get-all-sellers/")
+            .then(res => res.json())
+            .then(altData => {
+              if (altData.success && altData.sellers) {
+                console.log(`✅ Alternative endpoint: Found ${altData.sellers.length} sellers`);
+                altData.sellers.forEach(seller => {
+                  const opt = document.createElement("option");
+                  opt.value = seller.id;
+                  opt.textContent = seller.display_name || seller.username;
+                  sellerSelect.appendChild(opt);
+                });
+              }
+            })
+            .catch(err => console.error("❌ Error loading alternative sellers:", err));
+        }
+      })
+      .catch(err => {
+        console.error("❌ Error loading sellers:", err);
+        alert("Failed to load sellers. Check console for details.");
+      });
+
+    // Fetch categories
+    console.log("📡 Loading categories...");
+    fetch("/inventory/api/get-categories/")
+      .then(res => {
+        console.log("✅ Categories response status:", res.status);
+        return res.json();
+      })
+      .then(data => {
+        console.log("📦 Categories data:", data);
+        
+        if (data.success && data.categories && data.categories.length > 0) {
+          console.log(`✅ Found ${data.categories.length} categories`);
+          data.categories.forEach(cat => {
+            const opt = document.createElement("option");
+            opt.value = cat.id;
+            opt.textContent = cat.name;
+            categorySelect.appendChild(opt);
+          });
+        } else {
+          console.warn("⚠️ No categories found or API returned empty");
+        }
+      })
+      .catch(err => {
+        console.error("❌ Error loading categories:", err);
+        alert("Failed to load categories. Check console for details.");
+      });
+  }
+
+  loadFilterOptions();
+
+  // --- Generate Report ---
+  if (generateBtn) {
+    generateBtn.addEventListener("click", function () {
+      const seller = sellerSelect.value;
+      const category = categorySelect.value;
+      const start = startDateInput.value;
+      const end = endDateInput.value;
+
+      console.log("🔍 Report Filters:", {
+        seller: seller || "All",
+        category: category || "All",
+        start: start || "No start date",
+        end: end || "No end date"
+      });
+
+      // Show loading state
+      generateBtn.disabled = true;
+      generateBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Loading...';
+
+      const reportUrl = `/sales/api/reports/?seller=${seller}&category=${category}&start=${start}&end=${end}`;
+      console.log("📡 Fetching report from:", reportUrl);
+
+      fetch(reportUrl)
+        .then(res => {
+          console.log("✅ Report response status:", res.status);
+          return res.json();
+        })
+        .then(data => {
+          console.log("📦 Report data:", data);
+          
+          generateBtn.disabled = false;
+          generateBtn.innerHTML = '<i class="bi bi-file-earmark-bar-graph"></i> Generate Report';
+
+          if (data.status === 'success') {
+            currentReportData = data.results || [];
+            console.log(`✅ Received ${currentReportData.length} report items`);
+            renderReport(currentReportData);
+          } else {
+            console.error("❌ Report error:", data.message);
+            alert("Failed to generate report: " + (data.message || "Unknown error"));
+          }
+        })
+        .catch(err => {
+          generateBtn.disabled = false;
+          generateBtn.innerHTML = '<i class="bi bi-file-earmark-bar-graph"></i> Generate Report';
+          console.error("❌ Error fetching report:", err);
+          alert("Failed to fetch report. Please try again.");
+        });
+    });
+  }
+
+  // --- Render Report Table (FIXED) ---
+  function renderReport(data) {
+    reportTableBody.innerHTML = "";
+    let total = 0;
+    let itemCount = 0;
+
+    if (!data || data.length === 0) {
+      emptyState.style.display = "block";
+      reportResults.style.display = "none";
+      exportBtn.disabled = true;
+      reportTotal.textContent = "0.00";
+      const itemCountEl = document.getElementById('reportItemCount');
+      if (itemCountEl) {
+        itemCountEl.textContent = "0";
+      }
+      return;
+    }
+
+    emptyState.style.display = "none";
+    reportResults.style.display = "block";
+
+    data.forEach(row => {
+      total += parseFloat(row.total || 0);
+      itemCount += parseInt(row.quantity || 0);
+      
+      // ✅ FIX: Handle product data correctly (it's now an object)
+      const productName = row.product?.name || row.product || "N/A";
+      const etrNumber = row.product?.etr_number || "N/A";
+      const skuValue = row.product?.sku_value || "N/A";
+      const sellingPrice = parseFloat(row.product?.selling_price || row.unit_price || 0);
+      
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${row.date}</td>
+        <td>${row.seller}</td>
+        <td>${row.buyer_name || 'Walk-in Customer'}</td>
+        <td><span class="badge bg-secondary">${etrNumber}</span></td>
+        <td>${productName}</td>
+        <td>${skuValue}</td>
+        <td class="text-center"><strong>${row.quantity}</strong></td>
+        <td class="text-end">KSH ${sellingPrice.toFixed(2)}</td>
+        <td class="text-end"><strong style="color: #10b981;">KSH ${parseFloat(row.total || 0).toFixed(2)}</strong></td>
+      `;
+      reportTableBody.appendChild(tr);
+    });
+
+    reportTotal.textContent = total.toFixed(2);
+    
+    const itemCountEl = document.getElementById('reportItemCount');
+    if (itemCountEl) {
+      itemCountEl.textContent = itemCount;
+    }
+    
+    exportBtn.disabled = false;
+    
+    console.log(`✅ Report rendered: ${data.length} rows, ${itemCount} items, KSH ${total.toFixed(2)}`);
+  }
+
+  // --- Export Report as CSV (FIXED) ---
+  if (exportBtn) {
+    exportBtn.addEventListener("click", function () {
+      if (!currentReportData.length) {
+        alert("No data to export");
+        return;
+      }
+
+      let csvContent = "Date,Seller,Customer,Category,Product,SKU/IMEI,Quantity,Unit Price,Total\n";
+      
+      currentReportData.forEach(row => {
+        // ✅ FIX: Handle product data correctly
+        const productName = row.product?.name || row.product || "N/A";
+        const skuValue = (row.product?.sku_value || "N/A").replace(/,/g, ';');
+        const unitPrice = row.unit_price || row.product?.selling_price || 0;
+        const buyerName = (row.buyer_name || "Walk-in Customer").replace(/,/g, ';');
+        
+        csvContent += `${row.date},${row.seller},${buyerName},${row.category},${productName},${skuValue},${row.quantity},${unitPrice},${row.total || 0}\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `sales_report_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      console.log('✅ Report exported with SKU values');
+    });
+  }
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ========================================
+/* ========================================
    LIVE PRODUCT TABLE UPDATER FOR FIELDMAX
    Matches your EXACT HTML table structure
-   ====================================================== */
+   ===================================== */
+// ========================================
 
 function updateProductRow(product) {
     const row = document.querySelector(`#product-row-${product.id}`);
@@ -7287,9 +8260,24 @@ function updateProductRow(product) {
     refreshInventoryCounters();
 }
 
-/* ======================================================
+
+
+
+
+
+
+
+
+
+
+// ======================================
+// ======================================
+/* ======================================
    UPDATE INVENTORY STATISTICS COUNTERS
-   ====================================================== */
+   =================================== */
+// ======================================
+// ======================================
+
 function refreshInventoryCounters() {
     const rows = document.querySelectorAll(".product-row");
 
@@ -7327,7 +8315,19 @@ fetch('/reverse-sale/12/', { method: 'POST' })
 
 
 
-// ========================= FILTER LOGIC ========================= //
+
+
+
+
+
+
+
+
+// ====================================
+// ====================================
+// FILTER LOGIC 
+// ====================================
+// ====================================
 
 function filterProducts() {
     const statusFilter = document.getElementById("productStatusFilter").value;
@@ -7372,7 +8372,25 @@ function filterProducts() {
 
 
 
-// ========================= STAT REFRESH ========================= //
+
+
+
+
+
+
+
+
+
+
+
+
+// ====================================
+// ====================================
+// ========================= 
+// STAT REFRESH 
+// ========================= //
+// ====================================
+// ====================================
 
 function updateProductStats() {
     const rows = document.querySelectorAll("#productsTable tbody .product-row");
@@ -7402,7 +8420,7 @@ function updateProductStats() {
 
 
 
-// ========================= AUTO-RUN ON LOAD ========================= //
+// ============== AUTO-RUN ON LOAD ============ //
 document.addEventListener("DOMContentLoaded", filterProducts);
 
 
@@ -7411,12 +8429,22 @@ document.addEventListener("DOMContentLoaded", filterProducts);
 
 
 
-/* ============================================================
+
+
+
+
+
+
+// ====================================
+// ====================================
+/* ===============================
    GLOBAL CONFIG
-   ============================================================ */
+   ============================ */
+// ====================================
+// ====================================
 
 let currentPage = 1;
-const rowsPerPage = 15;  // Adjust if needed
+const rowsPerPage = 20;  // Adjust if needed
 
 // Cache selectors
 const table = document.getElementById("productsTable");
@@ -7425,9 +8453,19 @@ const rows = Array.from(tbody.querySelectorAll(".product-row"));
 
 
 
-/* ============================================================
+
+
+
+
+
+
+// ====================================
+// ====================================
+/* ===================================
    SAVE / LOAD FILTER STATE
-   ============================================================ */
+   ================================ */
+// ====================================
+// ====================================
 
 function saveFilterState() {
     localStorage.setItem("productFilters", JSON.stringify({
@@ -7452,9 +8490,22 @@ function loadFilterState() {
 
 
 
-/* ============================================================
-   FILTERING SYSTEM (same from previous message, extended)
-   ============================================================ */
+
+
+
+
+
+
+
+
+// ====================================
+// ====================================
+/* ====================================
+   FILTERING SYSTEM 
+   ================================= */
+// ====================================
+// ====================================
+
 function filterProducts() {
     const statusFilter = document.getElementById("productStatusFilter").value;
     const categoryFilter = document.getElementById("productCategoryFilter").value;
@@ -7502,9 +8553,18 @@ function filterProducts() {
 
 
 
-/* ============================================================
+
+
+
+
+
+// ====================================
+// ====================================
+/* ==============================
     SEARCH BUTTON AND ENTRIES
-   ============================================================ */
+   =========================== */
+// ====================================
+// ====================================
 
 // Search functionality
 function searchProducts() {
@@ -7537,9 +8597,18 @@ function changeEntries() {
 
 
 
-/* ============================================================
+
+
+
+
+
+// ====================================
+// ====================================
+/* ============================
    LIVE SEARCH
-   ============================================================ */
+   ========================= */
+// ====================================
+// ====================================
 
 function setupSearchBox() {
     if (!document.getElementById("productSearchInput")) {
@@ -7602,9 +8671,19 @@ function filterSales() {
 
 
 
-/* ============================================================
+
+
+
+
+
+
+// ====================================
+// ====================================
+/* ==========================
    COLUMN SORTING
-   ============================================================ */
+   ======================== */
+// ====================================
+// ====================================
 
 let sortDirection = 1;
 
@@ -7637,9 +8716,26 @@ function enableColumnSorting() {
 
 
 
-/* ============================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ====================================
+// ====================================
+/* =========================
    PAGINATION
-   ============================================================ */
+   ======================= */
+// ====================================
+// ====================================
 
 function paginateRows() {
     const visibleRows = rows.filter(r => r.style.display !== "none");
@@ -7696,9 +8792,21 @@ function renderPaginationControls(totalPages) {
 
 
 
-/* ============================================================
+
+
+
+
+
+
+
+
+// ====================================
+// ====================================
+/* ==============================
    HIDE / SHOW COLUMNS
-   ============================================================ */
+   ============================ */
+// ====================================
+// ====================================
 
 function toggleColumn(index) {
     const rowsAll = table.querySelectorAll("tr");
@@ -7735,9 +8843,22 @@ function initColumnHider() {
 
 
 
-/* ============================================================
+
+
+
+
+
+
+
+
+
+// ====================================
+// ====================================
+/* ==============================
    EXPORT TO EXCEL
-   ============================================================ */
+   ============================== */
+// ====================================
+// ====================================
 
 function exportTableToExcel() {
     let csv = [];
@@ -7759,9 +8880,25 @@ function exportTableToExcel() {
 
 
 
-/* ============================================================
-   INITIALIZE ALL SYSTEMS
-   ============================================================ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ====================================
+// ====================================
+// INITIALIZE ALL SYSTEMS
+// ====================================
+// ====================================
 
 document.addEventListener("DOMContentLoaded", () => {
     setupSearchBox();
@@ -7849,9 +8986,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+
+
+
+
+
+
+
+
+
+// ====================================
 // ================================
 // TOGGLE CARD DROPDOWN
 // ================================
+// ====================================
+
 function toggleCardDropdown(header) {
   const dropdown = header.parentElement.querySelector('.stat-dropdown');
   const icon = header.querySelector('.dropdown-icon');

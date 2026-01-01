@@ -60,28 +60,17 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 @login_required
 def get_categories_api(request):
-    """
-    Return all active categories for dropdowns
-    """
+    """Return all active categories"""
     try:
-        from .models import Category
-        
         categories = Category.objects.filter(
             is_active=True
-        ).values(
-            'id', 
-            'name', 
-            'item_type',
-            'sku_type'
-        ).order_by('name')
+        ).values('id', 'name', 'item_type', 'sku_type').order_by('name')
         
         return JsonResponse({
             "success": True,
-            "categories": list(categories),
-            "count": categories.count()
+            "categories": list(categories)
         })
     except Exception as e:
-        logger.error(f"Error fetching categories: {e}", exc_info=True)
         return JsonResponse({
             "success": False,
             "message": str(e),
