@@ -5083,9 +5083,7 @@ function closeProductDetails() {
 
 // ====================================
 // ====================================
-// ====================================
-// BAR  AND   CHART STATISTICS
-// ====================================
+// BAR AND DONUT CHART STATISTICS
 // ====================================
 // ====================================
 
@@ -5093,11 +5091,67 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('📊 Initializing Sales Statistics Charts...');
   
   // ==========================================
-  // DATA FROM DJANGO (or fallback to sample)
+  // GET DATA FROM DJANGO TEMPLATE
   // ==========================================
   
   let barChartData, donutChartData;
   
+  try {
+    // ✅ Parse Django data (already JSON strings from view)
+    const barLabels = '{{ chart_data.bar_chart.labels|safe }}';
+    const barSales = '{{ chart_data.bar_chart.sales_count|safe }}';
+    const barRevenue = '{{ chart_data.bar_chart.revenue|safe }}';
+    
+    const donutLabels = '{{ chart_data.donut_chart.labels|safe }}';
+    const donutCounts = '{{ chart_data.donut_chart.counts|safe }}';
+    const donutColors = '{{ chart_data.donut_chart.colors|safe }}';
+    
+    console.log('Raw data from Django:');
+    console.log('Bar Labels:', barLabels);
+    console.log('Bar Sales:', barSales);
+    console.log('Donut Labels:', donutLabels);
+    
+    // Check if we have valid data
+    if (barLabels && barSales && barRevenue && donutLabels && donutCounts) {
+      barChartData = {
+        labels: JSON.parse(barLabels),
+        sales: JSON.parse(barSales),
+        revenue: JSON.parse(barRevenue)
+      };
+      
+      donutChartData = {
+        labels: JSON.parse(donutLabels),
+        sales: JSON.parse(donutCounts),
+        colors: JSON.parse(donutColors)
+      };
+      
+      console.log('✅ Successfully parsed database data:');
+      console.log('Bar Chart:', barChartData);
+      console.log('Donut Chart:', donutChartData);
+    } else {
+      throw new Error('Missing chart data from Django');
+    }
+  } catch (error) {
+    console.warn('⚠️ Error loading chart data, using sample data:', error.message);
+    
+    // Fallback sample data
+    barChartData = {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      sales: [5, 8, 6, 10, 7, 12, 9],
+      revenue: [15000, 24000, 18000, 30000, 21000, 36000, 27000]
+    };
+    
+    donutChartData = {
+      labels: ['Phones', 'Accessories', 'Electronics', 'Others'],
+      sales: [25, 15, 10, 5],
+      colors: [
+        'rgba(59, 130, 246, 0.8)',
+        'rgba(16, 185, 129, 0.8)',
+        'rgba(245, 158, 11, 0.8)',
+        'rgba(139, 92, 246, 0.8)'
+      ]
+    };
+  }
 
   // ==========================================
   // BAR CHART - SALES TRENDS (Last 7 Days)
@@ -5281,7 +5335,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   return data.labels.map((label, i) => {
                     const value = data.datasets[0].data[i];
                     const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
-                    const percentage = ((value / total) * 100).toFixed(1);
+                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
                     
                     return {
                       text: `${label} (${percentage}%)`,
@@ -5310,7 +5364,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const label = context.label || '';
                 const value = context.parsed;
                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                const percentage = ((value / total) * 100).toFixed(1);
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
                 return `${label}: ${value} sales (${percentage}%)`;
               }
             }
@@ -5329,9 +5383,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   console.log('✅ Sales Statistics Charts Ready');
 });
-
-
-
 
 
 

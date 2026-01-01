@@ -423,151 +423,6 @@ def dashboard_url(request):
     
     return {'dashboard_url': url}
 
-# Add this to your dashboard view (e.g., views.py)
-
-from django.utils import timezone
-from datetime import timedelta
-from django.db.models import Sum, Count
-from sales.models import Sale, SaleItem
-from inventory.models import Category
-
-def get_sales_chart_data(request):
-    """
-    Generate data for sales statistics charts
-    Add this to your dashboard context
-    """
-    
-    # ==========================================
-    # BAR CHART DATA - Last 7 Days Sales Trends
-    # ==========================================
-    today = timezone.now().date()
-    last_7_days = []
-    sales_count_7days = []
-    revenue_7days = []
-    
-    for i in range(6, -1, -1):  # Last 7 days (6 days ago to today)
-        date = today - timedelta(days=i)
-        last_7_days.append(date.strftime('%a'))  # Mon, Tue, Wed, etc.
-        
-        # Count sales for this day
-        daily_sales = Sale.objects.filter(
-            sale_date__date=date,
-            is_reversed=False
-        )
-        
-        sales_count = daily_sales.count()
-        sales_count_7days.append(sales_count)
-        
-        # Sum revenue for this day
-        daily_revenue = daily_sales.aggregate(
-            total=Sum('total_amount')
-        )['total'] or 0
-        revenue_7days.append(float(daily_revenue))
-    
-    # ==========================================
-    # DONUT CHART DATA - Sales by Category
-    # ==========================================
-    
-    # Get sales grouped by category (last 30 days)
-    thirty_days_ago = today - timedelta(days=30)
-    
-    category_sales = SaleItem.objects.filter(
-        sale__sale_date__date__gte=thirty_days_ago,
-        sale__is_reversed=False
-    ).values(
-        'product__category__name'
-    ).annotate(
-        count=Count('id'),
-        revenue=Sum('total_price')
-    ).order_by('-count')
-    
-    # Prepare category data
-    category_labels = []
-    category_counts = []
-    category_colors = [
-        'rgba(59, 130, 246, 0.8)',   # Blue
-        'rgba(16, 185, 129, 0.8)',   # Green
-        'rgba(245, 158, 11, 0.8)',   # Orange
-        'rgba(139, 92, 246, 0.8)',   # Purple
-        'rgba(239, 68, 68, 0.8)',    # Red
-        'rgba(236, 72, 153, 0.8)',   # Pink
-        'rgba(20, 184, 166, 0.8)',   # Teal
-        'rgba(251, 146, 60, 0.8)',   # Amber
-    ]
-    
-    for idx, item in enumerate(category_sales):
-        category_name = item['product__category__name'] or 'Uncategorized'
-        category_labels.append(category_name)
-        category_counts.append(item['count'])
-    
-    # Limit to top 8 categories, combine rest as "Others"
-    if len(category_labels) > 8:
-        others_count = sum(category_counts[8:])
-        category_labels = category_labels[:8] + ['Others']
-        category_counts = category_counts[:8] + [others_count]
-    
-    # Return data dictionary to add to context
-    return {
-        'chart_data': {
-            'bar_chart': {
-                'labels': last_7_days,
-                'sales_count': sales_count_7days,
-                'revenue': revenue_7days
-            },
-            'donut_chart': {
-                'labels': category_labels,
-                'counts': category_counts,
-                'colors': category_colors[:len(category_labels)]
-            }
-        }
-    }
-
-
-# ==========================================
-# USAGE IN YOUR DASHBOARD VIEW
-# ==========================================
-
-def dashboard_view(request):
-    """
-    Your existing dashboard view - add chart data to context
-    """
-    
-    # ... your existing context variables ...
-    
-    # Add chart data
-    chart_data = get_sales_chart_data(request)
-    
-    context = {
-        # ... your existing context ...
-        'chart_data': chart_data['chart_data'],
-    }
-    
-    return render(request, 'dashboard.html', context)
-
-
-# ==========================================
-# TEMPLATE USAGE
-# ==========================================
-
-"""
-In your dashboard.html template, update the JavaScript to use Django data:
-
-<script>
-  // BAR CHART - Use Django data
-  const last7Days = {
-    labels: {{ chart_data.bar_chart.labels|safe }},
-    sales: {{ chart_data.bar_chart.sales_count|safe }},
-    revenue: {{ chart_data.bar_chart.revenue|safe }}
-  };
-
-  // DONUT CHART - Use Django data
-  const categoryData = {
-    labels: {{ chart_data.donut_chart.labels|safe }},
-    sales: {{ chart_data.donut_chart.counts|safe }},
-    colors: {{ chart_data.donut_chart.colors|safe }}
-  };
-</script>
-"""
 
 
 
@@ -1802,6 +1657,121 @@ class ShopListView(ListView):
 
 
 
+
+
+
+
+
+# ============================================
+# SALES CHART DATA
+# ============================================
+
+def get_sales_chart_data(request):
+    """
+    Generate REAL data for sales statistics charts
+    Returns properly formatted data for JavaScript charts
+    """
+    
+    # ==========================================
+    # BAR CHART DATA - Last 7 Days Sales Trends
+    # ==========================================
+    today = timezone.now().date()
+    last_7_days = []
+    sales_count_7days = []
+    revenue_7days = []
+    
+    for i in range(6, -1, -1):  # Last 7 days (6 days ago to today)
+        date = today - timedelta(days=i)
+        last_7_days.append(date.strftime('%a'))  # Mon, Tue, Wed, etc.
+        
+        # Count sales for this day (only non-reversed)
+        daily_sales = Sale.objects.filter(
+            sale_date__date=date,
+            is_reversed=False
+        )
+        
+        sales_count = daily_sales.count()
+        sales_count_7days.append(sales_count)
+        
+        # Sum revenue for this day
+        daily_revenue = daily_sales.aggregate(
+            total=Sum('total_amount')
+        )['total'] or 0
+        revenue_7days.append(float(daily_revenue))
+    
+    # ==========================================
+    # DONUT CHART DATA - Sales by Category
+    # ==========================================
+    
+    # Get sales grouped by category (last 30 days)
+    thirty_days_ago = today - timedelta(days=30)
+    
+    category_sales = SaleItem.objects.filter(
+        sale__sale_date__date__gte=thirty_days_ago,
+        sale__is_reversed=False
+    ).values(
+        'product__category__name'
+    ).annotate(
+        count=Count('id'),
+        revenue=Sum('total_price')
+    ).order_by('-count')
+    
+    # Prepare category data
+    category_labels = []
+    category_counts = []
+    category_colors = [
+        'rgba(59, 130, 246, 0.8)',   # Blue
+        'rgba(16, 185, 129, 0.8)',   # Green
+        'rgba(245, 158, 11, 0.8)',   # Orange
+        'rgba(139, 92, 246, 0.8)',   # Purple
+        'rgba(239, 68, 68, 0.8)',    # Red
+        'rgba(236, 72, 153, 0.8)',   # Pink
+        'rgba(20, 184, 166, 0.8)',   # Teal
+        'rgba(251, 146, 60, 0.8)',   # Amber
+    ]
+    
+    for idx, item in enumerate(category_sales):
+        category_name = item['product__category__name'] or 'Uncategorized'
+        category_labels.append(category_name)
+        category_counts.append(item['count'])
+    
+    # Limit to top 8 categories, combine rest as "Others"
+    if len(category_labels) > 8:
+        others_count = sum(category_counts[8:])
+        category_labels = category_labels[:8] + ['Others']
+        category_counts = category_counts[:8] + [others_count]
+    
+    # If no data, return sample data
+    if not category_labels:
+        category_labels = ['No Sales Yet']
+        category_counts = [0]
+    
+    # Return data dictionary - convert to JSON strings for template
+    return {
+        'chart_data': {
+            'bar_chart': {
+                'labels': json.dumps(last_7_days),
+                'sales_count': json.dumps(sales_count_7days),
+                'revenue': json.dumps(revenue_7days)
+            },
+            'donut_chart': {
+                'labels': json.dumps(category_labels),
+                'counts': json.dumps(category_counts),
+                'colors': json.dumps(category_colors[:len(category_labels)])
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
 # ============================================
 # ROLE BASED LOGIN VIEW
 # ============================================
@@ -2037,6 +2007,10 @@ def admin_dashboard(request):
     context["total_categories"] = Category.objects.count()
     context["total_stock_entries"] = StockEntry.objects.count()
 
+    # ✅ ADD CHART DATA TO CONTEXT
+    chart_data = get_sales_chart_data(request)
+    context['chart_data'] = chart_data['chart_data']
+
     # ============================================
     # RECENT PRODUCTS
     # ============================================
@@ -2180,6 +2154,7 @@ def admin_dashboard(request):
     # RENDER TEMPLATE
     # ============================================
     return render(request, "website/admin_dashboard.html", context)
+
 
 
 
