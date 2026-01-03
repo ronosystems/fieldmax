@@ -1,1 +1,87 @@
 /* Basic styles */
+/* Add to your existing CSS */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* Enhanced offline queue badge */
+.offline-queue-badge {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    padding: 12px 24px;
+    border-radius: 25px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    font-weight: 600;
+}
+
+.offline-queue-badge:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.offline-queue-badge.syncing {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+/* Connection status animation */
+.connection-status {
+    transition: all 0.3s ease;
+}
+
+.connection-status.online {
+    animation: fadeIn 0.5s ease;
+}
+
+.connection-status.offline {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Storage status indicator */
+.storage-status {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: #374151;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    display: none;
+    z-index: 1000;
+}
+
+/* Loading indicator for sync */
+.sync-loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0dcaf0;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

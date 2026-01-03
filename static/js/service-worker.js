@@ -1,41 +1,42 @@
 // static/js/service-worker.js
-const CACHE_NAME = 'fieldmax-v1';
+const CACHE_NAME = 'fieldmax-shop-v2';
 const OFFLINE_URL = '/offline/';
-const API_CACHE = 'fieldmax-api-v1';
+const SYNC_TAG = 'sync-offline-data';
 
-// Files to cache for offline use
-const STATIC_CACHE_URLS = [
+// Assets to cache immediately
+const STATIC_ASSETS = [
     '/',
-    '/offline/',
-    '/static/css/main.css',
-    '/static/js/app.js',
+    '/static/css/style.css',
     '/static/js/offline-manager.js',
-    '/static/icons/icon-192x192.png',
-    '/static/icons/icon-512x512.png',
+    '/static/js/app.js',
+    '/static/images/LOGO.jpg',
+    OFFLINE_URL,
+    '/api/offline-data/', // Cache API data
+    '/manifest.json'
 ];
 
-// Install event - cache static assets
 self.addEventListener('install', (event) => {
-    console.log('[ServiceWorker] Installing...');
+    console.log('Service Worker installing...');
+    
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                console.log('[ServiceWorker] Caching static assets');
-                return cache.addAll(STATIC_CACHE_URLS);
+                console.log('Caching static assets');
+                return cache.addAll(STATIC_ASSETS);
             })
             .then(() => self.skipWaiting())
     );
 });
 
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-    console.log('[ServiceWorker] Activating...');
+    console.log('Service Worker activating...');
+    
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME && cacheName !== API_CACHE) {
-                        console.log('[ServiceWorker] Deleting old cache:', cacheName);
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
@@ -44,160 +45,180 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Enhanced fetch handler with network-first for API, cache-first for static
 self.addEventListener('fetch', (event) => {
-    const { request } = event;
-    const url = new URL(request.url);
-
-    // Handle API requests
+    const url = new URL(event.request.url);
+    
+    // API requests - network first, fallback to cache
     if (url.pathname.startsWith('/api/')) {
-        event.respondWith(handleAPIRequest(request));
+        event.respondWith(
+            fetch(event.request)
+                .then((response) => {
+                    // Cache successful API responses
+                    if (response.ok) {
+                        const clonedResponse = response.clone();
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(event.request, clonedResponse);
+                        });
+                    }
+                    return response;
+                })
+                .catch(() => {
+                    // Fallback to cache for API
+                    return caches.match(event.request);
+                })
+        );
         return;
     }
-
-    // Handle navigation requests
-    if (request.mode === 'navigate') {
-        event.respondWith(handleNavigationRequest(request));
+    
+    // HTML pages - network first, fallback to offline page
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            fetch(event.request)
+                .catch(() => caches.match(OFFLINE_URL))
+        );
         return;
     }
-
-    // Handle static assets
-    event.respondWith(handleStaticRequest(request));
+    
+    // Static assets - cache first, fallback to network
+    event.respondWith(
+        caches.match(event.request)
+            .then((cachedResponse) => {
+                if (cachedResponse) {
+                    // Update cache in background
+                    fetch(event.request).then((response) => {
+                        if (response.ok) {
+                            caches.open(CACHE_NAME).then((cache) => {
+                                cache.put(event.request, response);
+                            });
+                        }
+                    });
+                    return cachedResponse;
+                }
+                return fetch(event.request);
+            })
+    );
 });
 
-// Handle API requests with network-first strategy
-async function handleAPIRequest(request) {
-    try {
-        // Try network first
-        const response = await fetch(request);
-        
-        // If successful, update cache
-        if (response.ok) {
-            const cache = await caches.open(API_CACHE);
-            cache.put(request, response.clone());
-        }
-        
-        return response;
-    } catch (error) {
-        console.log('[ServiceWorker] Network failed, trying cache:', request.url);
-        
-        // If network fails, try cache
-        const cachedResponse = await caches.match(request);
-        if (cachedResponse) {
-            return cachedResponse;
-        }
-        
-        // If both fail, return offline response
-        return new Response(JSON.stringify({
-            error: 'offline',
-            message: 'You are currently offline. This request will be synced when connection is restored.',
-            timestamp: new Date().toISOString()
-        }), {
-            status: 503,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    }
-}
-
-// Handle navigation requests
-async function handleNavigationRequest(request) {
-    try {
-        const response = await fetch(request);
-        return response;
-    } catch (error) {
-        console.log('[ServiceWorker] Navigation failed, serving offline page');
-        const cache = await caches.open(CACHE_NAME);
-        const cachedResponse = await cache.match(OFFLINE_URL);
-        return cachedResponse || new Response('Offline - Please check your connection');
-    }
-}
-
-// Handle static assets with cache-first strategy
-async function handleStaticRequest(request) {
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-        return cachedResponse;
-    }
-
-    try {
-        const response = await fetch(request);
-        if (response.ok) {
-            const cache = await caches.open(CACHE_NAME);
-            cache.put(request, response.clone());
-        }
-        return response;
-    } catch (error) {
-        console.log('[ServiceWorker] Static request failed:', request.url);
-        return new Response('Resource not available offline', { status: 404 });
-    }
-}
-
-// Background Sync - sync queued requests when online
+// Background sync handler
 self.addEventListener('sync', (event) => {
-    console.log('[ServiceWorker] Background sync triggered:', event.tag);
+    console.log('Background sync:', event.tag);
     
-    if (event.tag === 'sync-offline-data') {
+    if (event.tag === SYNC_TAG) {
         event.waitUntil(syncOfflineData());
     }
 });
 
+// Periodic sync for background updates
+self.addEventListener('periodicsync', (event) => {
+    if (event.tag === 'update-cache') {
+        event.waitUntil(updateCachedData());
+    }
+});
+
 async function syncOfflineData() {
-    console.log('[ServiceWorker] Syncing offline data...');
+    console.log('Processing background sync');
+    
+    // Notify client sync started
+    self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => {
+            client.postMessage({ type: 'SYNC_STARTED' });
+        });
+    });
     
     try {
-        // Notify all clients that sync is starting
-        const clients = await self.clients.matchAll();
-        clients.forEach(client => {
-            client.postMessage({
-                type: 'SYNC_STARTED',
-                timestamp: new Date().toISOString()
-            });
-        });
-
-        // Trigger sync in the main app
-        const response = await fetch('/api/sync-offline-queue/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (response.ok) {
-            console.log('[ServiceWorker] Sync completed successfully');
-            clients.forEach(client => {
-                client.postMessage({
-                    type: 'SYNC_COMPLETED',
-                    timestamp: new Date().toISOString()
-                });
-            });
-        } else {
-            throw new Error('Sync failed');
-        }
-    } catch (error) {
-        console.error('[ServiceWorker] Sync error:', error);
+        // Get queued data from IndexedDB
+        const queue = await getQueuedRequests();
         
-        const clients = await self.clients.matchAll();
-        clients.forEach(client => {
-            client.postMessage({
-                type: 'SYNC_FAILED',
-                error: error.message,
-                timestamp: new Date().toISOString()
+        for (const request of queue) {
+            try {
+                await processQueuedRequest(request);
+                await removeFromQueue(request.id);
+            } catch (error) {
+                console.error('Failed to sync request:', error);
+                // Keep failed requests for retry
+            }
+        }
+        
+        // Notify success
+        self.clients.matchAll().then((clients) => {
+            clients.forEach((client) => {
+                client.postMessage({ type: 'SYNC_COMPLETED' });
+            });
+        });
+    } catch (error) {
+        console.error('Background sync failed:', error);
+        self.clients.matchAll().then((clients) => {
+            clients.forEach((client) => {
+                client.postMessage({ type: 'SYNC_FAILED' });
             });
         });
     }
 }
 
-// Listen for messages from main app
-self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
-    }
+async function updateCachedData() {
+    console.log('Updating cached data');
     
-    if (event.data && event.data.type === 'CLEAR_CACHE') {
-        event.waitUntil(
-            caches.keys().then((cacheNames) => {
-                return Promise.all(
-                    cacheNames.map((cacheName) => caches.delete(cacheName))
-                );
-            })
-        );
+    const cache = await caches.open(CACHE_NAME);
+    const apiUrls = [
+        '/api/offline-data/',
+        '/api/categories/',
+        '/api/products/'
+    ];
+    
+    for (const url of apiUrls) {
+        try {
+            const response = await fetch(url);
+            if (response.ok) {
+                await cache.put(url, response);
+            }
+        } catch (error) {
+            console.error('Failed to update cache for:', url);
+        }
     }
-});
+}
+
+// IndexedDB for queued requests
+const DB_NAME = 'OfflineQueueDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'requests';
+
+async function openDatabase() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+            }
+        };
+        
+        request.onsuccess = (event) => resolve(event.target.result);
+        request.onerror = (event) => reject(event.target.error);
+    });
+}
+
+async function getQueuedRequests() {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.getAll();
+        
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+async function removeFromQueue(id) {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.delete(id);
+        
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+}

@@ -395,3 +395,50 @@ def get_offline_data(request):
             'success': False,
             'error': str(e)
         }, status=500)
+    
+
+    
+
+
+
+
+
+# ============================================
+# SYNC  DATA OFLINE
+# ============================================
+def sync_offline_requests(request):
+    """Endpoint for syncing queued offline requests"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            requests = data.get('requests', [])
+            results = []
+            
+            for req in requests:
+                try:
+                    # Process each queued request
+                    # This would be specific to your application logic
+                    result = {
+                        'id': req['id'],
+                        'success': True,
+                        'timestamp': timezone.now().isoformat()
+                    }
+                    results.append(result)
+                except Exception as e:
+                    result = {
+                        'id': req['id'],
+                        'success': False,
+                        'error': str(e)
+                    }
+                    results.append(result)
+            
+            return JsonResponse({
+                'success': True,
+                'results': results,
+                'synced_at': timezone.now().isoformat()
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+    
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
