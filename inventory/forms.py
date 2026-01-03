@@ -177,11 +177,25 @@ class ProductForm(forms.ModelForm):
     
 
 
+class CustomProductFormSet(forms.BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make price fields not required for all forms in the formset
+        for form in self.forms:
+            form.fields['buying_price'].required = False
+            form.fields['selling_price'].required = False
+            # Set default values
+            if not form.initial.get('buying_price'):
+                form.fields['buying_price'].initial = 0
+            if not form.initial.get('selling_price'):
+                form.fields['selling_price'].initial = 0
+
 ProductFormSet = inlineformset_factory(
     Category,
     Product,
     form=ProductForm,
-    extra=1,  # Number of blank product rows
+    formset=CustomProductFormSet,  # Use custom formset
+    extra=1,
     can_delete=True,
     validate_min=False
 )

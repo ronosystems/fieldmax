@@ -21,26 +21,12 @@ from .serializers import CategorySerializer, ProductSerializer, StockEntrySerial
 from .forms import CategoryForm, ProductForm, StockEntryForm, ProductFormSet
 import logging
 from django.views.generic import TemplateView
-
-
-
-
-
-
-
+from django.views.decorators.http import require_GET
 
 
 
 
 logger = logging.getLogger(__name__)
-
-
-
-
-
-
-
-
 
 
 
@@ -58,13 +44,19 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 
+
+# ====================================
+# GET CATEGORIES (AJAX)
+# ====================================
+
 @login_required
-def get_categories_api(request):
-    """Return all active categories"""
+@require_http_methods(["GET"])
+def get_categories(request):
+    """Get all categories for dropdowns (AJAX)"""
     try:
-        categories = Category.objects.filter(
-            is_active=True
-        ).values('id', 'name', 'item_type', 'sku_type').order_by('name')
+        categories = Category.objects.filter(is_active=True).values(
+            'id', 'name', 'category_code', 'item_type'
+        ).order_by('name')
         
         return JsonResponse({
             "success": True,
@@ -79,6 +71,41 @@ def get_categories_api(request):
 
 
 
+# ====================================
+# GET CATEGORIES API
+# ====================================
+
+@login_required
+@require_GET
+def get_categories_api(request):
+    """API endpoint to get all categories"""
+    try:
+        # Get all categories (no is_active field, so get all)
+        categories = Category.objects.all().order_by('name')
+        
+        data = []
+        for cat in categories:
+            # Count products for this category
+            product_count = Product.objects.filter(category=cat, is_active=True).count()
+            
+            category_data = {
+                'id': cat.id,
+                'name': cat.name,
+                'code': cat.category_code or '',
+                'item_type': cat.get_item_type_display() if hasattr(cat, 'get_item_type_display') else cat.item_type,
+                'sku_type': cat.get_sku_type_display() if hasattr(cat, 'get_sku_type_display') else cat.sku_type,
+                'product_count': product_count,
+            }
+            data.append(category_data)
+        
+        return JsonResponse({'success': True, 'categories': data})
+        
+    except Exception as e:
+        logger.error(f"Error in get_categories_api: {e}", exc_info=True)
+        return JsonResponse(
+            {'success': False, 'message': str(e), 'categories': []},
+            status=500
+        )
 
 
 
@@ -2091,6 +2118,5 @@ def product_list(request):
     }
 
     return render(request, 'website/products.html', context)
-
 
 
