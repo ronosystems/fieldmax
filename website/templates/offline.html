@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - FieldMax</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #0dcaf0 0%, #0ab4d6 100%);
+            color: white;
+        }
+        .offline-container {
+            text-align: center;
+            padding: 3rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            max-width: 500px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        .offline-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        h1 { 
+            font-size: 2rem; 
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        p { 
+            font-size: 1.1rem; 
+            opacity: 0.9; 
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        .retry-button {
+            padding: 15px 40px;
+            font-size: 16px;
+            background-color: white;
+            color: #0dcaf0;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .retry-button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        .offline-features {
+            margin-top: 2rem;
+            text-align: left;
+            display: inline-block;
+        }
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            font-size: 0.95rem;
+        }
+        .feature i {
+            color: #10b981;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📡</div>
+        <h1>You're Offline</h1>
+        <p>No internet connection detected. Don't worry, your data is safe!</p>
+        
+        <div class="offline-features">
+            <div class="feature">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Your data is cached locally</span>
+            </div>
+            <div class="feature">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Changes sync when back online</span>
+            </div>
+            <div class="feature">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Limited features available</span>
+            </div>
+        </div>
+        
+        <button class="retry-button" onclick="location.reload()">
+            <i class="bi bi-arrow-clockwise"></i> Try Again
+        </button>
+    </div>
+    
+    <script>
+        // Auto-reload when connection restored
+        window.addEventListener('online', function() {
+            location.reload();
+        });
+        
+        // Check connection every 5 seconds
+        setInterval(function() {
+            if (navigator.onLine) {
+                location.reload();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

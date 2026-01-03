@@ -593,3 +593,79 @@ def validate_settings():
 # Run validation on startup
 if 'runserver' in sys.argv or 'migrate' in sys.argv or 'collectstatic' in sys.argv:
     validate_settings()
+
+
+
+
+# ============================================
+# OFFLINE & SYNC CONFIGURATION
+# ============================================
+
+# Service Worker Configuration
+PWA_APP_NAME = 'FieldMax'
+PWA_APP_SHORT_NAME = 'FieldMax'
+PWA_APP_DESCRIPTION = 'Field Management System with Offline Support'
+PWA_APP_THEME_COLOR = '#0066cc'
+PWA_APP_BACKGROUND_COLOR = '#ffffff'
+PWA_APP_DISPLAY = 'standalone'
+PWA_APP_START_URL = '/'
+PWA_APP_ICONS = [
+    {
+        'src': '/static/icons/icon-192x192.png',
+        'sizes': '192x192',
+        'type': 'image/png'
+    },
+    {
+        'src': '/static/icons/icon-512x512.png',
+        'sizes': '512x512',
+        'type': 'image/png'
+    }
+]
+
+# Offline Storage Configuration
+OFFLINE_STORAGE = {
+    'ENABLE_OFFLINE_MODE': True,
+    'SYNC_ON_RECONNECT': True,
+    'QUEUE_REQUESTS_OFFLINE': True,
+    
+    # Maximum storage for offline data (in MB)
+    'MAX_OFFLINE_STORAGE': 50,
+    
+    # How long to keep offline data before auto-deletion (days)
+    'OFFLINE_DATA_RETENTION_DAYS': 7,
+    
+    # Sync retry configuration
+    'SYNC_RETRY_ATTEMPTS': 3,
+    'SYNC_RETRY_DELAY': 5,  # seconds
+    
+    # What operations can be performed offline
+    'OFFLINE_CAPABILITIES': {
+        'view_inventory': True,
+        'create_sale': True,
+        'update_stock': True,
+        'view_reports': True,
+        'create_customer': True,
+    },
+    
+    # Conflict resolution strategy: 'server_wins', 'client_wins', 'manual'
+    'CONFLICT_RESOLUTION': 'server_wins',
+    
+    # Enable background sync API
+    'ENABLE_BACKGROUND_SYNC': True,
+}
+
+# API endpoints that support offline mode
+OFFLINE_ENABLED_ENDPOINTS = [
+    '/api/inventory/',
+    '/api/sales/',
+    '/api/customers/',
+    '/api/products/',
+]
+
+# Sync status notification
+SYNC_NOTIFICATIONS = {
+    'ENABLE_NOTIFICATIONS': True,
+    'NOTIFY_ON_SYNC_START': False,
+    'NOTIFY_ON_SYNC_COMPLETE': True,
+    'NOTIFY_ON_SYNC_ERROR': True,
+}

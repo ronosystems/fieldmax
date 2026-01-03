@@ -1,0 +1,284 @@
+<!-- Add this to your base.html template -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0066cc">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <!-- iOS PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="FieldMax">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    
+    <title>{% block title %}FieldMax{% endblock %}</title>
+    
+    <!-- Your existing CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    
+    <style>
+        /* Connection Status Indicator */
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .connection-status.online {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .connection-status.offline {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        /* Offline Queue Counter */
+        .offline-queue-badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #f59e0b;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+        }
+        
+        .offline-queue-counter {
+            background-color: white;
+            color: #f59e0b;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        /* Notification Container */
+        #notification-container {
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            z-index: 1001;
+            max-width: 400px;
+        }
+        
+        .notification {
+            padding: 12px 20px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+        }
+        
+        .notification.fade-out {
+            animation: slideOut 0.3s ease;
+        }
+        
+        .notification-success {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .notification-warning {
+            background-color: #f59e0b;
+            color: white;
+        }
+        
+        .notification-error {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .notification-info {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        /* Sync Button */
+        .sync-button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .sync-button:hover {
+            background-color: #2563eb;
+        }
+        
+        .sync-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .sync-icon {
+            animation: rotate 1s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Connection Status -->
+    <div id="connection-status" class="connection-status online">
+        <i class="fas fa-wifi"></i> Online
+    </div>
+    
+    <!-- Offline Queue Badge -->
+    <div class="offline-queue-badge" onclick="offlineManager?.syncOfflineData()">
+        <i class="fas fa-sync"></i>
+        <span id="offline-queue-counter" class="offline-queue-counter">0</span>
+        items to sync
+    </div>
+    
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+    
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Load Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script src="{% static 'js/offline-manager.js' %}"></script>
+    
+    <script>
+        // Initialize offline functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if service worker is supported
+            if ('serviceWorker' in navigator) {
+                console.log('Service Worker supported');
+            } else {
+                console.warn('Service Worker not supported in this browser');
+            }
+            
+            // Download offline data on first load
+            if (navigator.onLine) {
+                cacheOfflineData();
+            }
+        });
+        
+        // Cache essential data for offline use
+        async function cacheOfflineData() {
+            try {
+                const response = await fetch('/api/offline-data/');
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('offlineData', JSON.stringify(data.data));
+                    localStorage.setItem('offlineDataTimestamp', new Date().toISOString());
+                    console.log('Offline data cached successfully');
+                }
+            } catch (error) {
+                console.error('Failed to cache offline data:', error);
+            }
+        }
+        
+        // Helper function to make offline-aware API calls
+        async function offlineAwareRequest(method, url, data = null) {
+            if (!navigator.onLine) {
+                // Queue request for later
+                const queueId = window.offlineManager.queueRequest(method, url, data);
+                return {
+                    success: true,
+                    offline: true,
+                    queueId: queueId,
+                    message: 'Request queued for sync when online'
+                };
+            }
+            
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: data ? JSON.stringify(data) : null
+                });
+                
+                return await response.json();
+            } catch (error) {
+                // Network error - queue for later
+                const queueId = window.offlineManager.queueRequest(method, url, data);
+                return {
+                    success: true,
+                    offline: true,
+                    queueId: queueId,
+                    message: 'Network error - request queued for sync'
+                };
+            }
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,8 +1,8 @@
-# Virtual Environment (CRITICAL!)
+# Virtual Environments
 venv/
 env/
-ENV/
 .venv/
+ENV/
 
 # Python
 __pycache__/
@@ -10,22 +10,40 @@ __pycache__/
 *.pyc
 *.so
 .Python
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.eggs/
+dist/
+build/
 
 # Django
 *.log
+*.sqlite3
 db.sqlite3
 /media
 /staticfiles
+local_settings.py
 
 # Environment Variables
 .env
 *.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # IDE
 .vscode/
 .idea/
 *.swp
+*.swo
+*~
 .DS_Store
+*.code-workspace
 
 # Logs
 logs/
@@ -33,3 +51,16 @@ logs/
 
 # Zone Identifier files
 *:Zone.Identifier
+
+# Operating System
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook
+.ipynb_checkpoints
