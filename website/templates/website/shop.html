@@ -374,7 +374,7 @@
   }
 
   .category-header {
-    background: linear-gradient(135deg, #00f7f7 100%,  #00fdf0 100%);
+    background: linear-gradient(135deg, #000000 100%,  #000000 100%);
     padding: 2.5rem;
     border-radius: 1.5rem;
     margin-bottom: 2rem;
@@ -406,9 +406,9 @@
   }
 
   .category-title {
-    font-size: 2.25rem;
-    font-weight: 900;
-    color: var(--gray-900);
+    font-size: 3rem;
+    font-weight: 1000;
+    color: #ffffff;
     margin: 0;
     display: flex;
     align-items: center;
@@ -440,7 +440,7 @@
     gap: 0.625rem;
     padding: 0.75rem 1.5rem;
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: #000000;
+    color: #ffffff;
     border-radius: 2rem;
     font-size: 0.95rem;
     font-weight: 700;
@@ -455,23 +455,23 @@
 
   .category-meta {
     display: flex;
-    gap: 2.5rem;
-    margin-top: 1.5rem;
+    gap: 3rem;
+    margin-top: 2rem;
     flex-wrap: wrap;
   }
 
   .meta-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    color: var(--gray-600);
-    font-size: 1rem;
-    font-weight: 500;
+    gap: 1rem;
+    color:#ffffff;
+    font-size: 2rem;
+    font-weight: 700;
   }
 
   .meta-item i {
-    color: var(--primary);
-    font-size: 1.25rem;
+    color: #ffffff;
+    font-size: 2rem;
   }
 
   /* PRODUCT GRID & CARD STYLES - FIXED */
@@ -1471,10 +1471,6 @@
                 <i class="bi bi-{% if category.is_single_item %}phone{% else %}box-seam{% endif %}"></i>
               </div>
               <span>{{ category.name }}</span>
-            </div>
-            <div class="category-badge">
-              <i class="bi bi-box-seam"></i>
-              <span>{{ category.filtered_products.count }} {{ category.get_item_type_display }}</span>
             </div>
           </div>
           <div class="category-meta">
