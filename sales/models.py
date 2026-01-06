@@ -10,7 +10,9 @@ from django.db.models import F, Max, Sum
 from django.contrib.auth.models import User
 from django.utils import timezone
 from inventory.models import Product, StockEntry
+import re
 
+    
 
 
 
@@ -212,7 +214,24 @@ class Sale(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.sale_id:
-            self.sale_id = generate_custom_sale_id()
+            # Find the highest numeric sale_id
+            max_sale = Sale.objects.all().order_by('-sale_id').first()
+            if max_sale:
+                # Extract numeric part
+                match = re.search(r'\d+', max_sale.sale_id)
+                if match:
+                    next_number = int(match.group()) + 1
+                else:
+                    next_number = 500  # Start from 500 if no numeric found
+            else:
+                next_number = 500  # First sale starts from 500
+            
+            # Ensure we start from 500 minimum
+            if next_number < 500:
+                next_number = 500
+            
+            self.sale_id = f"SALE-{next_number:04d}"  # Format as SALE-0500
+        
         super().save(*args, **kwargs)
 
     def recalculate_totals(self):

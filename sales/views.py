@@ -1883,7 +1883,7 @@ class BatchSaleCreateView(View):
                 "total_amount": float(sale.total_amount),
                 "etr_receipt_number": sale.etr_receipt_number,
                 "fiscal_receipt_number": sale.etr_receipt_number,
-                "receipt_number": etr_number,
+                "receipt_number": fiscal_receipt_number,
                 "items": created_items,
                 "errors": errors if errors else None,
                 "receipt_url": f"/sales/receipt/{sale.sale_id}/",
