@@ -30,13 +30,7 @@ from django.views.decorators.http import require_GET
 from django.views.decorators.cache import cache_page
 import logging
 
-
-
-
 logger = logging.getLogger(__name__)
-
-
-
 
 # ============================================
 #  CATEGORIES  LIST PUBLIC -
@@ -91,8 +85,6 @@ def categories_list_public(request):
             'message': str(e),
             'categories': []
         }, status=500)
-
-
 
 # ============================================
 # API GET CATEGORIES -
@@ -180,11 +172,6 @@ def api_get_categories(request):
             'categories': []
         }, status=500)
 
-
-
-
-
-
 # ============================================
 # API CATEGORY DETAILS-
 # ============================================
@@ -247,18 +234,9 @@ def api_category_details(request, category_id):
             'message': str(e)
         }, status=500)
 
-
-
-
-
-
-
-
-
 # ============================================
 # HOME VIEW -
 # ============================================
-
 def home(request):
     """
     Home page with top 12 most frequently sold products
@@ -281,7 +259,6 @@ def home(request):
         elif request.user.is_superuser:
             dashboard_url = '/admin-dashboard/'
     
-    
     # Get top 12 best-selling items
     best_sellers = []
     
@@ -296,7 +273,6 @@ def home(request):
         ).order_by('-times_ordered')[:12]
         
     except Exception as e:
-        
         # Fallback: Show newest available products
         best_sellers = Product.objects.filter(
             Q(status='available') | Q(status='lowstock')
@@ -338,16 +314,9 @@ def home(request):
     
     return render(request, 'website/home.html', context)
 
-
-
-
-
-
-
 # ============================================
 # HOME STATS -
 # ============================================
-
 @require_http_methods(["GET"])
 def home_stats(request):
     """
@@ -401,14 +370,9 @@ def home_stats(request):
             }
         }, status=500)
 
-
-
-
-
 # ============================================
 # FEATURED PRODUCTS -
 # ============================================
-
 @require_http_methods(["GET"])
 def featured_products(request):
     """
@@ -470,14 +434,9 @@ def featured_products(request):
             'products': []
         }, status=500)
 
-
-
-
-
 # ============================================
 # PRODUCT EMOJI-
 # ============================================
-
 def get_product_emoji(product):
     """
     Helper function to return emoji based on product category or type
@@ -523,15 +482,9 @@ def get_product_emoji(product):
     # Default emoji
     return '📦'
 
-
-
-
-
-
 # ============================================
 # TRENDING STATS -
 # ============================================
-
 @require_http_methods(["GET"])
 def trending_stats(request):
     """
@@ -571,17 +524,9 @@ def trending_stats(request):
             'error': str(e)
         }, status=500)
 
-
-
-
-
-
-
-
 # ============================================
 # PRODUCT INCREAMENT -
 # ============================================
-
 # Optional: View to increment product view count
 @require_http_methods(["POST"])
 @csrf_exempt
@@ -612,13 +557,9 @@ def increment_product_view(request, product_id):
             'error': str(e)
         }, status=500)
 
-
-
-
 # ============================================
 # DASHBOARD URL
 # ============================================
-
 def dashboard_url(request):
     """Make dashboard URL available globally in all templates"""
     url = '#'
@@ -642,15 +583,9 @@ def dashboard_url(request):
     
     return {'dashboard_url': url}
 
-
-
-
-
-
 # ============================================
 # PRODUCT PAGE
 # ============================================
-
 @require_http_methods(["GET"])
 def products_page(request):
     """
@@ -670,18 +605,9 @@ def products_page(request):
     
     return render(request, 'website/products.html', context)
 
-
-
-
-
-
-
-
-
 # ============================================
 # API FEATURED PRODUCT
 # ============================================
-
 @require_http_methods(["GET"])
 def api_featured_products(request):
     """
@@ -754,18 +680,9 @@ def api_featured_products(request):
             'products': []
         }, status=500)
 
-
-
-
-
-
-
-
-
 # ============================================
 # API  HOME STATS
 # ============================================
-
 @require_http_methods(["GET"])
 def api_home_stats(request):
     """
@@ -818,16 +735,9 @@ def api_home_stats(request):
             }
         })
 
-
-
-
-
-
-
 # ============================================
 # API PRODUCTS  CATEGORY
 # ============================================
-
 @require_http_methods(["GET"])
 def api_product_categories(request):
     """
@@ -862,17 +772,9 @@ def api_product_categories(request):
             'categories': []
         }, status=500)
 
-
-
-
-
-
-
-
 # ============================================
 # API QUICK SEARCH
 # ============================================
-
 @require_http_methods(["POST"])
 def api_quick_search(request):
     """
@@ -932,37 +834,18 @@ def api_quick_search(request):
             'products': []
         }, status=500)
 
-
-
-
-
-
-
-
-
-
-
 # ============================================
 # SHOPING CART
 # ============================================
-
 def shopping_cart(request):
     """Display shopping cart page"""
     return render(request, 'website/cart.html', {
         'page_title': 'Shopping Cart - Fieldmax'
     })
 
-
-
-
-
-
-
-
 # ============================================
 # VALIDATE CART
 # ============================================
-
 @require_http_methods(["POST"])
 def validate_cart(request):
     """
@@ -1042,18 +925,9 @@ def validate_cart(request):
             'message': str(e)
         }, status=500)
 
-
-
-
-
-
-
-
-
 # ============================================
 # CHECKOUT
 # ============================================
-
 @require_http_methods(["POST"])
 def checkout(request):
     """
@@ -1105,18 +979,9 @@ def checkout(request):
             'message': f'Checkout failed: {str(e)}'
         }, status=500)
 
-
-
-
-
-
-
-
-
 # ============================================
 # CREATE PENDING ORDER
 # ============================================
-
 @csrf_exempt  # Remove this if you're properly handling CSRF tokens
 @require_http_methods(["POST"])
 def create_pending_order(request):
@@ -1200,18 +1065,9 @@ def create_pending_order(request):
             'message': f'Failed to create order: {str(e)}'
         }, status=500)
 
-
-
-
-
-
-
-
-
 # ============================================
 # 2. CHECKOUT PAGE
 # ============================================
-
 @require_http_methods(["GET"])
 def checkout_page(request):
     """
@@ -1222,19 +1078,9 @@ def checkout_page(request):
         'page_title': 'Checkout - Fieldmax'
     })
 
-
-
-
-
-
-
-
-
-
 # ============================================
 # 3. STAFF VIEW: LIST PENDING ORDERS
 # ============================================
-
 @login_required
 @require_http_methods(["GET"])
 def pending_orders_list(request):
@@ -1255,18 +1101,9 @@ def pending_orders_list(request):
 
     return render(request, 'website/pending_orders.html', context)
 
-
-
-
-
-
-
-
-
 # ============================================
 # 4. API: GET PENDING ORDERS COUNT (for badge)
 # ============================================
-
 @login_required
 @require_http_methods(["GET"])
 def pending_orders_count(request):
@@ -1288,17 +1125,9 @@ def pending_orders_count(request):
             'error': str(e)
         })
 
-
-
-
-
-
-
-
 # ============================================
 # 5. STAFF ACTION: APPROVE ORDER
 # ============================================
-
 @login_required
 @require_http_methods(["POST"])
 def approve_order(request, order_id):
@@ -1415,17 +1244,9 @@ def approve_order(request, order_id):
             'message': f'Failed to approve order: {str(e)}'
         }, status=500)
 
-
-
-
-
-
-
-
 # ============================================
 # 6. STAFF ACTION: REJECT ORDER
 # ============================================
-
 @login_required
 @require_http_methods(["POST"])
 def reject_order(request, order_id):
@@ -1476,16 +1297,9 @@ def reject_order(request, order_id):
             'message': f'Failed to reject order: {str(e)}'
         }, status=500)
 
-
-
-
-
-
-
 # ============================================
 # PROCESS ORDER
 # ============================================
-
 @require_http_methods(["POST"])
 def process_order(request):
     """
@@ -1670,17 +1484,9 @@ def process_order(request):
             'message': f'Failed to process order: {str(e)}'
         }, status=500)
 
-
-
-
-
-
-
-
 # ============================================
 # ORDER SUCCESS
 # ============================================
-
 @require_http_methods(["GET"])
 def order_success(request):
     """
@@ -1692,17 +1498,9 @@ def order_success(request):
         'page_title': 'Order Successful - Fieldmax',
     })
 
-
-
-
-
-
-
-
 # ============================================
 # SHOP VIEW
 # ============================================
-
 @csrf_exempt
 @require_POST
 def api_add_to_cart(request):
@@ -1753,15 +1551,9 @@ def api_add_to_cart(request):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
-
-
-
-
-
 # ============================================
 # SHOP VIEW - UPDATED WITH CATEGORY FILTERING
 # ============================================
-
 def shop_view(request):
     """
     Display all products organized by category
@@ -1808,11 +1600,9 @@ def shop_view(request):
     
     return render(request, 'website/shop.html', context)
 
-
 # ============================================
 # ALTERNATIVE: CLASS-BASED VIEW WITH FILTERING
 # ============================================
-
 from django.views.generic import ListView
 
 class ShopListView(ListView):
@@ -1869,21 +1659,9 @@ class ShopListView(ListView):
         
         return context
 
-
-
-
-
-
-
-
-
-
-
-
 # ============================================
 # SALES CHART DATA
 # ============================================
-
 def get_sales_chart_data(request):
     """
     Generate REAL data for sales statistics charts
@@ -1980,20 +1758,9 @@ def get_sales_chart_data(request):
         }
     }
 
-
-
-
-
-
-
-
-
-
-
 # ============================================
 # ROLE BASED LOGIN VIEW
 # ============================================
-
 class RoleBasedLoginView(LoginView):
     template_name = 'registration/login.html'
         
@@ -2018,15 +1785,21 @@ class RoleBasedLoginView(LoginView):
         # Default redirect if no profile or role
         return '/'
 
-
-
-
-
+def get_users_by_role_counts():
+    """Helper function to get counts of users by role"""
+    all_users = User.objects.select_related('profile')
+    
+    return {
+        'total_admin': all_users.filter(profile__role__name__iexact='admin').count(),
+        'total_managers': all_users.filter(profile__role__name__iexact='manager').count(),
+        'total_cashiers': all_users.filter(profile__role__name__iexact='cashier').count(),
+        'total_agents': all_users.filter(profile__role__name__iexact='agent').count(),
+        'total_users': all_users.count(),
+    }
 
 # ============================================
 # CAHIER DASHBOARD
 # ============================================
-
 @login_required
 def cashier_dashboard(request):
     """
@@ -2035,20 +1808,9 @@ def cashier_dashboard(request):
     """
     return render(request, 'website/cashier_dashboard.html')
 
-
-
-
-
-
-
-
-
-
-
 # ============================================
 # ADMIN DASHBOARD
 # ============================================
-
 @login_required
 def admin_dashboard(request):
     """
@@ -2213,15 +1975,9 @@ def admin_dashboard(request):
     # ============================================
     # CARD E: 👤 USERS
     # ============================================
-    all_users = User.objects.select_related('profile')
-    
-    context["total_users"] = all_users.count()
-    
-    # Count by role
-    context["total_admin"] = all_users.filter(profile__role='admin').count()
-    context["total_managers"] = all_users.filter(profile__role='manager').count()
-    context["total_cashiers"] = all_users.filter(profile__role='cashier').count()
-    context["total_agents"] = all_users.filter(profile__role='agent').count()
+    # Use the helper function to get user counts by role
+    role_counts = get_users_by_role_counts()
+    context.update(role_counts)
 
     # ============================================
     # OTHER SUMMARY DATA
@@ -2377,17 +2133,6 @@ def admin_dashboard(request):
     # ============================================
     return render(request, "website/admin_dashboard.html", context)
 
-
-
-
-
-
-
-
-
-
-
-
 # ============================================
 # FIX PRODUCT STATUSES
 # ============================================
@@ -2472,12 +2217,6 @@ def fix_product_statuses():
     logger.info(f"✅ Fixed {fixed_count} products with inconsistent statuses")
     return fixed_count
 
-
-
-
-
-
-
 # ============================================
 # DEBUG PRODUCT STATUS
 # ============================================
@@ -2536,18 +2275,9 @@ def debug_product_status(request, product_code):
     
     return render(request, "debug_product.html", debug_info)
 
-
-
-
-
-
-
-
-
 # ============================================
 # MANAGER DASHBOARD
 # ============================================
-
 @login_required
 def manager_dashboard(request):
     context = {}
@@ -2555,7 +2285,10 @@ def manager_dashboard(request):
     # ============================================
     # SUMMARY CARDS
     # ============================================
-    context["total_users"] = User.objects.count()
+    # Use the helper function to get user counts by role
+    role_counts = get_users_by_role_counts()
+    context.update(role_counts)
+    
     context["total_categories"] = Category.objects.count()
     context["total_stock_entries"] = StockEntry.objects.count()
 
@@ -2728,25 +2461,11 @@ def manager_dashboard(request):
     # ============================================
     # RENDER TEMPLATE
     # ============================================
-
-
     return render(request, 'website/manager_dashboard.html', context)
-
-
-
-
-
-
-
-
-
-
-
 
 # ============================================
 # AGENT DASHBOARD
 # ============================================
-
 @login_required(login_url='/accounts/login/')
 def agent_dashboard(request):
     user = request.user
