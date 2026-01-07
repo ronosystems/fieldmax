@@ -25155,3 +25155,4 @@ django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. Y
 [INFO] 2026-01-07 08:46:06 basehttp 133023 138148642281152 - "GET /api/categories/ HTTP/1.1" 200 320
 [INFO] 2026-01-07 08:46:06 basehttp 133023 138148642281152 - "GET /api/offline-data/ HTTP/1.1" 302 0
 [INFO] 2026-01-07 08:46:06 basehttp 133023 138148642281152 - "GET /login/?next=/api/offline-data/ HTTP/1.1" 200 49905
+[INFO] 2026-01-07 09:24:34 autoreload 133023 138148823400576 - /home/kk/fieldmax/fieldmax/settings.py changed, reloading.
