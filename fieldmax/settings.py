@@ -1,6 +1,6 @@
 """
 Django settings for fieldmax project - PRODUCTION READY
-Optimized for Koyeb deployment with PostgreSQL database
+Optimized for Render deployment with PostgreSQL database
 """
 
 import dj_database_url
@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = os.getenv("DEBUG", "False").lower() in ('true', '1', 't')
 
 # ============================================
-# SECURITY SETTINGS - FIXED
+# SECURITY SETTINGS - RENDER OPTIMIZED
 # ============================================
 SECRET_KEY = os.getenv("SECRET_KEY")
 
@@ -37,28 +37,35 @@ if not SECRET_KEY:
     if DEBUG:
         # Development fallback
         SECRET_KEY = 'django-insecure-dev-key-for-local-testing-only'
-        print("⚠️  WARNING: Using development SECRET_KEY. Set SECRET_KEY in Koyeb environment variables for production.")
+        print("⚠️  WARNING: Using development SECRET_KEY. Set SECRET_KEY in Render environment variables for production.")
     else:
         # In production, generate a secure key if not set (won't raise error)
         SECRET_KEY = 'django-insecure-' + secrets.token_urlsafe(32)
-        print("⚠️  WARNING: Generated SECRET_KEY for this session. Set SECRET_KEY in Koyeb environment variables.")
+        print("⚠️  WARNING: Generated SECRET_KEY for this session. Set SECRET_KEY in Render environment variables.")
 
-# Koyeb specific domains
-KOYEB_APP_NAME = os.getenv("KOYEB_APP_NAME", "fieldmax")
-KOYEB_DOMAIN = f"{KOYEB_APP_NAME}-*.koyeb.app"
+# Render specific configuration
+RENDER_EXTERNAL_HOSTNAME = os.getenv('RENDER_EXTERNAL_HOSTNAME')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', f'.koyeb.app,localhost,127.0.0.1,{KOYEB_APP_NAME}.koyeb.app').split(',')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS = [
+        RENDER_EXTERNAL_HOSTNAME,
+        'localhost',
+        '127.0.0.1',
+    ]
+else:
+    ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
-# ✅ CRITICAL: CSRF Trusted Origins for Koyeb
+# ✅ CRITICAL: CSRF Trusted Origins for Render
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.koyeb.app",
-    f"https://{KOYEB_APP_NAME}.koyeb.app",
-    f"https://{KOYEB_DOMAIN}",
+    f"https://{RENDER_EXTERNAL_HOSTNAME}",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+] if RENDER_EXTERNAL_HOSTNAME else [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]
 
-# ✅ CRITICAL: Proxy SSL Header for Koyeb
+# ✅ CRITICAL: Proxy SSL Header for Render
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Security settings for production
@@ -111,7 +118,7 @@ INSTALLED_APPS = [
 # ============================================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ FIXED: Simple whitenoise
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ WhiteNoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -162,16 +169,40 @@ TEMPLATES = [
 WSGI_APPLICATION = 'fieldmax.wsgi.application'
 
 # ============================================
-# DATABASE CONFIGURATION (SIMPLIFIED)
+# DATABASE CONFIGURATION - RENDER OPTIMIZED
 # ============================================
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-if DATABASE_URL and DATABASE_URL.startswith('postgresql://'):
-    # Production - PostgreSQL from DATABASE_URL
+if DATABASE_URL:
+    # ✅ Render provides PostgreSQL URLs that may start with postgres://
+    # dj_database_url handles the conversion to postgresql://
     DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,  # Enable connection health checks
+            ssl_require=True  # Render requires SSL
+        )
     }
     print(f"🔗 Using PostgreSQL database from DATABASE_URL")
+elif all([os.getenv('DB_NAME'), os.getenv('DB_USER'), os.getenv('DB_PASSWORD'), os.getenv('DB_HOST')]):
+    # Use individual database credentials
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME'),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': os.getenv('DB_HOST'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+            'OPTIONS': {
+                'sslmode': 'require',
+            },
+            'CONN_MAX_AGE': 600,
+            'CONN_HEALTH_CHECKS': True,
+        }
+    }
+    print(f"🔗 Using PostgreSQL database: {os.getenv('DB_NAME')} on {os.getenv('DB_HOST')}")
 else:
     # Development or fallback - SQLite
     DATABASES = {
@@ -217,9 +248,9 @@ THOUSAND_SEPARATOR = ','
 DECIMAL_SEPARATOR = '.'
 
 # ============================================
-# STORAGE CONFIGURATION - FIXED
+# STORAGE CONFIGURATION - RENDER OPTIMIZED
 # ============================================
-# ✅ FIXED: Use simple StaticFilesStorage to avoid CSS map errors
+# ✅ Use simple StaticFilesStorage to avoid CSS map errors
 STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
 
 # Modern Django storage configuration
@@ -228,12 +259,12 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.StaticFilesStorage",  # ✅ FIXED: Changed from CompressedManifest
+        "BACKEND": "whitenoise.storage.StaticFilesStorage",
     },
 }
 
 # Whitenoise configuration
-WHITENOISE_KEEP_ONLY_HASHED_FILES = False  # ✅ FIXED: Set to False to avoid issues
+WHITENOISE_KEEP_ONLY_HASHED_FILES = False  # Set to False to avoid issues
 WHITENOISE_AUTOREFRESH = DEBUG
 WHITENOISE_MAX_AGE = 31536000 if not DEBUG else 0
 
@@ -342,7 +373,7 @@ REST_FRAMEWORK = {
     
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
     
-    'DATETIME_FORMAT': '%Y-%m-d %H:%M:%S',
+    'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',
     'DATE_FORMAT': '%Y-%m-%d',
     'TIME_FORMAT': '%H:%M:%S',
 }
@@ -446,7 +477,7 @@ LOGGING = {
             'style': '{',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
-        'koyeb': {
+        'render': {
             'format': '{asctime} [{levelname}] {message}',
             'style': '{',
             'datefmt': '%Y-%m-%d %H:%M:%S',
@@ -456,7 +487,7 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'koyeb',
+            'formatter': 'render',
             'level': 'INFO',
         },
     },
@@ -523,6 +554,10 @@ def validate_settings():
     
     warnings = []
     
+    # Check Render environment
+    if not RENDER_EXTERNAL_HOSTNAME and not DEBUG:
+        warnings.append("⚠️  RENDER_EXTERNAL_HOSTNAME not set. This should be automatically set by Render.")
+    
     # Check Cloudinary credentials
     cloudinary_vars = {
         'CLOUDINARY_CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
@@ -537,7 +572,7 @@ def validate_settings():
     
     # Check SECRET_KEY warning (not error)
     if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
-        warnings.append("⚠️  Generated SECRET_KEY in use. Set SECRET_KEY in Koyeb environment variables.")
+        warnings.append("⚠️  Generated SECRET_KEY in use. Set SECRET_KEY in Render environment variables.")
     
     if warnings:
         print("\n" + "="*70)
@@ -557,6 +592,7 @@ if 'runserver' in sys.argv or 'migrate' in sys.argv or 'collectstatic' in sys.ar
 # ============================================
 print(f"\n🚀 FieldMax initialized successfully!")
 print(f"   Environment: {'DEVELOPMENT' if DEBUG else 'PRODUCTION'}")
+print(f"   Platform: {'Render' if RENDER_EXTERNAL_HOSTNAME else 'Local'}")
 print(f"   Database: {DATABASES['default']['ENGINE']}")
 print(f"   Allowed Hosts: {ALLOWED_HOSTS}")
 print("="*50 + "\n")
