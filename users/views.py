@@ -84,3 +84,29 @@ class UserDeleteView(DeleteView):
     model = User
     template_name = 'users/user_confirm_delete.html'
     success_url = reverse_lazy('user-list')
+
+
+
+
+def user_management_view(request):
+    """
+    View to display all users with their profiles and statistics
+    """
+    # Get all users with related profile data
+    users = User.objects.select_related('profile', 'profile__role').all()
+    
+    # Calculate statistics
+    active_users_count = users.filter(is_active=True).count()
+    
+    # Count users by role
+    admin_count = users.filter(profile__role__name='Admin').count()
+    manager_count = users.filter(profile__role__name='Manager').count()
+    
+    context = {
+        'users': users,
+        'active_users_count': active_users_count,
+        'admin_count': admin_count,
+        'manager_count': manager_count,
+    }
+    
+    return render(request, 'users', context)

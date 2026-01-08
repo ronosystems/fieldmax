@@ -4061,6 +4061,9 @@ strong[style*="background-color"] {
 <!-- ============================= -->
 <!--     USERS LIST SECTION        -->
 <!-- ============================= -->
+<!-- ============================= -->
+<!--     USERS LIST SECTION        -->
+<!-- ============================= -->
 <div id="users-list" class="content-section">
   
   <!-- Header -->
@@ -4098,7 +4101,7 @@ strong[style*="background-color"] {
       <div class="stat-icon"><i class="bi bi-people"></i></div>
       <div class="stat-content">
         <span class="stat-label">Total Users</span>
-        <h3 class="stat-value" id="totalUsersCount">{{ total_users }}</h3>
+        <h3 class="stat-value" id="totalUsersCount">{{ users.count }}</h3>
       </div>
     </div>
     
@@ -4106,7 +4109,7 @@ strong[style*="background-color"] {
       <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
       <div class="stat-content">
         <span class="stat-label">Active Users</span>
-        <h3 class="stat-value" id="activeUsersCount">{{ active_users }}</h3>
+        <h3 class="stat-value" id="activeUsersCount">{{ active_users_count }}</h3>
       </div>
     </div>
     
@@ -4114,7 +4117,7 @@ strong[style*="background-color"] {
       <div class="stat-icon"><i class="bi bi-person-badge"></i></div>
       <div class="stat-content">
         <span class="stat-label">Admins</span>
-        <h3 class="stat-value" id="adminUsersCount">{{ admin_users }}</h3>
+        <h3 class="stat-value" id="adminUsersCount">{{ admin_count }}</h3>
       </div>
     </div>
     
@@ -4122,7 +4125,7 @@ strong[style*="background-color"] {
       <div class="stat-icon"><i class="bi bi-person-workspace"></i></div>
       <div class="stat-content">
         <span class="stat-label">Managers</span>
-        <h3 class="stat-value" id="managerUsersCount">{{ manager_users }}</h3>
+        <h3 class="stat-value" id="managerUsersCount">{{ manager_count }}</h3>
       </div>
     </div>
   </div>
@@ -4168,11 +4171,11 @@ strong[style*="background-color"] {
           </tr>
         </thead>
         <tbody>
-          {% for user in all_users %}
+          {% for user in users %}
           <tr class="user-row" 
               id="user-row-{{ user.id }}"
               data-user-id="{{ user.id }}"
-              data-role="{{ user.profile.role.name|lower }}"
+              data-role="{% if user.profile.role %}{{ user.profile.role.name|lower }}{% else %}none{% endif %}"
               data-status="{% if user.is_active %}active{% else %}inactive{% endif %}">
             
             <!-- User ID -->
@@ -4186,41 +4189,71 @@ strong[style*="background-color"] {
             <td><strong>{{ user.username }}</strong></td>
 
             <!-- Full Name -->
-            <td>{{ user.get_full_name|default:"N/A" }}</td>
+            <td>
+              {% if user.first_name or user.last_name %}
+                {{ user.first_name }} {{ user.last_name }}
+              {% else %}
+                <span style="color: #999;">N/A</span>
+              {% endif %}
+            </td>
 
             <!-- Email -->
-            <td>{{ user.email|default:"N/A" }}</td>
+            <td>
+              {% if user.email %}
+                {{ user.email }}
+              {% else %}
+                <span style="color: #999;">N/A</span>
+              {% endif %}
+            </td>
 
             <!-- Role Badge -->
             <td>
-              {% if user.profile.role.name == 'Admin' %}
-                <span class="badge" style="background: #ef4444; color: white;">
-                  <i class="bi bi-shield-fill"></i> Admin
-                </span>
-              {% elif user.profile.role.name == 'Manager' %}
-                <span class="badge" style="background: #3b82f6; color: white;">
-                  <i class="bi bi-person-badge"></i> Manager
-                </span>
-              {% elif user.profile.role.name == 'Cashier' %}
-                <span class="badge" style="background: #10b981; color: white;">
-                  <i class="bi bi-cash-stack"></i> Cashier
-                </span>
-              {% elif user.profile.role.name == 'Agent' %}
-                <span class="badge" style="background: #f59e0b; color: white;">
-                  <i class="bi bi-person"></i> Agent
-                </span>
+              {% if user.profile.role %}
+                {% if user.profile.role.name == 'Admin' %}
+                  <span class="badge" style="background: #ef4444; color: white;">
+                    <i class="bi bi-shield-fill"></i> Admin
+                  </span>
+                {% elif user.profile.role.name == 'Manager' %}
+                  <span class="badge" style="background: #3b82f6; color: white;">
+                    <i class="bi bi-person-badge"></i> Manager
+                  </span>
+                {% elif user.profile.role.name == 'Cashier' %}
+                  <span class="badge" style="background: #10b981; color: white;">
+                    <i class="bi bi-cash-stack"></i> Cashier
+                  </span>
+                {% elif user.profile.role.name == 'Agent' %}
+                  <span class="badge" style="background: #f59e0b; color: white;">
+                    <i class="bi bi-person"></i> Agent
+                  </span>
+                {% else %}
+                  <span class="badge bg-secondary">
+                    <i class="bi bi-person"></i> {{ user.profile.role.name }}
+                  </span>
+                {% endif %}
               {% else %}
                 <span class="badge bg-secondary">
-                  <i class="bi bi-person"></i> {{ user.profile.role.name }}
+                  <i class="bi bi-question-circle"></i> No Role
                 </span>
               {% endif %}
             </td>
 
             <!-- Phone -->
-            <td>{{ user.profile.phone_number|default:"N/A" }}</td>
+            <td>
+              {% if user.profile.phone_number %}
+                {{ user.profile.phone_number }}
+              {% else %}
+                <span style="color: #999;">N/A</span>
+              {% endif %}
+            </td>
 
             <!-- ID Number -->
-            <td>{{ user.profile.id_number|default:"N/A" }}</td>
+            <td>
+              {% if user.profile.id_number %}
+                {{ user.profile.id_number }}
+              {% else %}
+                <span style="color: #999;">N/A</span>
+              {% endif %}
+            </td>
 
             <!-- Status Badge -->
             <td>
@@ -4241,7 +4274,7 @@ strong[style*="background-color"] {
           </tr>
           {% empty %}
           <tr>
-            <td colspan="10">
+            <td colspan="9">
               <div class="empty-state">
                 <i class="bi bi-people"></i>
                 <p>No users found in the system.</p>
@@ -4251,6 +4284,13 @@ strong[style*="background-color"] {
           {% endfor %}
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="table-footer">
+      <div class="table-info">
+        Showing <span id="userShowingStart">1</span> to <span id="userShowingEnd">{{ users.count }}</span> of <span id="userTotalEntries">{{ users.count }}</span> entries
+      </div>
     </div>
   </div>
 </div>
@@ -7438,7 +7478,76 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+// ============================================
+// FILTER USERS
+// ============================================
+function filterUsers() {
+  const roleFilter = document.getElementById('roleFilter').value.toLowerCase();
+  const statusFilter = document.getElementById('userStatusFilter').value.toLowerCase();
+  const rows = document.querySelectorAll('.user-row');
+  
+  let visibleCount = 0;
+  
+  rows.forEach(row => {
+    const role = row.getAttribute('data-role');
+    const status = row.getAttribute('data-status');
+    
+    const roleMatch = roleFilter === 'all' || role === roleFilter;
+    const statusMatch = statusFilter === 'all' || status === statusFilter;
+    
+    if (roleMatch && statusMatch) {
+      row.style.display = '';
+      visibleCount++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+  
+  updateUserTableInfo(visibleCount);
+}
 
+// Search users
+function searchUsers() {
+  const searchValue = document.getElementById('userSearch').value.toLowerCase();
+  const rows = document.querySelectorAll('.user-row');
+  
+  let visibleCount = 0;
+  
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    if (text.includes(searchValue)) {
+      row.style.display = '';
+      visibleCount++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+  
+  updateUserTableInfo(visibleCount);
+}
+
+// Change entries per page
+function changeUserEntries() {
+  const entriesValue = document.getElementById('userEntriesSelect').value;
+  const rows = document.querySelectorAll('.user-row');
+  
+  if (entriesValue === 'all') {
+    rows.forEach(row => row.style.display = '');
+    updateUserTableInfo(rows.length);
+  } else {
+    const limit = parseInt(entriesValue);
+    rows.forEach((row, index) => {
+      row.style.display = index < limit ? '' : 'none';
+    });
+    updateUserTableInfo(Math.min(limit, rows.length));
+  }
+}
+
+// Update table info
+function updateUserTableInfo(visibleCount) {
+  document.getElementById('userShowingStart').textContent = visibleCount > 0 ? '1' : '0';
+  document.getElementById('userShowingEnd').textContent = visibleCount;
+}
 
 
 
