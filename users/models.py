@@ -27,19 +27,18 @@ class Profile(models.Model):
 
 # ✅ FIXED: Auto-create profile when user is created
 @receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    """Create profile only when user is first created"""
+def create_or_update_user_profile(sender, instance, created, **kwargs):
+    """
+    Create profile when user is created.
+    This ensures every user has a profile.
+    The role can be set later in the admin inline form.
+    """
     if created:
+        # Create profile with get_or_create to avoid duplicates
         Profile.objects.get_or_create(user=instance)
-
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    """Save profile when user is saved, create if doesn't exist"""
-    # Use get_or_create to avoid IntegrityError
-    try:
-        profile = instance.profile
-        profile.save()
-    except Profile.DoesNotExist:
-        # Profile doesn't exist, create it
-        Profile.objects.create(user=instance)
+    else:
+        # Update existing profile or create if somehow missing
+        try:
+            instance.profile.save()
+        except Profile.DoesNotExist:
+            Profile.objects.create(user=instance)
