@@ -2045,6 +2045,46 @@ strong[style*="background-color"] {
 }
 
 
+#scanner-container {
+  min-height: 300px;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#barcodeScannerVideo {
+  width: 100%;
+  max-height: 500px;
+  object-fit: contain;
+}
+
+#barcodeScannerCanvas {
+  display: none;
+}
+
+#scanningOverlay {
+  pointer-events: none;
+}
+
+#scannerResult {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.input-group .btn {
+  white-space: nowrap;
+}
+
 
 </style>
 
@@ -2638,7 +2678,6 @@ strong[style*="background-color"] {
 <!-- ======================================== -->
 <!-- ENHANCED PRODUCTS LIST SECTION ========= -->
 <!-- ======================================== -->
-
 <div id="product-list" class="content-section">
   <div class="content-header">
     <h1 class="page-title">INVENTORY MANAGEMENT</h1>
@@ -2896,8 +2935,6 @@ strong[style*="background-color"] {
 <!-- ======================================= -->
 <!-- ADD CATEGORY TEMPLATE -->
 <!-- ======================================= -->
-
-<!-- Add Category Section - Fixed Version -->
 <div id="add-category" class="content-section">
   <div class="content-header">
     <h1 class="page-title">Add New Category</h1>
@@ -3092,7 +3129,6 @@ strong[style*="background-color"] {
 <!-- ======================================= -->
 <!-- ADD PRODUCT TEMPLATE -->
 <!-- ======================================= -->
-   <!-- Add Product Section -->
 <div id="add-product" class="content-section">
   <div class="content-header">
     <h1 class="page-title">Add New Product</h1>
@@ -3113,6 +3149,7 @@ strong[style*="background-color"] {
         {% csrf_token %}
 
         <div class="row g-3">
+          
           <!-- Category -->
           <div class="col-12">
             <label for="category-select" class="form-label required">Category</label>
@@ -3129,44 +3166,105 @@ strong[style*="background-color"] {
             </select>
           </div>
 
-      
           <!-- Product Name -->
           <div class="col-12">
             <label for="product-name" class="form-label required">Product Name</label>
             <input type="text" name="name" id="product-name" class="form-control" placeholder="Enter product name" required>
           </div>
 
-          <!-- Product Image with Camera Modal -->
+          <!-- Product Image with Camera -->
           <div class="col-12">
-  <label for="product-image" class="form-label">Product Image</label>
-  
-  <!-- Image Preview -->
-  <div id="imagePreviewContainer" style="margin-bottom: 15px; display: none;">
-    <img id="imagePreview" src="" alt="Preview" style="max-width: 50%; max-height: 300px; border-radius: 8px; border: 2px solid #ddd;">
-    <button type="button" class="btn btn-sm btn-danger mt-2" onclick="clearImage()">
-      <i class="bi bi-trash"></i> Remove Image
-    </button>
-  </div>
-  
-  <!-- Button Group -->
-  <div class="btn-group w-100 mb-2" role="group">
-    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('product-image').click()">
-      <i class="bi bi-upload"></i> Upload Image
-    </button>
-    <button type="button" class="btn btn-outline-primary" onclick="openCameraModal()">
-      <i class="bi bi-camera"></i> Take Photo
-    </button>
-  </div>
-  
-  <!-- Hidden File Inputs -->
-  <input type="file" name="image" id="product-image" class="form-control d-none" accept="image/*" onchange="previewImage(this)">
-  <input type="file" id="camera-capture" class="form-control d-none" accept="image/*" capture="environment" onchange="previewImage(this)">
-  
-  <small class="form-text text-muted">Supported formats: JPG, PNG, GIF (Max 5MB)</small>
+            <label for="product-image" class="form-label">Product Image</label>
+            
+            <!-- Image Preview -->
+            <div id="imagePreviewContainer" style="margin-bottom: 15px; display: none;">
+              <img id="imagePreview" src="" alt="Preview" style="max-width: 50%; max-height: 300px; border-radius: 8px; border: 2px solid #ddd;">
+              <button type="button" class="btn btn-sm btn-danger mt-2" onclick="clearImage()">
+                <i class="bi bi-trash"></i> Remove Image
+              </button>
+            </div>
+            
+            <!-- Button Group -->
+            <div class="btn-group w-100 mb-2" role="group">
+              <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('product-image').click()">
+                <i class="bi bi-upload"></i> Upload Image
+              </button>
+              <button type="button" class="btn btn-outline-primary" onclick="openCameraModal()">
+                <i class="bi bi-camera"></i> Take Photo
+              </button>
+            </div>
+            
+            <!-- Hidden File Inputs -->
+            <input type="file" name="image" id="product-image" class="form-control d-none" accept="image/*" onchange="previewImage(this)">
+            <input type="file" id="camera-capture" class="form-control d-none" accept="image/*" capture="environment" onchange="previewImage(this)">
+            
+            <small class="form-text text-muted">Supported formats: JPG, PNG, GIF (Max 5MB)</small>
           </div>
 
-          <!-- Camera Modal -->
-          <div class="modal fade" id="cameraModal" tabindex="-1" aria-labelledby="cameraModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+          <!-- Buying Price -->
+          <div class="col-md-6">
+            <label for="buying-price" class="form-label required">Buying Price (KSH)</label>
+            <input type="number" step="0.01" name="buying_price" id="buying-price" class="form-control" placeholder="0.00" required>
+          </div>
+
+          <!-- Selling Price -->
+          <div class="col-md-6">
+            <label for="selling-price" class="form-label required">Selling Price (KSH)</label>
+            <input type="number" step="0.01" name="selling_price" id="selling-price" class="form-control" placeholder="0.00" required>
+          </div>
+
+          <!-- SKU Field (single items - IMEI/Serial) -->
+          <div class="col-12" id="sku-field" style="display:none;">
+            <label class="form-label" id="sku-label"></label>
+            <div class="input-group">
+              <input type="text" name="sku_value" id="sku-input" class="form-control" placeholder="Enter or scan">
+              <button type="button" class="btn btn-outline-primary" onclick="openBarcodeScanner('sku')">
+                <i class="bi bi-upc-scan"></i> Scan
+              </button>
+            </div>
+            <small class="form-text text-muted">Enter manually or use camera to scan IMEI/Serial number</small>
+          </div>
+
+          <!-- Barcode Field (bulk items only) -->
+          <div class="col-12" id="barcode-field" style="display:none;">
+            <label for="barcode-input" class="form-label">Barcode</label>
+            <div class="input-group">
+              <input type="text" name="barcode" id="barcode-input" class="form-control" placeholder="Enter or scan barcode">
+              <button type="button" class="btn btn-outline-primary" onclick="openBarcodeScanner('barcode')">
+                <i class="bi bi-upc-scan"></i> Scan
+              </button>
+            </div>
+            <small class="form-text text-muted">Enter manually or use camera to scan barcode</small>
+          </div>
+
+          <!-- Quantity Field (bulk items) -->
+          <div class="col-12" id="quantity-field" style="display:none;">
+            <label for="quantity" class="form-label required">Quantity</label>
+            <input type="number" name="quantity" id="quantity" class="form-control" min="1" placeholder="Enter quantity">
+          </div>
+
+          <!-- Buttons -->
+          <div class="col-12" style="margin-top: 1.5rem;">
+            <button type="submit" class="btn-action btn-primary">
+              <i class="bi bi-save"></i>
+              <span>Save Product</span>
+            </button>
+            <a href="#product-list" class="btn-action" style="background: #6c757d; color: #fff; margin-left: 0.5rem;" data-section="product-list">
+              <i class="bi bi-x-circle"></i>
+              <span>Cancel</span>
+            </a>
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================= -->
+<!-- CAMERA MODAL FOR PRODUCT IMAGE -->
+<!-- ======================================= -->
+<div class="modal fade" id="cameraModal" tabindex="-1" aria-labelledby="cameraModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -3199,55 +3297,67 @@ strong[style*="background-color"] {
       </div>
     </div>
   </div>
-          </div>
-          <!-- Buying Price -->
-          <div class="col-md-6">
-            <label for="buying-price" class="form-label required">Buying Price (KSH)</label>
-            <input type="number" step="0.01" name="buying_price" id="buying-price" class="form-control" placeholder="0.00" required>
-          </div>
+</div>
 
-          <!-- Selling Price -->
-          <div class="col-md-6">
-            <label for="selling-price" class="form-label required">Selling Price (KSH)</label>
-            <input type="number" step="0.01" name="selling_price" id="selling-price" class="form-control" placeholder="0.00" required>
-          </div>
-
-          <!-- SKU Field (single items - IMEI/Serial) -->
-          <div class="col-12" id="sku-field" style="display:none;">
-            <label class="form-label" id="sku-label"></label>
-            <input type="text" name="sku_value" id="sku-input" class="form-control">
-          </div>
-
-          <!-- Barcode Field (bulk items only) -->
-          <div class="col-12" id="barcode-field" style="display:none;">
-            <label for="barcode-input" class="form-label">Barcode</label>
-            <input type="text" name="barcode" id="barcode-input" class="form-control" placeholder="Enter or scan barcode">
-            <small class="form-text text-muted">Optional: You can scan the barcode directly into this field</small>
-          </div>
-
-          <!-- Quantity Field (bulk items) -->
-          <div class="col-12" id="quantity-field" style="display:none;">
-            <label for="quantity" class="form-label required">Quantity</label>
-            <input type="number" name="quantity" id="quantity" class="form-control" min="1" placeholder="Enter quantity">
-          </div>
-
-          <!-- Buttons -->
-          <div class="col-12" style="margin-top: 1.5rem;">
-            <button type="submit" class="btn-action btn-primary">
-              <i class="bi bi-save"></i>
-              <span>Save Product</span>
-            </button>
-            <a href="#product-list" class="btn-action" style="background: #6c757d; color: #fff; margin-left: 0.5rem;" data-section="product-list">
-              <i class="bi bi-x-circle"></i>
-              <span>Cancel</span>
-            </a>
+<!-- ======================================= -->
+<!-- BARCODE SCANNER MODAL -->
+<!-- ======================================= -->
+<div class="modal fade" id="barcodeScannerModal" tabindex="-1" aria-labelledby="barcodeScannerLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="barcodeScannerLabel">
+          <i class="bi bi-upc-scan"></i> Scan Barcode/IMEI/Serial
+        </h5>
+        <button type="button" class="btn-close" onclick="closeBarcodeScanner()"></button>
+      </div>
+      <div class="modal-body text-center">
+        <!-- Scanner Video -->
+        <div id="scanner-container" style="position: relative;">
+          <video id="barcodeScannerVideo" autoplay playsinline style="max-width: 100%; border-radius: 8px; display: none; background: #000;"></video>
+          <canvas id="barcodeScannerCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 50%;"></canvas>
+          
+          <!-- Scanning overlay -->
+          <div id="scanningOverlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
+            <div style="width: 500px; height: 100px; border: 3px solid #10b981; border-radius: 8px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);"></div>
+            <p style="color: white; margin-top: 10px; font-weight: bold;">Position barcode within frame</p>
           </div>
         </div>
-      </form>
+        
+        <!-- Scanner Status -->
+        <div id="scannerStatus" class="alert alert-info mt-3" style="display: none;">
+          <i class="bi bi-info-circle"></i> <span id="scannerStatusText">Initializing scanner...</span>
+        </div>
+        
+        <!-- Scanner Error -->
+        <div id="scannerError" class="alert alert-danger mt-3" style="display: none;"></div>
+        
+        <!-- Loading -->
+        <div id="scannerLoading" class="spinner-border text-primary" role="status" style="display: none;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        
+        <!-- Detected Result -->
+        <div id="scannerResult" class="alert alert-success mt-3" style="display: none;">
+          <h6><i class="bi bi-check-circle"></i> Detected:</h6>
+          <h4 id="detectedCode" style="font-family: monospace; color: #059669;"></h4>
+          <small class="text-muted" id="detectedFormat"></small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeBarcodeScanner()">
+          <i class="bi bi-x"></i> Cancel
+        </button>
+        <button type="button" id="useBarcodeBtn" class="btn btn-success" onclick="useDetectedBarcode()" style="display: none;">
+          <i class="bi bi-check-lg"></i> Use This Code
+        </button>
+        <button type="button" id="rescanBtn" class="btn btn-primary" onclick="restartScanner()" style="display: none;">
+          <i class="bi bi-arrow-repeat"></i> Scan Again
+        </button>
+      </div>
     </div>
   </div>
 </div>
-
 
 
 <!-- ============================= -->
@@ -3847,8 +3957,6 @@ strong[style*="background-color"] {
 <!-- RECORD SALE SECTION     🛒🛒🛒 -->
 <!--================================= -->
 <!--================================= -->
-
-<!-- Two-Column Record Sale Section -->
 <div id="record-sale" class="content-section">
 
   <!-- Header -->
@@ -4708,15 +4816,15 @@ strong[style*="background-color"] {
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
 
 <script>
-// ======================================
+
 // ======================================
 // ======================================
 // DASHBOARD SIDEBAR MOBILE ENHANCEMENT
 // ======================================
-// ======================================
-// ======================================
+
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Dashboard Sidebar Mobile Enhancement Loaded');
@@ -5147,6 +5255,252 @@ document.getElementById('cameraModal').addEventListener('hidden.bs.modal', funct
 });
 
 
+
+
+let barcodeScannerModal = null;
+let barcodeStream = null;
+let barcodeReader = null;
+let currentScanTarget = null; // 'sku' or 'barcode'
+let detectedBarcodeValue = null;
+let isScanning = false;
+
+// Open barcode scanner
+function openBarcodeScanner(target) {
+  currentScanTarget = target;
+  
+  if (!barcodeScannerModal) {
+    barcodeScannerModal = new bootstrap.Modal(document.getElementById('barcodeScannerModal'), {
+      backdrop: true,
+      keyboard: true
+    });
+  }
+  
+  // Reset modal state
+  resetBarcodeScanner();
+  
+  // Show modal
+  barcodeScannerModal.show();
+  
+  // Start scanner after modal is shown
+  document.getElementById('barcodeScannerModal').addEventListener('shown.bs.modal', function() {
+    startBarcodeScanner();
+  }, { once: true });
+}
+
+// Close barcode scanner
+function closeBarcodeScanner() {
+  stopBarcodeScanner();
+  if (barcodeScannerModal) {
+    barcodeScannerModal.hide();
+  }
+  // Remove any lingering backdrops
+  setTimeout(() => {
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+  }, 300);
+}
+
+// Reset scanner modal
+function resetBarcodeScanner() {
+  document.getElementById('barcodeScannerVideo').style.display = 'none';
+  document.getElementById('scanningOverlay').style.display = 'none';
+  document.getElementById('scannerStatus').style.display = 'none';
+  document.getElementById('scannerError').style.display = 'none';
+  document.getElementById('scannerLoading').style.display = 'none';
+  document.getElementById('scannerResult').style.display = 'none';
+  document.getElementById('useBarcodeBtn').style.display = 'none';
+  document.getElementById('rescanBtn').style.display = 'none';
+  detectedBarcodeValue = null;
+  isScanning = false;
+}
+
+// Start barcode scanner
+async function startBarcodeScanner() {
+  try {
+    const video = document.getElementById('barcodeScannerVideo');
+    const loading = document.getElementById('scannerLoading');
+    const statusDiv = document.getElementById('scannerStatus');
+    const statusText = document.getElementById('scannerStatusText');
+    const errorDiv = document.getElementById('scannerError');
+    
+    loading.style.display = 'block';
+    statusDiv.style.display = 'block';
+    statusText.textContent = 'Requesting camera access...';
+    
+    // Request camera access
+    barcodeStream = await navigator.mediaDevices.getUserMedia({
+      video: { 
+        facingMode: 'environment',
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    });
+    
+    video.srcObject = barcodeStream;
+    
+    video.onloadedmetadata = function() {
+      loading.style.display = 'none';
+      video.style.display = 'block';
+      document.getElementById('scanningOverlay').style.display = 'block';
+      statusText.textContent = 'Ready to scan. Position barcode in the frame.';
+      
+      // Initialize barcode reader
+      initBarcodeReader();
+    };
+    
+  } catch (error) {
+    console.error('Scanner error:', error);
+    document.getElementById('scannerLoading').style.display = 'none';
+    document.getElementById('scannerStatus').style.display = 'none';
+    document.getElementById('scannerError').textContent = 'Unable to access camera. Please check permissions.';
+    document.getElementById('scannerError').style.display = 'block';
+  }
+}
+
+// Initialize barcode reader with ZXing
+function initBarcodeReader() {
+  const video = document.getElementById('barcodeScannerVideo');
+  const canvas = document.getElementById('barcodeScannerCanvas');
+  const context = canvas.getContext('2d');
+  
+  // Set canvas size
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  
+  // Create code reader
+  barcodeReader = new ZXing.BrowserMultiFormatReader();
+  isScanning = true;
+  
+  // Start continuous scanning
+  scanBarcode();
+}
+
+// Scan barcode continuously
+function scanBarcode() {
+  if (!isScanning) return;
+  
+  const video = document.getElementById('barcodeScannerVideo');
+  const canvas = document.getElementById('barcodeScannerCanvas');
+  const context = canvas.getContext('2d');
+  
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    
+    try {
+      const code = barcodeReader.decodeFromImageData(imageData);
+      
+      if (code) {
+        // Barcode detected!
+        handleBarcodeDetected(code);
+        return;
+      }
+    } catch (error) {
+      // No barcode detected, continue scanning
+    }
+  }
+  
+  // Continue scanning
+  requestAnimationFrame(scanBarcode);
+}
+
+// Handle detected barcode
+function handleBarcodeDetected(code) {
+  isScanning = false;
+  detectedBarcodeValue = code.text;
+  
+  // Update UI
+  document.getElementById('scanningOverlay').style.display = 'none';
+  document.getElementById('scannerStatus').style.display = 'none';
+  document.getElementById('detectedCode').textContent = code.text;
+  document.getElementById('detectedFormat').textContent = `Format: ${code.format}`;
+  document.getElementById('scannerResult').style.display = 'block';
+  document.getElementById('useBarcodeBtn').style.display = 'inline-block';
+  document.getElementById('rescanBtn').style.display = 'inline-block';
+  
+  // Play success sound (optional)
+  playBeep();
+  
+  // Stop camera
+  stopBarcodeScanner();
+}
+
+// Use detected barcode
+function useDetectedBarcode() {
+  if (detectedBarcodeValue) {
+    if (currentScanTarget === 'sku') {
+      document.getElementById('sku-input').value = detectedBarcodeValue;
+    } else if (currentScanTarget === 'barcode') {
+      document.getElementById('barcode-input').value = detectedBarcodeValue;
+    }
+  }
+  closeBarcodeScanner();
+}
+
+// Restart scanner
+function restartScanner() {
+  resetBarcodeScanner();
+  startBarcodeScanner();
+}
+
+// Stop barcode scanner
+function stopBarcodeScanner() {
+  isScanning = false;
+  
+  if (barcodeStream) {
+    barcodeStream.getTracks().forEach(track => track.stop());
+    barcodeStream = null;
+  }
+  
+  const video = document.getElementById('barcodeScannerVideo');
+  if (video) {
+    video.srcObject = null;
+  }
+  
+  if (barcodeReader) {
+    barcodeReader.reset();
+  }
+}
+
+// Play success beep sound
+function playBeep() {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  oscillator.frequency.value = 800;
+  oscillator.type = 'sine';
+  
+  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+  
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.1);
+}
+
+// Clean up on page unload
+window.addEventListener('beforeunload', function() {
+  stopBarcodeScanner();
+});
+
+// Handle modal close events
+document.getElementById('barcodeScannerModal').addEventListener('hidden.bs.modal', function() {
+  stopBarcodeScanner();
+  resetBarcodeScanner();
+});
+
+
+
+
 // ==========================
 // =========================
 // UTILITY FUNCTIONS
@@ -5205,13 +5559,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 // ====================================
-// ====================================
-// ===================
+// ===================================
 // MOBILE SIDEBAR TOGGLE
-// ===================
-// ====================================
-// ====================================
-
+// ==================================
 const toggleBtn = document.getElementById('mobileSidebarToggle');
 if (toggleBtn) {
   toggleBtn.addEventListener('click', () => sidebar.classList.toggle('active'));
@@ -5219,13 +5569,9 @@ if (toggleBtn) {
 
 
 // ====================================
-// ====================================
 // ==============================
 // COLLAPSE ICON ROTATION HANDLER
 // ==============================
-// ====================================
-// ====================================
-
 document.querySelectorAll('.nav-item[data-bs-toggle="collapse"]').forEach(item => {
   item.addEventListener('click', () => {
     const expanded = item.getAttribute('aria-expanded') === 'true';
@@ -5235,13 +5581,11 @@ document.querySelectorAll('.nav-item[data-bs-toggle="collapse"]').forEach(item =
 
 
 
-// ====================================
+
 // ====================================
 // ================================
 // FILTER PRODUCTS
 // ================================
-// ====================================
-// ====================================
 function filterProducts() {
   const statusFilter = document.getElementById('productStatusFilter').value;
   const categoryFilter = document.getElementById('productCategoryFilter').value;
@@ -5274,14 +5618,11 @@ function filterProducts() {
 
 
 
-// ====================================
+
 // ====================================
 // ================================
 // LOAD SELLERS FROM DATABASE
 // ================================
-// ====================================
-// ====================================
-
 async function loadSellers() {
   try {
     // Replace with your actual API endpoint that returns users who have made sales
@@ -5311,13 +5652,9 @@ async function loadSellers() {
 
 
 // ====================================
-// ====================================
 // ================================
 // FILTER SALES (Like filterProducts)
 // ================================
-// ====================================
-// ====================================
-
 function filterSales() {
   const statusFilter = document.getElementById('statusFilter').value;
   const sellerFilter = document.getElementById('sellerFilter').value;
@@ -5357,13 +5694,9 @@ function filterSales() {
 
 
 // ====================================
-// ====================================
 // ================================
 // UPDATE STATS AFTER FILTERING
 // ================================
-// ====================================
-// ====================================
-
 function updateSalesStats(visibleCount, activeCount, reversedCount) {
   // Update total visible sales
   const totalSalesElement = document.getElementById('totalSalesCount');
@@ -5385,15 +5718,10 @@ function updateSalesStats(visibleCount, activeCount, reversedCount) {
 }
 
 
-
-// ====================================
 // ====================================
 // ================================
 // INITIALIZE ON PAGE LOAD
 // ================================
-// ====================================
-// ====================================
-
 document.addEventListener('DOMContentLoaded', function() {
   // Load sellers from database
   loadSellers();
@@ -5408,13 +5736,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // ====================================
-// ====================================
 // ================================
 // UPDATE STATISTICS
 // ================================
-// ====================================
-// ====================================
-
 function updateProductStats() {
   const allRows = document.querySelectorAll('.product-row');
   const inStockRows = document.querySelectorAll('.product-row[data-stock-status="instock"]');
@@ -5528,8 +5852,6 @@ function closeProductDetails() {
 // ====================================
 // BAR AND DONUT CHART STATISTICS
 // ====================================
-// ====================================
-
 document.addEventListener('DOMContentLoaded', function() {
   console.log('📊 Initializing Sales Statistics Charts...');
   
@@ -5831,13 +6153,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ====================================
 // ====================================
-// ====================================
 // ADD CATEORY AREA
 // ====================================
-// ====================================
-// ====================================
-
-  // JS: Add new product row dynamically
   let productIndex = 1;
   document.getElementById('add-product-btn').addEventListener('click', function() {
     const tableBody = document.querySelector('#products-table tbody');
@@ -5892,8 +6209,6 @@ document.addEventListener('DOMContentLoaded', function () {
 // ====================================
 // ADD CATEGORY SECTION - FIXED VERSION
 // ====================================
-// ====================================
-
 document.addEventListener("DOMContentLoaded", function() {
     console.log('🔧 Category form initialization started');
     
@@ -6211,8 +6526,6 @@ function showToast(message, type = 'success') {
 // ====================================
 // ADD PRODUCT  SECTION
 // ====================================
-// ====================================
-
 document.addEventListener('DOMContentLoaded', function () {
 
     const categorySelect = document.getElementById('category-select');
@@ -6458,8 +6771,6 @@ document.addEventListener('DOMContentLoaded', function () {
 // ====================================
 // RESTOCK PRODUCT JAVASCRIPT
 // ====================================
-// ====================================
-
 document.addEventListener('DOMContentLoaded', function() {
   // Elements
   const searchInput = document.getElementById('restockSearchInput');
@@ -6772,8 +7083,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // ====================================
 // TRANSFER PRODUCT JAVASCRIPT 
 // ====================================
-// ====================================
-
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🔧 Enhanced Transfer Product Module Initializing...');
   
@@ -7679,7 +7988,6 @@ function updateUserTableInfo(visibleCount) {
 // =====================================
 // BUTTON CLICK HANDLERS FOR ROW ACTIONS
 // ====================================
-// ====================================
 function editProduct(btn) {
     const id = btn.dataset.id;
     const name = btn.dataset.name;
@@ -7707,8 +8015,6 @@ function transferProduct(btn) {
 // ====================================
 // RECORD SALE FUNCTIONALITY 🛒🛒🛒
 // ====================================
-// ====================================
-
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('saleForm');
     const productCodeInput = document.getElementById('productCode');
@@ -8348,8 +8654,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // ================================
 // GENERATE REPORT SECTION  👁️👁️
 // ================================
-// ================================
-
 document.addEventListener("DOMContentLoaded", function () {
 
   // --- DOM Elements ---
@@ -8593,7 +8897,6 @@ document.addEventListener("DOMContentLoaded", function () {
    Matches your EXACT HTML table structure
    ===================================== */
 // ========================================
-
 function updateProductRow(product) {
     const row = document.querySelector(`#product-row-${product.id}`);
     if (!row) return;
