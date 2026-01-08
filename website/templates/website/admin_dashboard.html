@@ -2007,6 +2007,44 @@ strong[style*="background-color"] {
   }
 }
 
+#imagePreviewContainer {
+  text-align: center;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+#imagePreview {
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn-group button {
+  flex: 1;
+}
+
+#cameraStream, #cameraCanvas {
+  background: #000;
+  max-height: 500px;
+  width: 100%;
+  object-fit: contain;
+}
+
+/* Ensure modal doesn't block page */
+.modal-backdrop {
+  z-index: 1040;
+}
+
+.modal {
+  z-index: 1050;
+}
+
+#cameraLoading {
+  width: 3rem;
+  height: 3rem;
+  margin: 50px auto;
+}
+
+
 
 </style>
 
@@ -2118,11 +2156,6 @@ strong[style*="background-color"] {
       </div>
     </nav>
   </aside>
-
-
-
-
-
 
 
 
@@ -2602,13 +2635,6 @@ strong[style*="background-color"] {
 
 
 
-
-
-
-
-
-
-
 <!-- ======================================== -->
 <!-- ENHANCED PRODUCTS LIST SECTION ========= -->
 <!-- ======================================== -->
@@ -2867,9 +2893,6 @@ strong[style*="background-color"] {
 
 
 
-
-
-
 <!-- ======================================= -->
 <!-- ADD CATEGORY TEMPLATE -->
 <!-- ======================================= -->
@@ -3066,16 +3089,6 @@ strong[style*="background-color"] {
 
 
 
-
-
-
-
-
-
-
-
-
-
 <!-- ======================================= -->
 <!-- ADD PRODUCT TEMPLATE -->
 <!-- ======================================= -->
@@ -3123,13 +3136,70 @@ strong[style*="background-color"] {
             <input type="text" name="name" id="product-name" class="form-control" placeholder="Enter product name" required>
           </div>
 
-          <!-- Product Image -->
+          <!-- Product Image with Camera Modal -->
           <div class="col-12">
-            <label for="product-image" class="form-label">Product Image</label>
-            <input type="file" name="image" id="product-image" class="form-control" accept="image/*">
-            <small class="form-text text-muted">Supported formats: JPG, PNG, GIF (Max 5MB)</small>
+  <label for="product-image" class="form-label">Product Image</label>
+  
+  <!-- Image Preview -->
+  <div id="imagePreviewContainer" style="margin-bottom: 15px; display: none;">
+    <img id="imagePreview" src="" alt="Preview" style="max-width: 50%; max-height: 300px; border-radius: 8px; border: 2px solid #ddd;">
+    <button type="button" class="btn btn-sm btn-danger mt-2" onclick="clearImage()">
+      <i class="bi bi-trash"></i> Remove Image
+    </button>
+  </div>
+  
+  <!-- Button Group -->
+  <div class="btn-group w-100 mb-2" role="group">
+    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('product-image').click()">
+      <i class="bi bi-upload"></i> Upload Image
+    </button>
+    <button type="button" class="btn btn-outline-primary" onclick="openCameraModal()">
+      <i class="bi bi-camera"></i> Take Photo
+    </button>
+  </div>
+  
+  <!-- Hidden File Inputs -->
+  <input type="file" name="image" id="product-image" class="form-control d-none" accept="image/*" onchange="previewImage(this)">
+  <input type="file" id="camera-capture" class="form-control d-none" accept="image/*" capture="environment" onchange="previewImage(this)">
+  
+  <small class="form-text text-muted">Supported formats: JPG, PNG, GIF (Max 5MB)</small>
           </div>
 
+          <!-- Camera Modal -->
+          <div class="modal fade" id="cameraModal" tabindex="-1" aria-labelledby="cameraModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cameraModalLabel">
+          <i class="bi bi-camera"></i> Take Photo
+        </h5>
+        <button type="button" class="btn-close" onclick="closeCameraModal()"></button>
+      </div>
+      <div class="modal-body text-center">
+        <video id="cameraStream" autoplay playsinline style="max-width: 100%; border-radius: 8px; display: none; background: #000;"></video>
+        <canvas id="cameraCanvas" style="max-width: 100%; border-radius: 8px; display: none;"></canvas>
+        <div id="cameraError" class="alert alert-danger" style="display: none;"></div>
+        <div id="cameraLoading" class="spinner-border text-primary" role="status" style="display: none;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeCameraModal()">
+          <i class="bi bi-x"></i> Cancel
+        </button>
+        <button type="button" id="captureBtn" class="btn btn-primary" onclick="capturePhoto()" style="display: none;">
+          <i class="bi bi-camera-fill"></i> Capture
+        </button>
+        <button type="button" id="retakeBtn" class="btn btn-warning" onclick="retakePhoto()" style="display: none;">
+          <i class="bi bi-arrow-counterclockwise"></i> Retake
+        </button>
+        <button type="button" id="usePhotoBtn" class="btn btn-success" onclick="usePhoto()" style="display: none;">
+          <i class="bi bi-check-lg"></i> Use Photo
+        </button>
+      </div>
+    </div>
+  </div>
+          </div>
           <!-- Buying Price -->
           <div class="col-md-6">
             <label for="buying-price" class="form-label required">Buying Price (KSH)</label>
@@ -3177,12 +3247,6 @@ strong[style*="background-color"] {
     </div>
   </div>
 </div>
-
-
-
-
-
-
 
 
 
@@ -3474,12 +3538,6 @@ strong[style*="background-color"] {
 
 
 
-
-
-
-
-
-
 <!-- ============================= -->
 <!--  TRANSFER PRODUCT SECTION   -->
 <!-- ============================= -->
@@ -3615,13 +3673,6 @@ strong[style*="background-color"] {
 </div>
 
 </div>
-
-
-
-
-
-
-
 
 
 
@@ -3788,10 +3839,6 @@ strong[style*="background-color"] {
   </div>
 
 </div>
-
-
-
-
 
 
 
@@ -4061,9 +4108,6 @@ strong[style*="background-color"] {
 <!-- ============================= -->
 <!--     USERS LIST SECTION        -->
 <!-- ============================= -->
-<!-- ============================= -->
-<!--     USERS LIST SECTION        -->
-<!-- ============================= -->
 <div id="users-list" class="content-section">
   
   <!-- Header -->
@@ -4294,7 +4338,6 @@ strong[style*="background-color"] {
     </div>
   </div>
 </div>
-
 
 
 
@@ -4870,44 +4913,252 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+// ======================================
+// ======================================
+// CAMERA CAPTURE
+// ======================================
+let cameraStream = null;
+let cameraModal = null;
+
+// Open camera modal
+function openCameraModal() {
+  // Try simple file input first (works on most mobile devices)
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    document.getElementById('camera-capture').click();
+    return;
+  }
+  
+  // Desktop - open modal
+  if (!cameraModal) {
+    cameraModal = new bootstrap.Modal(document.getElementById('cameraModal'), {
+      backdrop: true,
+      keyboard: true
+    });
+  }
+  
+  // Reset modal state
+  resetCameraModal();
+  
+  // Show modal
+  cameraModal.show();
+  
+  // Start camera after modal is shown
+  document.getElementById('cameraModal').addEventListener('shown.bs.modal', function() {
+    startCamera();
+  }, { once: true });
+}
+
+// Close camera modal properly
+function closeCameraModal() {
+  stopCamera();
+  if (cameraModal) {
+    cameraModal.hide();
+  }
+  // Remove any lingering backdrops
+  setTimeout(() => {
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+  }, 300);
+}
+
+// Reset modal state
+function resetCameraModal() {
+  document.getElementById('cameraStream').style.display = 'none';
+  document.getElementById('cameraCanvas').style.display = 'none';
+  document.getElementById('cameraError').style.display = 'none';
+  document.getElementById('cameraLoading').style.display = 'none';
+  document.getElementById('captureBtn').style.display = 'none';
+  document.getElementById('retakeBtn').style.display = 'none';
+  document.getElementById('usePhotoBtn').style.display = 'none';
+}
+
+// Start camera stream
+async function startCamera() {
+  try {
+    const video = document.getElementById('cameraStream');
+    const errorDiv = document.getElementById('cameraError');
+    const loading = document.getElementById('cameraLoading');
+    
+    loading.style.display = 'block';
+    
+    // Request camera access with fallback
+    const constraints = {
+      video: { 
+        facingMode: 'environment', // Use back camera on mobile
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    };
+    
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (err) {
+      // Fallback: try with any camera
+      cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+    }
+    
+    video.srcObject = cameraStream;
+    
+    // Wait for video to load
+    video.onloadedmetadata = function() {
+      loading.style.display = 'none';
+      video.style.display = 'block';
+      document.getElementById('captureBtn').style.display = 'inline-block';
+      errorDiv.style.display = 'none';
+    };
+    
+  } catch (error) {
+    console.error('Camera error:', error);
+    document.getElementById('cameraLoading').style.display = 'none';
+    document.getElementById('cameraError').textContent = 'Unable to access camera. Please check permissions or use the upload option.';
+    document.getElementById('cameraError').style.display = 'block';
+  }
+}
+
+// Stop camera stream
+function stopCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+  }
+  const video = document.getElementById('cameraStream');
+  if (video) {
+    video.srcObject = null;
+  }
+}
+
+// Capture photo from video stream
+function capturePhoto() {
+  const video = document.getElementById('cameraStream');
+  const canvas = document.getElementById('cameraCanvas');
+  const context = canvas.getContext('2d');
+  
+  // Set canvas size to video size
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  
+  // Draw video frame to canvas
+  context.drawImage(video, 0, 0);
+  
+  // Hide video, show canvas
+  video.style.display = 'none';
+  canvas.style.display = 'block';
+  
+  // Show retake and use buttons
+  document.getElementById('captureBtn').style.display = 'none';
+  document.getElementById('retakeBtn').style.display = 'inline-block';
+  document.getElementById('usePhotoBtn').style.display = 'inline-block';
+  
+  // Stop camera
+  stopCamera();
+}
+
+// Retake photo
+function retakePhoto() {
+  document.getElementById('cameraCanvas').style.display = 'none';
+  document.getElementById('retakeBtn').style.display = 'none';
+  document.getElementById('usePhotoBtn').style.display = 'none';
+  startCamera();
+}
+
+// Use captured photo
+function usePhoto() {
+  const canvas = document.getElementById('cameraCanvas');
+  
+  // Convert canvas to blob
+  canvas.toBlob(function(blob) {
+    // Create file from blob
+    const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+    
+    // Add to file input
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('product-image').files = dt.files;
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('imagePreview').src = e.target.result;
+      document.getElementById('imagePreviewContainer').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+    
+    // Close modal
+    closeCameraModal();
+  }, 'image/jpeg', 0.9);
+}
+
+// Preview image before upload
+function previewImage(input) {
+  const file = input.files[0];
+  if (file) {
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      input.value = '';
+      return;
+    }
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPG, PNG, GIF, WEBP)');
+      input.value = '';
+      return;
+    }
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('imagePreview').src = e.target.result;
+      document.getElementById('imagePreviewContainer').style.display = 'block';
+      
+      // Sync the file to the actual form input
+      if (input.id === 'camera-capture') {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        document.getElementById('product-image').files = dt.files;
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+// Clear image preview
+function clearImage() {
+  document.getElementById('product-image').value = '';
+  document.getElementById('camera-capture').value = '';
+  document.getElementById('imagePreview').src = '';
+  document.getElementById('imagePreviewContainer').style.display = 'none';
+}
+
+// Clean up on page unload
+window.addEventListener('beforeunload', function() {
+  stopCamera();
+});
+
+// Handle modal close events
+document.getElementById('cameraModal').addEventListener('hidden.bs.modal', function() {
+  stopCamera();
+  resetCameraModal();
+});
 
 
-
-
-
-
-
-
-
-
-// ====================================
-// ====================================
+// ==========================
 // =========================
 // UTILITY FUNCTIONS
 // =========================
-// ====================================
-// ====================================
 function csrfToken() {
   return document.querySelector('[name=csrfmiddlewaretoken]').value;
 }
 
 
-
-
-
-
-
-
-
-
-// ====================================
-// ====================================
 // =========================
 // SECTION NAVIGATION SYSTEM
 // =========================
-// ====================================
-// ====================================
-
 function showSection(sectionId) {
   document.querySelectorAll('.content-section').forEach(section => {
     section.classList.remove('active');
@@ -4953,12 +5204,6 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 
-
-
-
-
-
-
 // ====================================
 // ====================================
 // ===================
@@ -4971,14 +5216,6 @@ const toggleBtn = document.getElementById('mobileSidebarToggle');
 if (toggleBtn) {
   toggleBtn.addEventListener('click', () => sidebar.classList.toggle('active'));
 }
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -4995,10 +5232,6 @@ document.querySelectorAll('.nav-item[data-bs-toggle="collapse"]').forEach(item =
     item.setAttribute('aria-expanded', !expanded);
   });
 });
-
-
-
-
 
 
 
@@ -5041,14 +5274,6 @@ function filterProducts() {
 
 
 
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 // ================================
@@ -5083,12 +5308,6 @@ async function loadSellers() {
     // Continue without sellers loaded - filter will just show "All Sellers"
   }
 }
-
-
-
-
-
-
 
 
 // ====================================
@@ -5137,14 +5356,6 @@ function filterSales() {
 
 
 
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 // ================================
@@ -5175,9 +5386,6 @@ function updateSalesStats(visibleCount, activeCount, reversedCount) {
 
 
 
-
-
-
 // ====================================
 // ====================================
 // ================================
@@ -5197,21 +5405,6 @@ document.addEventListener('DOMContentLoaded', function() {
   
   updateSalesStats(totalRows, activeRows, reversedRows);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -5329,15 +5522,6 @@ function viewProductDetails(productId) {
 function closeProductDetails() {
   document.getElementById('productDetailsModal').style.display = 'none';
 }
-
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -5645,16 +5829,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
-
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 // ====================================
@@ -5711,17 +5885,6 @@ document.addEventListener('DOMContentLoaded', function () {
     itemTypeSelect.addEventListener('change', toggleFields);
     toggleFields();  // initialize on page load
 });
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -6044,16 +6207,6 @@ function showToast(message, type = 'success') {
 
 
 
-
-
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 // ADD PRODUCT  SECTION
@@ -6299,20 +6452,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -6627,14 +6766,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -7472,12 +7603,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-
-
-
-
-
-
 // ============================================
 // FILTER USERS
 // ============================================
@@ -7550,11 +7675,6 @@ function updateUserTableInfo(visibleCount) {
 }
 
 
-
-
-
-
-
 // ====================================
 // =====================================
 // BUTTON CLICK HANDLERS FOR ROW ACTIONS
@@ -7581,18 +7701,6 @@ function transferProduct(btn) {
     const isSKU = qty === 1;
     openTransferModal(id, isSKU);
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -8236,17 +8344,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 // ================================
 // ================================
 // GENERATE REPORT SECTION  👁️👁️
@@ -8490,17 +8587,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 // ========================================
 /* ========================================
    LIVE PRODUCT TABLE UPDATER FOR FIELDMAX
@@ -8640,15 +8726,6 @@ function updateProductRow(product) {
 }
 
 
-
-
-
-
-
-
-
-
-
 // ======================================
 // ======================================
 /* ======================================
@@ -8689,17 +8766,6 @@ fetch('/reverse-sale/12/', { method: 'POST' })
         updateProductRow(data.product);
     });
 */
-
-
-
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -8750,19 +8816,6 @@ function filterProducts() {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 // ========================= 
@@ -8803,17 +8856,6 @@ function updateProductStats() {
 document.addEventListener("DOMContentLoaded", filterProducts);
 
 
-
-
-
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 /* ===============================
@@ -8829,13 +8871,6 @@ const rowsPerPage = 20;  // Adjust if needed
 const table = document.getElementById("productsTable");
 const tbody = table.querySelector("tbody");
 const rows = Array.from(tbody.querySelectorAll(".product-row"));
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -8866,15 +8901,6 @@ function loadFilterState() {
         document.getElementById("productSearchInput").value = state.search;
     }
 }
-
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -8928,15 +8954,6 @@ function filterProducts() {
 }
 
 
-
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 /* ==============================
@@ -8972,15 +8989,6 @@ function changeEntries() {
 }
 
 
-
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 /* ============================
@@ -9004,8 +9012,6 @@ function setupSearchBox() {
         header.prepend(searchInput);  
     }
 }
-
-
 
 
 function searchSale() {
@@ -9047,15 +9053,6 @@ function filterSales() {
 }
 
 
-
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 /* ==========================
@@ -9092,20 +9089,6 @@ function enableColumnSorting() {
         th.addEventListener("click", () => sortTable(i));
     });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -9170,15 +9153,6 @@ function renderPaginationControls(totalPages) {
 }
 
 
-
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 /* ==============================
@@ -9221,16 +9195,6 @@ function initColumnHider() {
 }
 
 
-
-
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 /* ==============================
@@ -9256,21 +9220,6 @@ function exportTableToExcel() {
     a.download = "products_export.csv";
     a.click();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -9364,16 +9313,6 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 
 
-
-
-
-
-
-
-
-
-
-
 // ====================================
 // ================================
 // TOGGLE CARD DROPDOWN
@@ -9414,9 +9353,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-
-
 </script>
-
 
 {% endblock %}
