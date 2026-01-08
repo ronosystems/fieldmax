@@ -2087,16 +2087,35 @@ strong[style*="background-color"] {
         </a>       
       </div>
 
-      <!-- LOGOUT -->
+<!-- USER MANAGEMENT -->
       <div style="margin-top: auto; padding: 1rem; border-top: 2px solid #e5e7eb;">
-        <form method="post" action="{% url 'logout' %}">
-        {% csrf_token %}
-          <button type="submit" class="nav-item" style="border: 1px solid #dc2626; background: #fee2e2; color: #dc2626; width: 100%;">
-            <i class="bi bi-box-arrow-right"></i>
-            <span>Logout</span>
-          </button>
-        </form>
-     </div>
+        <button class="nav-item" data-bs-toggle="collapse" data-bs-target="#userSubmenu" aria-expanded="false" style="width: 100%;">
+          <i class="bi bi-person-circle"></i>
+          <span>User Management</span>
+          <i class="bi bi-chevron-down"></i>
+        </button>
+        <div class="submenu collapse" id="userSubmenu">
+          <a href="#users-list" class="submenu-item" data-section="users-list">
+            <i class="bi bi-people"></i>
+            <span>All Users</span>
+          </a>
+          <a href="#add-user" class="submenu-item" data-section="add-user">
+            <i class="bi bi-person-plus"></i>
+            <span>Add User</span>
+          </a>
+          <a href="#roles-permissions" class="submenu-item" data-section="roles-permissions">
+            <i class="bi bi-shield-check"></i>
+            <span>Roles & Permissions</span>
+          </a>
+          <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+            {% csrf_token %}
+            <button type="submit" class="submenu-item" style="border: 1px solid #dc2626; background: #fee2e2; color: #dc2626; width: 100%;">
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Logout</span>
+            </button>
+          </form>
+        </div>
+      </div>
     </nav>
   </aside>
 
@@ -4039,7 +4058,415 @@ strong[style*="background-color"] {
 
 
 
+<!-- ============================= -->
+<!--     USERS LIST SECTION        -->
+<!-- ============================= -->
+<div id="users-list" class="content-section">
+  
+  <!-- Header -->
+  <div class="content-header">
+    <button class="mobile-sidebar-toggle" id="mobileSidebarToggle5">
+      <i class="bi bi-list"></i>
+    </button>
+    <h1 class="page-title">
+      <i class="bi bi-people-fill"></i> User Management
+      <small class="text-muted" style="font-size: 0.6em; display: block; margin-top: 0.5rem;">
+        Manage System Users
+      </small>
+    </h1>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <!-- Filter Buttons -->
+      <select id="roleFilter" class="form-select" style="width: auto;" onchange="filterUsers()">
+        <option value="all">All Roles</option>
+        <option value="admin">Admin</option>
+        <option value="manager">Manager</option>
+        <option value="cashier">Cashier</option>
+        <option value="agent">Agent</option>
+      </select>
+      
+      <select id="userStatusFilter" class="form-select" style="width: auto;" onchange="filterUsers()">
+        <option value="all">All Status</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+  </div>
 
+  <!-- User Statistics -->
+  <div class="stats-grid" style="margin-bottom: 1.5rem;">
+    <div class="stat-card stat-card-info">
+      <div class="stat-icon"><i class="bi bi-people"></i></div>
+      <div class="stat-content">
+        <span class="stat-label">Total Users</span>
+        <h3 class="stat-value" id="totalUsersCount">{{ total_users }}</h3>
+      </div>
+    </div>
+    
+    <div class="stat-card stat-card-success">
+      <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-label">Active Users</span>
+        <h3 class="stat-value" id="activeUsersCount">{{ active_users }}</h3>
+      </div>
+    </div>
+    
+    <div class="stat-card stat-card-warning">
+      <div class="stat-icon"><i class="bi bi-person-badge"></i></div>
+      <div class="stat-content">
+        <span class="stat-label">Admins</span>
+        <h3 class="stat-value" id="adminUsersCount">{{ admin_users }}</h3>
+      </div>
+    </div>
+    
+    <div class="stat-card stat-card-primary">
+      <div class="stat-icon"><i class="bi bi-person-workspace"></i></div>
+      <div class="stat-content">
+        <span class="stat-label">Managers</span>
+        <h3 class="stat-value" id="managerUsersCount">{{ manager_users }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users Table -->
+  <div class="data-card">
+    <!-- Table Controls: Search and Entries -->
+    <div class="table-controls">
+      <div class="entries-control">
+        <label for="userEntriesSelect">Show</label>
+        <select id="userEntriesSelect" onchange="changeUserEntries()">
+          <option value="10">10</option>
+          <option value="25" selected>25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+          <option value="all">All</option>
+        </select>
+        <span>entries</span>
+      </div>
+      
+      <div class="search-control">
+        <input type="text" id="userSearch" placeholder="Search users..." onkeyup="searchUsers()">
+        <button onclick="searchUsers()">
+          <i class="bi bi-search"></i>
+          <span>Search</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table" id="usersTable">
+        <thead>
+          <tr>
+            <th><strong style="color:#ff0000;">USER ID</strong></th>
+            <th><strong style="color:#ff0000;">USERNAME</strong></th>
+            <th><strong style="color:#ff0000;">FULL NAME</strong></th>
+            <th><strong style="color:#ff0000;">EMAIL</strong></th>
+            <th><strong style="color:#ff0000;">ROLE</strong></th>
+            <th><strong style="color:#ff0000;">PHONE</strong></th>
+            <th><strong style="color:#ff0000;">ID NUMBER</strong></th>
+            <th><strong style="color:#ff0000;">STATUS</strong></th>
+            <th><strong style="color:#ff0000;">DATE JOINED</strong></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in all_users %}
+          <tr class="user-row" 
+              id="user-row-{{ user.id }}"
+              data-user-id="{{ user.id }}"
+              data-role="{{ user.profile.role.name|lower }}"
+              data-status="{% if user.is_active %}active{% else %}inactive{% endif %}">
+            
+            <!-- User ID -->
+            <td>
+              <code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-weight: 600;">
+                #{{ user.id }}
+              </code>
+            </td>
+
+            <!-- Username -->
+            <td><strong>{{ user.username }}</strong></td>
+
+            <!-- Full Name -->
+            <td>{{ user.get_full_name|default:"N/A" }}</td>
+
+            <!-- Email -->
+            <td>{{ user.email|default:"N/A" }}</td>
+
+            <!-- Role Badge -->
+            <td>
+              {% if user.profile.role.name == 'Admin' %}
+                <span class="badge" style="background: #ef4444; color: white;">
+                  <i class="bi bi-shield-fill"></i> Admin
+                </span>
+              {% elif user.profile.role.name == 'Manager' %}
+                <span class="badge" style="background: #3b82f6; color: white;">
+                  <i class="bi bi-person-badge"></i> Manager
+                </span>
+              {% elif user.profile.role.name == 'Cashier' %}
+                <span class="badge" style="background: #10b981; color: white;">
+                  <i class="bi bi-cash-stack"></i> Cashier
+                </span>
+              {% elif user.profile.role.name == 'Agent' %}
+                <span class="badge" style="background: #f59e0b; color: white;">
+                  <i class="bi bi-person"></i> Agent
+                </span>
+              {% else %}
+                <span class="badge bg-secondary">
+                  <i class="bi bi-person"></i> {{ user.profile.role.name }}
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Phone -->
+            <td>{{ user.profile.phone_number|default:"N/A" }}</td>
+
+            <!-- ID Number -->
+            <td>{{ user.profile.id_number|default:"N/A" }}</td>
+
+            <!-- Status Badge -->
+            <td>
+              {% if user.is_active %}
+                <span class="badge badge-success">
+                  <i class="bi bi-check-circle-fill"></i> Active
+                </span>
+              {% else %}
+                <span class="badge badge-danger">
+                  <i class="bi bi-x-circle-fill"></i> Inactive
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Date Joined -->
+            <td><span style="color: #6c757d;">{{ user.date_joined|date:"M d, Y" }}</span></td>
+
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="10">
+              <div class="empty-state">
+                <i class="bi bi-people"></i>
+                <p>No users found in the system.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- ============================= -->
+<!--      ADD USER SECTION         -->
+<!-- ============================= -->
+<div id="add-user" class="content-section">
+  <div class="content-header">
+    <h1 class="page-title">Add New User</h1>
+  </div>
+
+  <div class="data-card">
+    <div style="padding: 2rem; max-width: 800px; margin: 0 auto;">
+      
+      <!-- Success Message -->
+      <div id="success-message-user" style="display: none;" class="alert alert-success">
+        User created successfully!
+      </div>
+
+      <!-- Error Message -->
+      <div id="message-div-user"></div>
+
+      <form id="addUserForm" method="POST" action="{% url 'user-add' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row g-3">
+          <!-- Username -->
+          <div class="col-md-6">
+            <label for="username" class="form-label required">Username</label>
+            <input type="text" name="username" id="username" class="form-control" placeholder="Enter username" required>
+          </div>
+
+          <!-- Email -->
+          <div class="col-md-6">
+            <label for="email" class="form-label required">Email</label>
+            <input type="email" name="email" id="email" class="form-control" placeholder="user@example.com" required>
+          </div>
+
+          <!-- First Name -->
+          <div class="col-md-6">
+            <label for="first_name" class="form-label required">First Name</label>
+            <input type="text" name="first_name" id="first_name" class="form-control" placeholder="Enter first name" required>
+          </div>
+
+          <!-- Last Name -->
+          <div class="col-md-6">
+            <label for="last_name" class="form-label required">Last Name</label>
+            <input type="text" name="last_name" id="last_name" class="form-control" placeholder="Enter last name" required>
+          </div>
+
+          <!-- Password -->
+          <div class="col-md-6">
+            <label for="password" class="form-label required">Password</label>
+            <input type="password" name="password" id="password" class="form-control" placeholder="Enter password" required>
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="col-md-6">
+            <label for="confirm_password" class="form-label required">Confirm Password</label>
+            <input type="password" name="confirm_password" id="confirm_password" class="form-control" placeholder="Confirm password" required>
+          </div>
+
+          <!-- Role -->
+          <div class="col-md-6">
+            <label for="role" class="form-label required">Role</label>
+            <select name="role" id="role" class="form-select" required>
+              <option value="">Select Role</option>
+              {% for role in roles %}
+              <option value="{{ role.id }}">{{ role.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Phone Number -->
+          <div class="col-md-6">
+            <label for="phone_number" class="form-label">Phone Number</label>
+            <input type="text" name="phone_number" id="phone_number" class="form-control" placeholder="0712345678">
+          </div>
+
+          <!-- ID Number -->
+          <div class="col-md-6">
+            <label for="id_number" class="form-label">ID Number</label>
+            <input type="text" name="id_number" id="id_number" class="form-control" placeholder="12345678">
+          </div>
+
+          <!-- Date of Birth -->
+          <div class="col-md-6">
+            <label for="date_of_birth" class="form-label">Date of Birth</label>
+            <input type="date" name="date_of_birth" id="date_of_birth" class="form-control">
+          </div>
+
+          <!-- Passport Image -->
+          <div class="col-12">
+            <label for="passport_image" class="form-label">Passport Photo</label>
+            <input type="file" name="passport_image" id="passport_image" class="form-control" accept="image/*">
+            <small class="form-text text-muted">Supported formats: JPG, PNG (Max 5MB)</small>
+          </div>
+
+          <!-- Buttons -->
+          <div class="col-12" style="margin-top: 1.5rem;">
+            <button type="submit" class="btn-action btn-primary">
+              <i class="bi bi-save"></i>
+              <span>Create User</span>
+            </button>
+            <a href="#users-list" class="btn-action" style="background: #6c757d; color: #fff; margin-left: 0.5rem;" data-section="users-list">
+              <i class="bi bi-x-circle"></i>
+              <span>Cancel</span>
+            </a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- ============================= -->
+<!--  ROLES & PERMISSIONS SECTION  -->
+<!-- ============================= -->
+<div id="roles-permissions" class="content-section">
+  <div class="content-header">
+    <h1 class="page-title">
+      <i class="bi bi-shield-check"></i> Roles & Permissions
+    </h1>
+  </div>
+
+  <div class="data-card">
+    <div style="padding: 2rem;">
+      <h4 class="mb-4">System Roles Overview</h4>
+      
+      <div class="row g-4">
+        <!-- Admin Role -->
+        <div class="col-md-6">
+          <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+              <h3 class="mb-0"><i class="bi bi-shield-fill"></i> Admin</h3>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">Full system access and control</p>
+              <ul class="list-unstyled">
+                <li><i class="bi bi-check-circle text-success"></i> Manage all users</li>
+                <li><i class="bi bi-check-circle text-success"></i> Manage inventory</li>
+                <li><i class="bi bi-check-circle text-success"></i> Process sales</li>
+                <li><i class="bi bi-check-circle text-success"></i> View all reports</li>
+                <li><i class="bi bi-check-circle text-success"></i> System configuration</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manager Role -->
+        <div class="col-md-6">
+          <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+              <h3 class="mb-0"><i class="bi bi-person-badge"></i> Manager</h3>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">Manage operations and staff</p>
+              <ul class="list-unstyled">
+                <li><i class="bi bi-check-circle text-success"></i> Manage cashiers</li>
+                <li><i class="bi bi-check-circle text-success"></i> Manage inventory</li>
+                <li><i class="bi bi-check-circle text-success"></i> Process sales</li>
+                <li><i class="bi bi-check-circle text-success"></i> View reports</li>
+                <li><i class="bi bi-x-circle text-danger"></i> System configuration</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cashier Role -->
+        <div class="col-md-6">
+          <div class="card border-success">
+            <div class="card-header bg-success text-white">
+              <h3 class="mb-0"><i class="bi bi-cash-stack"></i> Cashier</h3>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">Process sales and transactions</p>
+              <ul class="list-unstyled">
+                <li><i class="bi bi-x-circle text-danger"></i> Manage users</li>
+                <li><i class="bi bi-check-circle text-success"></i> View inventory</li>
+                <li><i class="bi bi-check-circle text-success"></i> Process sales</li>
+                <li><i class="bi bi-check-circle text-success"></i> View own sales</li>
+                <li><i class="bi bi-x-circle text-danger"></i> System configuration</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agent Role -->
+        <div class="col-md-6">
+          <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+              <h3 class="mb-0"><i class="bi bi-person"></i> Agent</h3>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">Limited sales access</p>
+              <ul class="list-unstyled">
+                <li><i class="bi bi-x-circle text-danger"></i> Manage users</li>
+                <li><i class="bi bi-check-circle text-success"></i> View inventory</li>
+                <li><i class="bi bi-check-circle text-success"></i> Record sales</li>
+                <li><i class="bi bi-check-circle text-success"></i> View own sales</li>
+                <li><i class="bi bi-x-circle text-danger"></i> System configuration</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 
