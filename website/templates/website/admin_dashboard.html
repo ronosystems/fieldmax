@@ -5070,6 +5070,125 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
+
+// ==========================
+// =========================
+// UTILITY FUNCTIONS
+// =========================
+function csrfToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+
+// =========================
+// SECTION NAVIGATION SYSTEM
+// =========================
+function showSection(sectionId) {
+  document.querySelectorAll('.content-section').forEach(section => {
+    section.classList.remove('active');
+  });
+
+  const targetSection = document.getElementById(sectionId);
+  if (targetSection) targetSection.classList.add('active');
+
+  document.querySelectorAll('.nav-item, .submenu-item').forEach(item => {
+    item.classList.remove('active');
+  });
+
+  const clickedNavItem = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
+  const clickedSubmenuItem = document.querySelector(`.submenu-item[data-section="${sectionId}"]`);
+
+  if (clickedNavItem) clickedNavItem.classList.add('active');
+  if (clickedSubmenuItem) clickedSubmenuItem.classList.add('active');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const sidebar = document.getElementById('dashboardSidebar');
+  if (window.innerWidth <= 992 && sidebar) sidebar.classList.remove('active');
+}
+
+// Handle navigation clicks
+document.querySelectorAll('[data-section]').forEach(el => {
+  el.addEventListener('click', e => {
+    e.preventDefault();
+    const sectionId = el.getAttribute('data-section');
+    showSection(sectionId);
+    history.pushState(null, null, `#${sectionId}`);
+  });
+});
+
+window.addEventListener('popstate', () => {
+  const hash = window.location.hash.substring(1);
+  showSection(hash || 'dashboard');
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  const hash = window.location.hash.substring(1);
+  if (hash) showSection(hash);
+});
+
+
+// ====================================
+// ===================================
+// MOBILE SIDEBAR TOGGLE
+// ==================================
+const toggleBtn = document.getElementById('mobileSidebarToggle');
+if (toggleBtn) {
+  toggleBtn.addEventListener('click', () => sidebar.classList.toggle('active'));
+}
+
+
+// ===================
+// SWIPE TO CLOSE SIDEBAR (MOBILE)
+// ===================
+let touchStartX = 0;
+let touchEndX = 0;
+
+sidebar.addEventListener('touchstart', (e) => {
+  touchStartX = e.changedTouches[0].screenX;
+}, { passive: true });
+
+sidebar.addEventListener('touchend', (e) => {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipeGesture();
+}, { passive: true });
+
+function handleSwipeGesture() {
+  // Swipe left to close (threshold: 50px)
+  if (touchStartX - touchEndX > 50) {
+    if (sidebar.classList.contains('active')) {
+      sidebar.classList.remove('active');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (overlay) overlay.remove();
+    }
+  }
+}
+
+// ===================
+// PREVENT BODY SCROLL WHEN SIDEBAR IS OPEN (MOBILE)
+// ===================
+const observer = new MutationObserver((mutations) => {
+  mutations.forEach((mutation) => {
+    if (mutation.attributeName === 'class') {
+      if (window.innerWidth <= 992) {
+        if (sidebar.classList.contains('active')) {
+          document.body.style.overflow = 'hidden';
+        } else {
+          document.body.style.overflow = '';
+        }
+      }
+    }
+  });
+});
+
+observer.observe(sidebar, { attributes: true });
+
+
+
+
+
+
 // ======================================
 // ======================================
 // CAMERA CAPTURE
@@ -5550,117 +5669,8 @@ document.getElementById('barcodeScannerModal').addEventListener('hidden.bs.modal
 
 
 
-// ==========================
-// =========================
-// UTILITY FUNCTIONS
-// =========================
-function csrfToken() {
-  return document.querySelector('[name=csrfmiddlewaretoken]').value;
-}
 
 
-// =========================
-// SECTION NAVIGATION SYSTEM
-// =========================
-function showSection(sectionId) {
-  document.querySelectorAll('.content-section').forEach(section => {
-    section.classList.remove('active');
-  });
-
-  const targetSection = document.getElementById(sectionId);
-  if (targetSection) targetSection.classList.add('active');
-
-  document.querySelectorAll('.nav-item, .submenu-item').forEach(item => {
-    item.classList.remove('active');
-  });
-
-  const clickedNavItem = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
-  const clickedSubmenuItem = document.querySelector(`.submenu-item[data-section="${sectionId}"]`);
-
-  if (clickedNavItem) clickedNavItem.classList.add('active');
-  if (clickedSubmenuItem) clickedSubmenuItem.classList.add('active');
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  const sidebar = document.getElementById('dashboardSidebar');
-  if (window.innerWidth <= 992 && sidebar) sidebar.classList.remove('active');
-}
-
-// Handle navigation clicks
-document.querySelectorAll('[data-section]').forEach(el => {
-  el.addEventListener('click', e => {
-    e.preventDefault();
-    const sectionId = el.getAttribute('data-section');
-    showSection(sectionId);
-    history.pushState(null, null, `#${sectionId}`);
-  });
-});
-
-window.addEventListener('popstate', () => {
-  const hash = window.location.hash.substring(1);
-  showSection(hash || 'dashboard');
-});
-
-window.addEventListener('DOMContentLoaded', () => {
-  const hash = window.location.hash.substring(1);
-  if (hash) showSection(hash);
-});
-
-
-// ====================================
-// ===================================
-// MOBILE SIDEBAR TOGGLE
-// ==================================
-const toggleBtn = document.getElementById('mobileSidebarToggle');
-if (toggleBtn) {
-  toggleBtn.addEventListener('click', () => sidebar.classList.toggle('active'));
-}
-
-
-// ===================
-// SWIPE TO CLOSE SIDEBAR (MOBILE)
-// ===================
-let touchStartX = 0;
-let touchEndX = 0;
-
-sidebar.addEventListener('touchstart', (e) => {
-  touchStartX = e.changedTouches[0].screenX;
-}, { passive: true });
-
-sidebar.addEventListener('touchend', (e) => {
-  touchEndX = e.changedTouches[0].screenX;
-  handleSwipeGesture();
-}, { passive: true });
-
-function handleSwipeGesture() {
-  // Swipe left to close (threshold: 50px)
-  if (touchStartX - touchEndX > 50) {
-    if (sidebar.classList.contains('active')) {
-      sidebar.classList.remove('active');
-      const overlay = document.getElementById('sidebarOverlay');
-      if (overlay) overlay.remove();
-    }
-  }
-}
-
-// ===================
-// PREVENT BODY SCROLL WHEN SIDEBAR IS OPEN (MOBILE)
-// ===================
-const observer = new MutationObserver((mutations) => {
-  mutations.forEach((mutation) => {
-    if (mutation.attributeName === 'class') {
-      if (window.innerWidth <= 992) {
-        if (sidebar.classList.contains('active')) {
-          document.body.style.overflow = 'hidden';
-        } else {
-          document.body.style.overflow = '';
-        }
-      }
-    }
-  });
-});
-
-observer.observe(sidebar, { attributes: true });
 
 
 // ====================================
