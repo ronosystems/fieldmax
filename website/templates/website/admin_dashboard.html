@@ -2093,7 +2093,6 @@ strong[style*="background-color"] {
 <!-- ======================================== -->
 <!-- ============SIDEBAR NAVIGATION ========= -->
 <!-- ======================================== -->
-  <!-- Sidebar Navigation -->
   <aside class="dashboard-sidebar" id="dashboardSidebar">
     <div class="sidebar-header">
       <h2 class="sidebar-title">
@@ -2200,9 +2199,8 @@ strong[style*="background-color"] {
 
 
 <!-- ======================================== -->
-<!-- ========MAIN DASHBOARD CONTENTS========= -->
+<!-- ======= MAIN DASHBOARD CONTENTS========= -->
 <!-- ======================================== -->
-<!-- Main Dashboard Content -->
   <main class="dashboard-content">
     
     <!-- Dashboard Overview Section -->
@@ -9080,8 +9078,6 @@ function updateProductRow(product) {
 /* ======================================
    UPDATE INVENTORY STATISTICS COUNTERS
    =================================== */
-// ======================================
-// ======================================
 
 function refreshInventoryCounters() {
     const rows = document.querySelectorAll(".product-row");
@@ -9170,8 +9166,6 @@ function filterProducts() {
 // ========================= 
 // STAT REFRESH 
 // ========================= //
-// ====================================
-// ====================================
 
 function updateProductStats() {
     const rows = document.querySelectorAll("#productsTable tbody .product-row");
@@ -9201,7 +9195,7 @@ function updateProductStats() {
 
 
 
-// ============== AUTO-RUN ON LOAD ============ //
+// ======= AUTO-RUN ON LOAD ========= //
 document.addEventListener("DOMContentLoaded", filterProducts);
 
 
@@ -9222,14 +9216,10 @@ const tbody = table.querySelector("tbody");
 const rows = Array.from(tbody.querySelectorAll(".product-row"));
 
 
-// ====================================
-// ====================================
-/* ===================================
+// ===============================
+/* ==============================
    SAVE / LOAD FILTER STATE
-   ================================ */
-// ====================================
-// ====================================
-
+   ============================= */
 function saveFilterState() {
     localStorage.setItem("productFilters", JSON.stringify({
         status: document.getElementById("productStatusFilter").value,
@@ -9252,14 +9242,11 @@ function loadFilterState() {
 }
 
 
-// ====================================
-// ====================================
-/* ====================================
+// ==============================
+/* ==============================
    FILTERING SYSTEM 
-   ================================= */
-// ====================================
-// ====================================
-
+   ========================== */
+// =============================
 function filterProducts() {
     const statusFilter = document.getElementById("productStatusFilter").value;
     const categoryFilter = document.getElementById("productCategoryFilter").value;
@@ -9303,15 +9290,10 @@ function filterProducts() {
 }
 
 
-// ====================================
-// ====================================
+// ==============================
 /* ==============================
     SEARCH BUTTON AND ENTRIES
    =========================== */
-// ====================================
-// ====================================
-
-// Search functionality
 function searchProducts() {
   const searchTerm = document.getElementById('productSearch').value.toLowerCase();
   const rows = document.querySelectorAll('.product-row');
@@ -9338,14 +9320,11 @@ function changeEntries() {
 }
 
 
-// ====================================
-// ====================================
+// =============================
 /* ============================
    LIVE SEARCH
    ========================= */
-// ====================================
-// ====================================
-
+// ============================
 function setupSearchBox() {
     if (!document.getElementById("productSearchInput")) {
 
@@ -9402,14 +9381,11 @@ function filterSales() {
 }
 
 
-// ====================================
-// ====================================
+// ============================
+// ============================
 /* ==========================
    COLUMN SORTING
    ======================== */
-// ====================================
-// ====================================
-
 let sortDirection = 1;
 
 function sortTable(columnIndex) {
@@ -9440,13 +9416,11 @@ function enableColumnSorting() {
 }
 
 
-// ====================================
-// ====================================
+// ============================
 /* =========================
    PAGINATION
    ======================= */
-// ====================================
-// ====================================
+// ============================
 
 function paginateRows() {
     const visibleRows = rows.filter(r => r.style.display !== "none");
@@ -9502,14 +9476,10 @@ function renderPaginationControls(totalPages) {
 }
 
 
-// ====================================
-// ====================================
+// ==============================
 /* ==============================
    HIDE / SHOW COLUMNS
    ============================ */
-// ====================================
-// ====================================
-
 function toggleColumn(index) {
     const rowsAll = table.querySelectorAll("tr");
     rowsAll.forEach(row => {
@@ -9544,14 +9514,10 @@ function initColumnHider() {
 }
 
 
-// ====================================
-// ====================================
+// ==============================
 /* ==============================
    EXPORT TO EXCEL
-   ============================== */
-// ====================================
-// ====================================
-
+   =========================== */
 function exportTableToExcel() {
     let csv = [];
 
@@ -9571,12 +9537,10 @@ function exportTableToExcel() {
 }
 
 
-// ====================================
-// ====================================
+// ===============================
+// ===============================
 // INITIALIZE ALL SYSTEMS
-// ====================================
-// ====================================
-
+// ===============================
 document.addEventListener("DOMContentLoaded", () => {
     setupSearchBox();
     enableColumnSorting();
@@ -9662,12 +9626,10 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 
 
-// ====================================
+// ================================
 // ================================
 // TOGGLE CARD DROPDOWN
 // ================================
-// ====================================
-
 function toggleCardDropdown(header) {
   const dropdown = header.parentElement.querySelector('.stat-dropdown');
   const icon = header.querySelector('.dropdown-icon');

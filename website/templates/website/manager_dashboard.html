@@ -2693,8 +2693,51 @@ th.dragging {
     </div>
   </div>
 </div>
-
-
+<!-- Camera Modal -->
+<div class="modal fade" id="cameraModal" tabindex="-1" aria-labelledby="cameraModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cameraModalLabel">
+          <i class="bi bi-camera"></i> Take Photo
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <!-- Loading Spinner -->
+        <div id="cameraLoading" style="display: none;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading camera...</span>
+          </div>
+          <p class="mt-2 text-muted">Starting camera...</p>
+        </div>
+        
+        <!-- Error Message -->
+        <div id="cameraError" class="alert alert-danger" style="display: none;"></div>
+        
+        <!-- Camera Stream -->
+        <video id="cameraStream" autoplay playsinline style="display: none; max-width: 100%; border-radius: 8px;"></video>
+        
+        <!-- Canvas for Captured Photo -->
+        <canvas id="cameraCanvas" style="display: none; max-width: 100%; border-radius: 8px;"></canvas>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle"></i> Cancel
+        </button>
+        <button type="button" id="captureBtn" class="btn btn-primary" onclick="capturePhoto()" style="display: none;">
+          <i class="bi bi-camera"></i> Capture Photo
+        </button>
+        <button type="button" id="retakeBtn" class="btn btn-warning" onclick="retakePhoto()" style="display: none;">
+          <i class="bi bi-arrow-counterclockwise"></i> Retake
+        </button>
+        <button type="button" id="usePhotoBtn" class="btn btn-success" onclick="usePhoto()" style="display: none;">
+          <i class="bi bi-check-circle"></i> Use This Photo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 
