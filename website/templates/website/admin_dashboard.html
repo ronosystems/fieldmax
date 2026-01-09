@@ -2093,6 +2093,7 @@ strong[style*="background-color"] {
 <!-- ======================================== -->
 <!-- ============SIDEBAR NAVIGATION ========= -->
 <!-- ======================================== -->
+  <!-- Sidebar Navigation -->
   <aside class="dashboard-sidebar" id="dashboardSidebar">
     <div class="sidebar-header">
       <h2 class="sidebar-title">
@@ -2199,8 +2200,9 @@ strong[style*="background-color"] {
 
 
 <!-- ======================================== -->
-<!-- ======= MAIN DASHBOARD CONTENTS========= -->
+<!-- ========MAIN DASHBOARD CONTENTS========= -->
 <!-- ======================================== -->
+<!-- Main Dashboard Content -->
   <main class="dashboard-content">
     
     <!-- Dashboard Overview Section -->
@@ -3123,6 +3125,7 @@ strong[style*="background-color"] {
 </div>
 
 
+
 <!-- ======================================= -->
 <!-- ADD PRODUCT TEMPLATE -->
 <!-- ======================================= -->
@@ -3151,7 +3154,7 @@ strong[style*="background-color"] {
           <div class="col-12">
             <label for="category-select" class="form-label required">Category</label>
             <select name="category" id="category-select" class="form-select" required>
-              <option value="">-- Select Category --</option>
+              <option value=""></option>
               {% for cat in categories %}
               <option value="{{ cat.id }}"
                       data-is-single="{{ cat.is_single_item|yesno:'true,false' }}"
@@ -3161,7 +3164,6 @@ strong[style*="background-color"] {
               </option>
               {% endfor %}
             </select>
-            <small class="form-text text-muted">Select the product category first to show relevant fields</small>
           </div>
 
           <!-- Product Name -->
@@ -3170,54 +3172,13 @@ strong[style*="background-color"] {
             <input type="text" name="name" id="product-name" class="form-control" placeholder="Enter product name" required>
           </div>
 
-          <!-- ===================================== -->
-          <!-- SKU VALUE FIELD (ENHANCED VERSION) -->
-          <!-- ===================================== -->
-          <div class="col-12" id="sku-value-container" style="display: none;">
-            <div class="alert alert-info" style="background: #e0f2fe; border-color: #3b82f6;">
-              <div class="d-flex align-items-center mb-2">
-                <i class="bi bi-info-circle-fill text-primary me-2" style="font-size: 1.5rem;"></i>
-                <h6 class="mb-0" id="sku-field-title">Product Identifier</h6>
-              </div>
-              <p class="mb-3 small" id="sku-field-description">Enter the unique identifier for this product</p>
-              
-              <label for="sku-input" class="form-label fw-bold" id="sku-label">
-                <i class="bi bi-upc-scan"></i> SKU / IMEI / Serial Number <span class="text-danger">*</span>
-              </label>
-              
-              <div class="input-group input-group-lg">
-                <span class="input-group-text bg-white">
-                  <i class="bi bi-hash"></i>
-                </span>
-                <input type="text" 
-                       name="sku_value" 
-                       id="sku-input" 
-                       class="form-control" 
-                       placeholder="Enter or scan identifier"
-                       style="font-family: 'Courier New', monospace; font-weight: 600;">
-                <button type="button" 
-                        class="btn btn-primary" 
-                        onclick="openBarcodeScanner('sku')"
-                        title="Scan with camera">
-                  <i class="bi bi-camera"></i> Scan
-                </button>
-              </div>
-              
-              <div class="mt-2">
-                <small class="text-muted" id="sku-field-hint">
-                  <i class="bi bi-lightbulb"></i> Tip: Click "Scan" to use your camera
-                </small>
-              </div>
-            </div>
-          </div>
-
           <!-- Product Image with Camera -->
           <div class="col-12">
-            <label for="product-image" class="form-label">Product Image (Optional)</label>
+            <label for="product-image" class="form-label">Product Image</label>
             
             <!-- Image Preview -->
             <div id="imagePreviewContainer" style="margin-bottom: 15px; display: none;">
-              <img id="imagePreview" src="" alt="Preview" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 2px solid #ddd;">
+              <img id="imagePreview" src="" alt="Preview" style="max-width: 50%; max-height: 300px; border-radius: 8px; border: 2px solid #ddd;">
               <button type="button" class="btn btn-sm btn-danger mt-2" onclick="clearImage()">
                 <i class="bi bi-trash"></i> Remove Image
               </button>
@@ -3243,53 +3204,43 @@ strong[style*="background-color"] {
           <!-- Buying Price -->
           <div class="col-md-6">
             <label for="buying-price" class="form-label required">Buying Price (KSH)</label>
-            <div class="input-group">
-              <span class="input-group-text">KSH</span>
-              <input type="number" step="0.01" name="buying_price" id="buying-price" class="form-control" placeholder="0.00" required>
-            </div>
+            <input type="number" step="0.01" name="buying_price" id="buying-price" class="form-control" placeholder="0.00" required>
           </div>
 
           <!-- Selling Price -->
           <div class="col-md-6">
             <label for="selling-price" class="form-label required">Selling Price (KSH)</label>
+            <input type="number" step="0.01" name="selling_price" id="selling-price" class="form-control" placeholder="0.00" required>
+          </div>
+
+          <!-- SKU Field (single items - IMEI/Serial) -->
+          <div class="col-12" id="sku-field" style="display:none;">
+            <label class="form-label" id="sku-label"></label>
             <div class="input-group">
-              <span class="input-group-text">KSH</span>
-              <input type="number" step="0.01" name="selling_price" id="selling-price" class="form-control" placeholder="0.00" required>
+              <input type="text" name="sku_value" id="sku-input" class="form-control" placeholder="Enter or scan">
+              <button type="button" class="btn btn-outline-primary" onclick="openBarcodeScanner('sku')">
+                <i class="bi bi-upc-scan"></i> Scan
+              </button>
             </div>
+            <small class="form-text text-muted">Enter manually or use camera to scan IMEI/Serial number</small>
           </div>
 
           <!-- Barcode Field (bulk items only) -->
           <div class="col-12" id="barcode-field" style="display:none;">
-            <div class="alert alert-warning" style="background: #fef3c7; border-color: #f59e0b;">
-              <label for="barcode-input" class="form-label fw-bold">
-                <i class="bi bi-upc-scan"></i> Barcode (Optional)
-              </label>
-              <div class="input-group">
-                <span class="input-group-text bg-white">
-                  <i class="bi bi-upc"></i>
-                </span>
-                <input type="text" name="barcode" id="barcode-input" class="form-control" placeholder="Enter or scan barcode">
-                <button type="button" class="btn btn-warning" onclick="openBarcodeScanner('barcode')">
-                  <i class="bi bi-camera"></i> Scan
-                </button>
-              </div>
-              <small class="form-text text-muted mt-2 d-block">
-                <i class="bi bi-info-circle"></i> For bulk items: Add barcode for faster scanning during sales
-              </small>
+            <label for="barcode-input" class="form-label">Barcode</label>
+            <div class="input-group">
+              <input type="text" name="barcode" id="barcode-input" class="form-control" placeholder="Enter or scan barcode">
+              <button type="button" class="btn btn-outline-primary" onclick="openBarcodeScanner('barcode')">
+                <i class="bi bi-upc-scan"></i> Scan
+              </button>
             </div>
+            <small class="form-text text-muted">Enter manually or use camera to scan barcode</small>
           </div>
 
           <!-- Quantity Field (bulk items) -->
           <div class="col-12" id="quantity-field" style="display:none;">
-            <div class="alert alert-success" style="background: #d1fae5; border-color: #10b981;">
-              <label for="quantity" class="form-label fw-bold required">
-                <i class="bi bi-box-seam"></i> Initial Stock Quantity
-              </label>
-              <input type="number" name="quantity" id="quantity" class="form-control form-control-lg" min="1" placeholder="Enter quantity">
-              <small class="form-text text-muted mt-2 d-block">
-                <i class="bi bi-info-circle"></i> Enter the number of units you're adding to inventory
-              </small>
-            </div>
+            <label for="quantity" class="form-label required">Quantity</label>
+            <input type="number" name="quantity" id="quantity" class="form-control" min="1" placeholder="Enter quantity">
           </div>
 
           <!-- Buttons -->
@@ -5070,125 +5021,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
-
-// ==========================
-// =========================
-// UTILITY FUNCTIONS
-// =========================
-function csrfToken() {
-  return document.querySelector('[name=csrfmiddlewaretoken]').value;
-}
-
-
-// =========================
-// SECTION NAVIGATION SYSTEM
-// =========================
-function showSection(sectionId) {
-  document.querySelectorAll('.content-section').forEach(section => {
-    section.classList.remove('active');
-  });
-
-  const targetSection = document.getElementById(sectionId);
-  if (targetSection) targetSection.classList.add('active');
-
-  document.querySelectorAll('.nav-item, .submenu-item').forEach(item => {
-    item.classList.remove('active');
-  });
-
-  const clickedNavItem = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
-  const clickedSubmenuItem = document.querySelector(`.submenu-item[data-section="${sectionId}"]`);
-
-  if (clickedNavItem) clickedNavItem.classList.add('active');
-  if (clickedSubmenuItem) clickedSubmenuItem.classList.add('active');
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  const sidebar = document.getElementById('dashboardSidebar');
-  if (window.innerWidth <= 992 && sidebar) sidebar.classList.remove('active');
-}
-
-// Handle navigation clicks
-document.querySelectorAll('[data-section]').forEach(el => {
-  el.addEventListener('click', e => {
-    e.preventDefault();
-    const sectionId = el.getAttribute('data-section');
-    showSection(sectionId);
-    history.pushState(null, null, `#${sectionId}`);
-  });
-});
-
-window.addEventListener('popstate', () => {
-  const hash = window.location.hash.substring(1);
-  showSection(hash || 'dashboard');
-});
-
-window.addEventListener('DOMContentLoaded', () => {
-  const hash = window.location.hash.substring(1);
-  if (hash) showSection(hash);
-});
-
-
-// ====================================
-// ===================================
-// MOBILE SIDEBAR TOGGLE
-// ==================================
-const toggleBtn = document.getElementById('mobileSidebarToggle');
-if (toggleBtn) {
-  toggleBtn.addEventListener('click', () => sidebar.classList.toggle('active'));
-}
-
-
-// ===================
-// SWIPE TO CLOSE SIDEBAR (MOBILE)
-// ===================
-let touchStartX = 0;
-let touchEndX = 0;
-
-sidebar.addEventListener('touchstart', (e) => {
-  touchStartX = e.changedTouches[0].screenX;
-}, { passive: true });
-
-sidebar.addEventListener('touchend', (e) => {
-  touchEndX = e.changedTouches[0].screenX;
-  handleSwipeGesture();
-}, { passive: true });
-
-function handleSwipeGesture() {
-  // Swipe left to close (threshold: 50px)
-  if (touchStartX - touchEndX > 50) {
-    if (sidebar.classList.contains('active')) {
-      sidebar.classList.remove('active');
-      const overlay = document.getElementById('sidebarOverlay');
-      if (overlay) overlay.remove();
-    }
-  }
-}
-
-// ===================
-// PREVENT BODY SCROLL WHEN SIDEBAR IS OPEN (MOBILE)
-// ===================
-const observer = new MutationObserver((mutations) => {
-  mutations.forEach((mutation) => {
-    if (mutation.attributeName === 'class') {
-      if (window.innerWidth <= 992) {
-        if (sidebar.classList.contains('active')) {
-          document.body.style.overflow = 'hidden';
-        } else {
-          document.body.style.overflow = '';
-        }
-      }
-    }
-  });
-});
-
-observer.observe(sidebar, { attributes: true });
-
-
-
-
-
-
 // ======================================
 // ======================================
 // CAMERA CAPTURE
@@ -5669,8 +5501,71 @@ document.getElementById('barcodeScannerModal').addEventListener('hidden.bs.modal
 
 
 
+// ==========================
+// =========================
+// UTILITY FUNCTIONS
+// =========================
+function csrfToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
 
 
+// =========================
+// SECTION NAVIGATION SYSTEM
+// =========================
+function showSection(sectionId) {
+  document.querySelectorAll('.content-section').forEach(section => {
+    section.classList.remove('active');
+  });
+
+  const targetSection = document.getElementById(sectionId);
+  if (targetSection) targetSection.classList.add('active');
+
+  document.querySelectorAll('.nav-item, .submenu-item').forEach(item => {
+    item.classList.remove('active');
+  });
+
+  const clickedNavItem = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
+  const clickedSubmenuItem = document.querySelector(`.submenu-item[data-section="${sectionId}"]`);
+
+  if (clickedNavItem) clickedNavItem.classList.add('active');
+  if (clickedSubmenuItem) clickedSubmenuItem.classList.add('active');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const sidebar = document.getElementById('dashboardSidebar');
+  if (window.innerWidth <= 992 && sidebar) sidebar.classList.remove('active');
+}
+
+// Handle navigation clicks
+document.querySelectorAll('[data-section]').forEach(el => {
+  el.addEventListener('click', e => {
+    e.preventDefault();
+    const sectionId = el.getAttribute('data-section');
+    showSection(sectionId);
+    history.pushState(null, null, `#${sectionId}`);
+  });
+});
+
+window.addEventListener('popstate', () => {
+  const hash = window.location.hash.substring(1);
+  showSection(hash || 'dashboard');
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  const hash = window.location.hash.substring(1);
+  if (hash) showSection(hash);
+});
+
+
+// ====================================
+// ===================================
+// MOBILE SIDEBAR TOGGLE
+// ==================================
+const toggleBtn = document.getElementById('mobileSidebarToggle');
+if (toggleBtn) {
+  toggleBtn.addEventListener('click', () => sidebar.classList.toggle('active'));
+}
 
 
 // ====================================
@@ -6627,37 +6522,23 @@ function showToast(message, type = 'success') {
 
 
 
-
 // ====================================
-// ADD PRODUCT FORM - FIXED VERSION
+// ====================================
+// ADD PRODUCT  SECTION
 // ====================================
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ===========================
-    // DOM ELEMENTS
-    // ===========================
     const categorySelect = document.getElementById('category-select');
-    const skuValueContainer = document.getElementById('sku-value-container');
+    const skuField = document.getElementById('sku-field');
     const skuInput = document.getElementById('sku-input');
     const skuLabel = document.getElementById('sku-label');
-    const skuFieldTitle = document.getElementById('sku-field-title');
-    const skuFieldDescription = document.getElementById('sku-field-description');
-    const skuFieldHint = document.getElementById('sku-field-hint');
-    
-    const barcodeField = document.getElementById('barcode-field');
-    const barcodeInput = document.getElementById('barcode-input');
-    
     const quantityField = document.getElementById('quantity-field');
     const quantityInput = document.getElementById('quantity');
-    
     const form = document.getElementById('addProductForm');
     const messageDiv = document.getElementById('message-div');
     const successDiv = document.getElementById('success-message-product');
     const saveBtn = form.querySelector("button[type='submit']");
 
-    // ===========================
-    // HELPER FUNCTIONS
-    // ===========================
     function getCookie(name) {
         let cookieValue = null;
         const cookies = document.cookie.split(';');
@@ -6672,7 +6553,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     const csrftoken = getCookie('csrftoken');
 
-    function showToast(msg, type = "success") {
+    function showToast(msg, type="success") {
         const t = document.createElement("div");
         t.className = `toast-message ${type}`;
         t.innerHTML = msg;
@@ -6681,110 +6562,6 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => t.remove(), 3500);
     }
 
-    // ===========================
-    // ✅ FIXED: FIELD VISIBILITY LOGIC
-    // ===========================
-    function updateFields() {
-        const selected = categorySelect.options[categorySelect.selectedIndex];
-        
-        if (!selected.value) {
-            // No category selected - hide all special fields
-            hideAllFields();
-            return;
-        }
-
-        const isSingle = selected.dataset.isSingle === "true";
-        const isBulk = selected.dataset.isBulk === "true";
-        const skuType = selected.dataset.skuType || "SKU";
-
-        console.log('Category changed:', {
-            isSingle,
-            isBulk,
-            skuType
-        });
-
-        if (isSingle) {
-            showSingleItemFields(skuType);
-        } else if (isBulk) {
-            showBulkItemFields();
-        } else {
-            hideAllFields();
-        }
-    }
-
-    function showSingleItemFields(skuType) {
-        // Show SKU field with proper labels
-        skuValueContainer.style.display = 'block';
-        skuFieldTitle.textContent = `${skuType} Required`;
-        skuFieldDescription.textContent = `Enter the unique ${skuType.toLowerCase()} for this item`;
-        skuLabel.innerHTML = `<i class="bi bi-upc-scan"></i> ${skuType} <span class="text-danger">*</span>`;
-        skuFieldHint.innerHTML = `<i class="bi bi-lightbulb"></i> Tip: Each ${skuType.toLowerCase()} must be unique`;
-        skuInput.required = true;
-        skuInput.disabled = false;
-        skuInput.placeholder = `Enter ${skuType.toLowerCase()}`;
-
-        // Hide barcode field for single items
-        barcodeField.style.display = 'none';
-        barcodeInput.required = false;
-        barcodeInput.disabled = true;
-        barcodeInput.value = '';
-
-        // Hide quantity field (always 1 for single items)
-        quantityField.style.display = 'none';
-        quantityInput.value = 1;
-        quantityInput.required = false;
-        quantityInput.disabled = true;
-
-        console.log('✅ Single item fields shown');
-    }
-
-    function showBulkItemFields() {
-        // Hide SKU field for bulk items
-        skuValueContainer.style.display = 'none';
-        skuInput.required = false;
-        skuInput.disabled = true;
-        skuInput.value = '';
-
-        // Show barcode field (optional)
-        barcodeField.style.display = 'block';
-        barcodeInput.required = false;
-        barcodeInput.disabled = false;
-
-        // Show quantity field (required)
-        quantityField.style.display = 'block';
-        quantityInput.required = true;
-        quantityInput.disabled = false;
-        quantityInput.value = '';
-        quantityInput.min = 1;
-
-        console.log('✅ Bulk item fields shown');
-    }
-
-    function hideAllFields() {
-        // Hide SKU
-        skuValueContainer.style.display = 'none';
-        skuInput.required = false;
-        skuInput.disabled = true;
-        skuInput.value = '';
-
-        // Hide barcode
-        barcodeField.style.display = 'none';
-        barcodeInput.required = false;
-        barcodeInput.disabled = true;
-        barcodeInput.value = '';
-
-        // Hide quantity
-        quantityField.style.display = 'none';
-        quantityInput.required = false;
-        quantityInput.disabled = true;
-        quantityInput.value = '';
-
-        console.log('✅ All fields hidden');
-    }
-
-    // ===========================
-    // ✅ FIXED: FORM VALIDATION
-    // ===========================
     function validateInline() {
         const name = document.getElementById("product-name").value.trim();
         const category = categorySelect.value;
@@ -6793,57 +6570,46 @@ document.addEventListener('DOMContentLoaded', function () {
 
         messageDiv.innerHTML = "";
 
-        // Check category
         if (!category) {
-            messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Please select a category.</div>`;
+            messageDiv.innerHTML = `<div class="alert alert-danger">Please select a category.</div>`;
             return false;
         }
 
-        // Check name
         if (!name) {
-            messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Product name is required.</div>`;
+            messageDiv.innerHTML = `<div class="alert alert-danger">Product name is required.</div>`;
             return false;
         }
 
-        // Check buying price
         if (isNaN(buy) || buy <= 0) {
-            messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Valid buying price is required.</div>`;
+            messageDiv.innerHTML = `<div class="alert alert-danger">Valid buying price is required.</div>`;
             return false;
         }
 
-        // Check selling price
         if (isNaN(sell) || sell <= 0) {
-            messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Valid selling price is required.</div>`;
+            messageDiv.innerHTML = `<div class="alert alert-danger">Valid selling price is required.</div>`;
             return false;
         }
 
-        // Check price logic
         if (sell < buy) {
-            messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Selling price must be higher than or equal to buying price.</div>`;
+            messageDiv.innerHTML = `<div class="alert alert-danger">Selling price must be higher than buying price.</div>`;
             return false;
         }
 
-        // Category-specific validation
+        // Check if single item needs SKU
         const selected = categorySelect.options[categorySelect.selectedIndex];
         const isSingle = selected.dataset.isSingle === "true";
-        const isBulk = selected.dataset.isBulk === "true";
-        const skuType = selected.dataset.skuType || "SKU";
-
-        // Single item validation
-        if (isSingle) {
-            const skuValue = skuInput.value.trim();
-            if (!skuValue) {
-                messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ${skuType} is required for single items.</div>`;
-                skuInput.focus();
-                return false;
-            }
+        if (isSingle && !skuInput.value.trim()) {
+            messageDiv.innerHTML = `<div class="alert alert-danger">SKU/IMEI/Serial is required for single items.</div>`;
+            skuInput.focus();
+            return false;
         }
 
-        // Bulk item validation
+        // Check if bulk item needs quantity
+        const isBulk = selected.dataset.isBulk === "true";
         if (isBulk) {
             const qty = parseInt(quantityInput.value);
             if (isNaN(qty) || qty <= 0) {
-                messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Valid quantity is required for bulk items.</div>`;
+                messageDiv.innerHTML = `<div class="alert alert-danger">Valid quantity is required for bulk items.</div>`;
                 quantityInput.focus();
                 return false;
             }
@@ -6852,52 +6618,83 @@ document.addEventListener('DOMContentLoaded', function () {
         return true;
     }
 
-    // ===========================
-    // EVENT LISTENERS
-    // ===========================
+    function updateFields() {
+        const selected = categorySelect.options[categorySelect.selectedIndex];
+        const isSingle = selected.dataset.isSingle === "true";
+        const isBulk = selected.dataset.isBulk === "true";
+        const skuType = selected.dataset.skuType || "SKU";
+
+        const barcodeField = document.getElementById('barcode-field');
+        const barcodeInput = document.getElementById('barcode-input');
+
+        if (isSingle) {
+            // Single items: show SKU field (IMEI/Serial)
+            skuField.style.display = 'block';
+            skuLabel.textContent = `${skuType} *`;
+            skuInput.required = true;
+            skuInput.disabled = false; // Enable SKU input
+        
+            // Hide and disable barcode field
+            barcodeField.style.display = 'none';
+            barcodeInput.required = false;
+            barcodeInput.disabled = true; // Disable so it won't submit
+            barcodeInput.value = ''; // Clear value
+        
+            quantityField.style.display = 'none';
+            quantityInput.value = 1;
+            quantityInput.required = false;
+        
+        } else if (isBulk) {
+            // Bulk items: show barcode and quantity fields
+            skuField.style.display = 'none';
+            skuInput.required = false;
+            skuInput.disabled = true; // Disable so it won't submit
+            skuInput.value = ''; // Clear value
+        
+            barcodeField.style.display = 'block';
+            barcodeInput.required = false;
+            barcodeInput.disabled = false; // Enable barcode input
+        
+            quantityField.style.display = 'block';
+            quantityInput.required = true;
+        
+        } else {
+            // No category selected: hide all
+            skuField.style.display = 'none';
+            skuInput.required = false;
+            skuInput.disabled = true;
+        
+            barcodeField.style.display = 'none';
+            barcodeInput.required = false;
+            barcodeInput.disabled = true;
+        
+            quantityField.style.display = 'none';
+            quantityInput.required = false;
+        }
+    }
+
     categorySelect.addEventListener('change', updateFields);
-    
-    // Initialize on page load
     updateFields();
 
-    // ===========================
-    // FORM SUBMISSION
-    // ===========================
     form.addEventListener('submit', function (e) {
         e.preventDefault();
 
-        console.log('Form submitted');
-
-        if (!validateInline()) {
-            console.log('Validation failed');
-            return;
-        }
+        if (!validateInline()) return;
 
         saveBtn.disabled = true;
         saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Saving...`;
         messageDiv.innerHTML = "";
 
-        const formData = new FormData(form);
-
-        // Log form data for debugging
-        console.log('Form data being sent:');
-        for (let [key, value] of formData.entries()) {
-            if (value instanceof File) {
-                console.log(key, ':', value.name, '(', value.size, 'bytes)');
-            } else {
-                console.log(key, ':', value);
-            }
-        }
-
         fetch(form.action, {
             method: "POST",
-            body: formData,
+            body: new FormData(form),
             headers: {
                 "X-Requested-With": "XMLHttpRequest",
                 "X-CSRFToken": csrftoken
             }
         })
         .then(response => {
+            // CRITICAL FIX: Check content type before parsing
             const contentType = response.headers.get("content-type");
             
             if (contentType && contentType.includes("application/json")) {
@@ -6906,6 +6703,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     data: data 
                 }));
             } else {
+                // Non-JSON response (probably HTML redirect or error page)
                 return response.text().then(text => ({ 
                     status: response.status, 
                     data: { success: false, message: "Unexpected response from server" },
@@ -6920,14 +6718,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (status === 200 && data.success) {
                 showToast("✅ Product saved successfully!");
 
-                // Reset form
                 form.reset();
-                clearImagePreview();
                 updateFields();
 
-                // Show success message
                 successDiv.style.display = "block";
-                successDiv.innerHTML = `<i class="bi bi-check-circle"></i> Product "${data.product_code}" saved successfully!`;
                 setTimeout(() => successDiv.style.display = "none", 5000);
 
                 // Navigate to product list
@@ -6935,11 +6729,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (listBtn) {
                     setTimeout(() => {
                         listBtn.click();
+                        // Optionally reload to show new product
                         setTimeout(() => window.location.reload(), 500);
                     }, 1200);
                 }
             }
             else {
+                // Error response
                 let errorMessage = "Error saving product";
                 
                 if (data.message) {
@@ -6950,17 +6746,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         errorMessage = firstError[0];
                     }
                 } else if (rawText) {
-                    console.error("Raw response:", rawText.substring(0, 500));
+                    console.error("Raw response:", rawText);
                     errorMessage = "Server error. Check console for details.";
                 }
                 
-                messageDiv.innerHTML = `<div class="alert alert-danger"><strong><i class="bi bi-x-circle"></i> Error:</strong> ${errorMessage}</div>`;
+                messageDiv.innerHTML = `<div class="alert alert-danger"><strong>❌ Error:</strong> ${errorMessage}</div>`;
                 showToast(errorMessage, "error");
             }
         })
         .catch(error => {
             console.error("Network error:", error);
-            messageDiv.innerHTML = `<div class="alert alert-danger"><strong><i class="bi bi-x-circle"></i> Network Error:</strong> Could not connect to server. Please check your connection.</div>`;
+            messageDiv.innerHTML = `<div class="alert alert-danger"><strong>❌ Network Error:</strong> Could not connect to server. Please check your connection.</div>`;
             showToast("Network error occurred", "error");
         })
         .finally(() => {
@@ -6969,301 +6765,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
-
-// ===========================
-// IMAGE PREVIEW FUNCTIONS
-// ===========================
-function previewImage(input) {
-    const file = input.files[0];
-    const preview = document.getElementById('imagePreview');
-    const container = document.getElementById('imagePreviewContainer');
-
-    if (file) {
-        // Validate file size (5MB max)
-        if (file.size > 5 * 1024 * 1024) {
-            alert('File size must be less than 5MB');
-            input.value = '';
-            return;
-        }
-
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            alert('Please select a valid image file');
-            input.value = '';
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.src = e.target.result;
-            container.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-function clearImage() {
-    document.getElementById('product-image').value = '';
-    document.getElementById('camera-capture').value = '';
-    document.getElementById('imagePreview').src = '';
-    document.getElementById('imagePreviewContainer').style.display = 'none';
-}
-
-function clearImagePreview() {
-    clearImage();
-}
-
-// ===========================
-// CAMERA MODAL FUNCTIONS
-// ===========================
-
-function openCameraModal() {
-    const modal = new bootstrap.Modal(document.getElementById('cameraModal'));
-    modal.show();
-    startCamera();
-}
-
-function closeCameraModal() {
-    stopCamera();
-    const modal = bootstrap.Modal.getInstance(document.getElementById('cameraModal'));
-    if (modal) modal.hide();
-}
-
-async function startCamera() {
-    const video = document.getElementById('cameraStream');
-    const loading = document.getElementById('cameraLoading');
-    const errorDiv = document.getElementById('cameraError');
-    const captureBtn = document.getElementById('captureBtn');
-
-    loading.style.display = 'block';
-    errorDiv.style.display = 'none';
-    video.style.display = 'none';
-
-    try {
-        cameraStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'environment' } 
-        });
-        video.srcObject = cameraStream;
-        video.style.display = 'block';
-        loading.style.display = 'none';
-        captureBtn.style.display = 'inline-block';
-    } catch (error) {
-        loading.style.display = 'none';
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = 'Camera access denied or not available: ' + error.message;
-        console.error('Camera error:', error);
-    }
-}
-
-function stopCamera() {
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
-    }
-}
-
-function capturePhoto() {
-    const video = document.getElementById('cameraStream');
-    const canvas = document.getElementById('cameraCanvas');
-    const captureBtn = document.getElementById('captureBtn');
-    const retakeBtn = document.getElementById('retakeBtn');
-    const usePhotoBtn = document.getElementById('usePhotoBtn');
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-
-    video.style.display = 'none';
-    canvas.style.display = 'block';
-    captureBtn.style.display = 'none';
-    retakeBtn.style.display = 'inline-block';
-    usePhotoBtn.style.display = 'inline-block';
-
-    stopCamera();
-}
-
-function retakePhoto() {
-    const video = document.getElementById('cameraStream');
-    const canvas = document.getElementById('cameraCanvas');
-    const captureBtn = document.getElementById('captureBtn');
-    const retakeBtn = document.getElementById('retakeBtn');
-    const usePhotoBtn = document.getElementById('usePhotoBtn');
-
-    canvas.style.display = 'none';
-    video.style.display = 'block';
-    retakeBtn.style.display = 'none';
-    usePhotoBtn.style.display = 'none';
-    captureBtn.style.display = 'inline-block';
-
-    startCamera();
-}
-
-function usePhoto() {
-    const canvas = document.getElementById('cameraCanvas');
-    
-    canvas.toBlob(function(blob) {
-        const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        
-        const fileInput = document.getElementById('product-image');
-        fileInput.files = dataTransfer.files;
-        
-        // Trigger preview
-        previewImage(fileInput);
-        
-        closeCameraModal();
-    }, 'image/jpeg', 0.9);
-}
-
-// ===========================
-// BARCODE SCANNER FUNCTIONS
-// ===========================
-let barcodeDetector = null;
-let scannerStream = null;
-let scannerAnimationFrame = null;
-
-async function openBarcodeScanner(target) {
-    currentScanTarget = target;
-    const modal = new bootstrap.Modal(document.getElementById('barcodeScannerModal'));
-    modal.show();
-    await initBarcodeScanner();
-}
-
-function closeBarcodeScanner() {
-    stopBarcodeScanner();
-    const modal = bootstrap.Modal.getInstance(document.getElementById('barcodeScannerModal'));
-    if (modal) modal.hide();
-}
-
-async function initBarcodeScanner() {
-    const video = document.getElementById('barcodeScannerVideo');
-    const loading = document.getElementById('scannerLoading');
-    const errorDiv = document.getElementById('scannerError');
-    const statusDiv = document.getElementById('scannerStatus');
-    const overlay = document.getElementById('scanningOverlay');
-
-    loading.style.display = 'block';
-    errorDiv.style.display = 'none';
-    statusDiv.style.display = 'none';
-    video.style.display = 'none';
-
-    try {
-        // Check if BarcodeDetector is supported
-        if (!('BarcodeDetector' in window)) {
-            throw new Error('Barcode detection not supported in this browser. Use Chrome or Edge.');
-        }
-
-        scannerStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'environment' } 
-        });
-        
-        video.srcObject = scannerStream;
-        video.style.display = 'block';
-        overlay.style.display = 'block';
-        loading.style.display = 'none';
-        statusDiv.style.display = 'block';
-        statusDiv.querySelector('#scannerStatusText').textContent = 'Scanning... Position barcode in frame';
-
-        barcodeDetector = new BarcodeDetector({ 
-            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'] 
-        });
-
-        scanBarcodes();
-    } catch (error) {
-        loading.style.display = 'none';
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = 'Error: ' + error.message;
-        console.error('Scanner error:', error);
-    }
-}
-
-async function scanBarcodes() {
-    const video = document.getElementById('barcodeScannerVideo');
-    const resultDiv = document.getElementById('scannerResult');
-    const statusDiv = document.getElementById('scannerStatus');
-    const detectedCode = document.getElementById('detectedCode');
-    const detectedFormat = document.getElementById('detectedFormat');
-    const useBarcodeBtn = document.getElementById('useBarcodeBtn');
-    const rescanBtn = document.getElementById('rescanBtn');
-
-    if (!video.srcObject) return;
-
-    try {
-        const barcodes = await barcodeDetector.detect(video);
-        
-        if (barcodes.length > 0) {
-            const barcode = barcodes[0];
-            
-            // Stop scanning
-            stopBarcodeScanner();
-            
-            // Show result
-            detectedCode.textContent = barcode.rawValue;
-            detectedFormat.textContent = `Format: ${barcode.format}`;
-            resultDiv.style.display = 'block';
-            statusDiv.style.display = 'none';
-            useBarcodeBtn.style.display = 'inline-block';
-            rescanBtn.style.display = 'inline-block';
-            
-            // Play success sound
-            playBeep();
-        } else {
-            scannerAnimationFrame = requestAnimationFrame(scanBarcodes);
-        }
-    } catch (error) {
-        console.error('Scan error:', error);
-        scannerAnimationFrame = requestAnimationFrame(scanBarcodes);
-    }
-}
-
-function stopBarcodeScanner() {
-    if (scannerAnimationFrame) {
-        cancelAnimationFrame(scannerAnimationFrame);
-        scannerAnimationFrame = null;
-    }
-    if (scannerStream) {
-        scannerStream.getTracks().forEach(track => track.stop());
-        scannerStream = null;
-    }
-    document.getElementById('scanningOverlay').style.display = 'none';
-}
-
-function useDetectedBarcode() {
-    const code = document.getElementById('detectedCode').textContent;
-    
-    if (currentScanTarget === 'sku') {
-        document.getElementById('sku-input').value = code;
-    } else if (currentScanTarget === 'barcode') {
-        document.getElementById('barcode-input').value = code;
-    }
-    
-    closeBarcodeScanner();
-}
-
-function restartScanner() {
-    document.getElementById('scannerResult').style.display = 'none';
-    document.getElementById('useBarcodeBtn').style.display = 'none';
-    document.getElementById('rescanBtn').style.display = 'none';
-    initBarcodeScanner();
-}
-
-function playBeep() {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
-    gainNode.gain.value = 0.3;
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.1);
-}
-
 
 
 // ====================================
@@ -9533,6 +9034,8 @@ function updateProductRow(product) {
 /* ======================================
    UPDATE INVENTORY STATISTICS COUNTERS
    =================================== */
+// ======================================
+// ======================================
 
 function refreshInventoryCounters() {
     const rows = document.querySelectorAll(".product-row");
@@ -9621,6 +9124,8 @@ function filterProducts() {
 // ========================= 
 // STAT REFRESH 
 // ========================= //
+// ====================================
+// ====================================
 
 function updateProductStats() {
     const rows = document.querySelectorAll("#productsTable tbody .product-row");
@@ -9650,7 +9155,7 @@ function updateProductStats() {
 
 
 
-// ======= AUTO-RUN ON LOAD ========= //
+// ============== AUTO-RUN ON LOAD ============ //
 document.addEventListener("DOMContentLoaded", filterProducts);
 
 
@@ -9671,10 +9176,14 @@ const tbody = table.querySelector("tbody");
 const rows = Array.from(tbody.querySelectorAll(".product-row"));
 
 
-// ===============================
-/* ==============================
+// ====================================
+// ====================================
+/* ===================================
    SAVE / LOAD FILTER STATE
-   ============================= */
+   ================================ */
+// ====================================
+// ====================================
+
 function saveFilterState() {
     localStorage.setItem("productFilters", JSON.stringify({
         status: document.getElementById("productStatusFilter").value,
@@ -9697,11 +9206,14 @@ function loadFilterState() {
 }
 
 
-// ==============================
-/* ==============================
+// ====================================
+// ====================================
+/* ====================================
    FILTERING SYSTEM 
-   ========================== */
-// =============================
+   ================================= */
+// ====================================
+// ====================================
+
 function filterProducts() {
     const statusFilter = document.getElementById("productStatusFilter").value;
     const categoryFilter = document.getElementById("productCategoryFilter").value;
@@ -9745,10 +9257,15 @@ function filterProducts() {
 }
 
 
-// ==============================
+// ====================================
+// ====================================
 /* ==============================
     SEARCH BUTTON AND ENTRIES
    =========================== */
+// ====================================
+// ====================================
+
+// Search functionality
 function searchProducts() {
   const searchTerm = document.getElementById('productSearch').value.toLowerCase();
   const rows = document.querySelectorAll('.product-row');
@@ -9775,11 +9292,14 @@ function changeEntries() {
 }
 
 
-// =============================
+// ====================================
+// ====================================
 /* ============================
    LIVE SEARCH
    ========================= */
-// ============================
+// ====================================
+// ====================================
+
 function setupSearchBox() {
     if (!document.getElementById("productSearchInput")) {
 
@@ -9836,11 +9356,14 @@ function filterSales() {
 }
 
 
-// ============================
-// ============================
+// ====================================
+// ====================================
 /* ==========================
    COLUMN SORTING
    ======================== */
+// ====================================
+// ====================================
+
 let sortDirection = 1;
 
 function sortTable(columnIndex) {
@@ -9871,11 +9394,13 @@ function enableColumnSorting() {
 }
 
 
-// ============================
+// ====================================
+// ====================================
 /* =========================
    PAGINATION
    ======================= */
-// ============================
+// ====================================
+// ====================================
 
 function paginateRows() {
     const visibleRows = rows.filter(r => r.style.display !== "none");
@@ -9931,10 +9456,14 @@ function renderPaginationControls(totalPages) {
 }
 
 
-// ==============================
+// ====================================
+// ====================================
 /* ==============================
    HIDE / SHOW COLUMNS
    ============================ */
+// ====================================
+// ====================================
+
 function toggleColumn(index) {
     const rowsAll = table.querySelectorAll("tr");
     rowsAll.forEach(row => {
@@ -9969,10 +9498,14 @@ function initColumnHider() {
 }
 
 
-// ==============================
+// ====================================
+// ====================================
 /* ==============================
    EXPORT TO EXCEL
-   =========================== */
+   ============================== */
+// ====================================
+// ====================================
+
 function exportTableToExcel() {
     let csv = [];
 
@@ -9992,10 +9525,12 @@ function exportTableToExcel() {
 }
 
 
-// ===============================
-// ===============================
+// ====================================
+// ====================================
 // INITIALIZE ALL SYSTEMS
-// ===============================
+// ====================================
+// ====================================
+
 document.addEventListener("DOMContentLoaded", () => {
     setupSearchBox();
     enableColumnSorting();
@@ -10081,10 +9616,12 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 
 
-// ================================
+// ====================================
 // ================================
 // TOGGLE CARD DROPDOWN
 // ================================
+// ====================================
+
 function toggleCardDropdown(header) {
   const dropdown = header.parentElement.querySelector('.stat-dropdown');
   const icon = header.querySelector('.dropdown-icon');
