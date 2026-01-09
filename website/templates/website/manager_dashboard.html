@@ -2558,7 +2558,6 @@ th.dragging {
 
 
 
-
 <!-- ======================================= -->
 <!-- ADD PRODUCT TEMPLATE -->
 <!-- ======================================= -->
@@ -2587,7 +2586,7 @@ th.dragging {
           <div class="col-12">
             <label for="category-select" class="form-label required">Category</label>
             <select name="category" id="category-select" class="form-select" required>
-              <option value=""></option>
+              <option value="">-- Select Category --</option>
               {% for cat in categories %}
               <option value="{{ cat.id }}"
                       data-is-single="{{ cat.is_single_item|yesno:'true,false' }}"
@@ -2597,6 +2596,7 @@ th.dragging {
               </option>
               {% endfor %}
             </select>
+            <small class="form-text text-muted">Select the product category first to show relevant fields</small>
           </div>
 
           <!-- Product Name -->
@@ -2605,13 +2605,54 @@ th.dragging {
             <input type="text" name="name" id="product-name" class="form-control" placeholder="Enter product name" required>
           </div>
 
+          <!-- ===================================== -->
+          <!-- SKU VALUE FIELD (ENHANCED VERSION) -->
+          <!-- ===================================== -->
+          <div class="col-12" id="sku-value-container" style="display: none;">
+            <div class="alert alert-info" style="background: #e0f2fe; border-color: #3b82f6;">
+              <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-info-circle-fill text-primary me-2" style="font-size: 1.5rem;"></i>
+                <h6 class="mb-0" id="sku-field-title">Product Identifier</h6>
+              </div>
+              <p class="mb-3 small" id="sku-field-description">Enter the unique identifier for this product</p>
+              
+              <label for="sku-input" class="form-label fw-bold" id="sku-label">
+                <i class="bi bi-upc-scan"></i> SKU / IMEI / Serial Number <span class="text-danger">*</span>
+              </label>
+              
+              <div class="input-group input-group-lg">
+                <span class="input-group-text bg-white">
+                  <i class="bi bi-hash"></i>
+                </span>
+                <input type="text" 
+                       name="sku_value" 
+                       id="sku-input" 
+                       class="form-control" 
+                       placeholder="Enter or scan identifier"
+                       style="font-family: 'Courier New', monospace; font-weight: 600;">
+                <button type="button" 
+                        class="btn btn-primary" 
+                        onclick="openBarcodeScanner('sku')"
+                        title="Scan with camera">
+                  <i class="bi bi-camera"></i> Scan
+                </button>
+              </div>
+              
+              <div class="mt-2">
+                <small class="text-muted" id="sku-field-hint">
+                  <i class="bi bi-lightbulb"></i> Tip: Click "Scan" to use your camera
+                </small>
+              </div>
+            </div>
+          </div>
+
           <!-- Product Image with Camera -->
           <div class="col-12">
-            <label for="product-image" class="form-label">Product Image</label>
+            <label for="product-image" class="form-label">Product Image (Optional)</label>
             
             <!-- Image Preview -->
             <div id="imagePreviewContainer" style="margin-bottom: 15px; display: none;">
-              <img id="imagePreview" src="" alt="Preview" style="max-width: 50%; max-height: 300px; border-radius: 8px; border: 2px solid #ddd;">
+              <img id="imagePreview" src="" alt="Preview" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 2px solid #ddd;">
               <button type="button" class="btn btn-sm btn-danger mt-2" onclick="clearImage()">
                 <i class="bi bi-trash"></i> Remove Image
               </button>
@@ -2637,43 +2678,53 @@ th.dragging {
           <!-- Buying Price -->
           <div class="col-md-6">
             <label for="buying-price" class="form-label required">Buying Price (KSH)</label>
-            <input type="number" step="0.01" name="buying_price" id="buying-price" class="form-control" placeholder="0.00" required>
+            <div class="input-group">
+              <span class="input-group-text">KSH</span>
+              <input type="number" step="0.01" name="buying_price" id="buying-price" class="form-control" placeholder="0.00" required>
+            </div>
           </div>
 
           <!-- Selling Price -->
           <div class="col-md-6">
             <label for="selling-price" class="form-label required">Selling Price (KSH)</label>
-            <input type="number" step="0.01" name="selling_price" id="selling-price" class="form-control" placeholder="0.00" required>
-          </div>
-
-          <!-- SKU Field (single items - IMEI/Serial) -->
-          <div class="col-12" id="sku-field" style="display:none;">
-            <label class="form-label" id="sku-label"></label>
             <div class="input-group">
-              <input type="text" name="sku_value" id="sku-input" class="form-control" placeholder="Enter or scan">
-              <button type="button" class="btn btn-outline-primary" onclick="openBarcodeScanner('sku')">
-                <i class="bi bi-upc-scan"></i> Scan
-              </button>
+              <span class="input-group-text">KSH</span>
+              <input type="number" step="0.01" name="selling_price" id="selling-price" class="form-control" placeholder="0.00" required>
             </div>
-            <small class="form-text text-muted">Enter manually or use camera to scan IMEI/Serial number</small>
           </div>
 
           <!-- Barcode Field (bulk items only) -->
           <div class="col-12" id="barcode-field" style="display:none;">
-            <label for="barcode-input" class="form-label">Barcode</label>
-            <div class="input-group">
-              <input type="text" name="barcode" id="barcode-input" class="form-control" placeholder="Enter or scan barcode">
-              <button type="button" class="btn btn-outline-primary" onclick="openBarcodeScanner('barcode')">
-                <i class="bi bi-upc-scan"></i> Scan
-              </button>
+            <div class="alert alert-warning" style="background: #fef3c7; border-color: #f59e0b;">
+              <label for="barcode-input" class="form-label fw-bold">
+                <i class="bi bi-upc-scan"></i> Barcode (Optional)
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-white">
+                  <i class="bi bi-upc"></i>
+                </span>
+                <input type="text" name="barcode" id="barcode-input" class="form-control" placeholder="Enter or scan barcode">
+                <button type="button" class="btn btn-warning" onclick="openBarcodeScanner('barcode')">
+                  <i class="bi bi-camera"></i> Scan
+                </button>
+              </div>
+              <small class="form-text text-muted mt-2 d-block">
+                <i class="bi bi-info-circle"></i> For bulk items: Add barcode for faster scanning during sales
+              </small>
             </div>
-            <small class="form-text text-muted">Enter manually or use camera to scan barcode</small>
           </div>
 
           <!-- Quantity Field (bulk items) -->
           <div class="col-12" id="quantity-field" style="display:none;">
-            <label for="quantity" class="form-label required">Quantity</label>
-            <input type="number" name="quantity" id="quantity" class="form-control" min="1" placeholder="Enter quantity">
+            <div class="alert alert-success" style="background: #d1fae5; border-color: #10b981;">
+              <label for="quantity" class="form-label fw-bold required">
+                <i class="bi bi-box-seam"></i> Initial Stock Quantity
+              </label>
+              <input type="number" name="quantity" id="quantity" class="form-control form-control-lg" min="1" placeholder="Enter quantity">
+              <small class="form-text text-muted mt-2 d-block">
+                <i class="bi bi-info-circle"></i> Enter the number of units you're adding to inventory
+              </small>
+            </div>
           </div>
 
           <!-- Buttons -->
@@ -2693,51 +2744,105 @@ th.dragging {
     </div>
   </div>
 </div>
-<!-- Camera Modal -->
-<div class="modal fade" id="cameraModal" tabindex="-1" aria-labelledby="cameraModalLabel" aria-hidden="true">
+
+<!-- ======================================= -->
+<!-- CAMERA MODAL FOR PRODUCT IMAGE -->
+<!-- ======================================= -->
+<div class="modal fade" id="cameraModal" tabindex="-1" aria-labelledby="cameraModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="cameraModalLabel">
           <i class="bi bi-camera"></i> Take Photo
         </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" onclick="closeCameraModal()"></button>
       </div>
       <div class="modal-body text-center">
-        <!-- Loading Spinner -->
-        <div id="cameraLoading" style="display: none;">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading camera...</span>
-          </div>
-          <p class="mt-2 text-muted">Starting camera...</p>
-        </div>
-        
-        <!-- Error Message -->
+        <video id="cameraStream" autoplay playsinline style="max-width: 100%; border-radius: 8px; display: none; background: #000;"></video>
+        <canvas id="cameraCanvas" style="max-width: 100%; border-radius: 8px; display: none;"></canvas>
         <div id="cameraError" class="alert alert-danger" style="display: none;"></div>
-        
-        <!-- Camera Stream -->
-        <video id="cameraStream" autoplay playsinline style="display: none; max-width: 100%; border-radius: 8px;"></video>
-        
-        <!-- Canvas for Captured Photo -->
-        <canvas id="cameraCanvas" style="display: none; max-width: 100%; border-radius: 8px;"></canvas>
+        <div id="cameraLoading" class="spinner-border text-primary" role="status" style="display: none;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
       </div>
-      <div class="modal-footer justify-content-center">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          <i class="bi bi-x-circle"></i> Cancel
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeCameraModal()">
+          <i class="bi bi-x"></i> Cancel
         </button>
         <button type="button" id="captureBtn" class="btn btn-primary" onclick="capturePhoto()" style="display: none;">
-          <i class="bi bi-camera"></i> Capture Photo
+          <i class="bi bi-camera-fill"></i> Capture
         </button>
         <button type="button" id="retakeBtn" class="btn btn-warning" onclick="retakePhoto()" style="display: none;">
           <i class="bi bi-arrow-counterclockwise"></i> Retake
         </button>
         <button type="button" id="usePhotoBtn" class="btn btn-success" onclick="usePhoto()" style="display: none;">
-          <i class="bi bi-check-circle"></i> Use This Photo
+          <i class="bi bi-check-lg"></i> Use Photo
         </button>
       </div>
     </div>
   </div>
 </div>
+
+<!-- ======================================= -->
+<!-- BARCODE SCANNER MODAL -->
+<!-- ======================================= -->
+<div class="modal fade" id="barcodeScannerModal" tabindex="-1" aria-labelledby="barcodeScannerLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="barcodeScannerLabel">
+          <i class="bi bi-upc-scan"></i> Scan Barcode/IMEI/Serial
+        </h5>
+        <button type="button" class="btn-close" onclick="closeBarcodeScanner()"></button>
+      </div>
+      <div class="modal-body text-center">
+        <!-- Scanner Video -->
+        <div id="scanner-container" style="position: relative;">
+          <video id="barcodeScannerVideo" autoplay playsinline style="max-width: 100%; border-radius: 8px; display: none; background: #000;"></video>
+          <canvas id="barcodeScannerCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 50%;"></canvas>
+          
+          <!-- Scanning overlay -->
+          <div id="scanningOverlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
+            <div style="width: 500px; height: 100px; border: 3px solid #10b981; border-radius: 8px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);"></div>
+            <p style="color: white; margin-top: 10px; font-weight: bold;">Position barcode within frame</p>
+          </div>
+        </div>
+        
+        <!-- Scanner Status -->
+        <div id="scannerStatus" class="alert alert-info mt-3" style="display: none;">
+          <i class="bi bi-info-circle"></i> <span id="scannerStatusText">Initializing scanner...</span>
+        </div>
+        
+        <!-- Scanner Error -->
+        <div id="scannerError" class="alert alert-danger mt-3" style="display: none;"></div>
+        
+        <!-- Loading -->
+        <div id="scannerLoading" class="spinner-border text-primary" role="status" style="display: none;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        
+        <!-- Detected Result -->
+        <div id="scannerResult" class="alert alert-success mt-3" style="display: none;">
+          <h6><i class="bi bi-check-circle"></i> Detected:</h6>
+          <h4 id="detectedCode" style="font-family: monospace; color: #059669;"></h4>
+          <small class="text-muted" id="detectedFormat"></small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeBarcodeScanner()">
+          <i class="bi bi-x"></i> Cancel
+        </button>
+        <button type="button" id="useBarcodeBtn" class="btn btn-success" onclick="useDetectedBarcode()" style="display: none;">
+          <i class="bi bi-check-lg"></i> Use This Code
+        </button>
+        <button type="button" id="rescanBtn" class="btn btn-primary" onclick="restartScanner()" style="display: none;">
+          <i class="bi bi-arrow-repeat"></i> Scan Again
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 
 
