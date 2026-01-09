@@ -6619,11 +6619,9 @@ function showToast(message, type = 'success') {
 
 
 // ====================================
-// ====================================
 // ADD PRODUCT FORM - FIXED VERSION
 // ====================================
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🔧 Product form initialization started');
 
     // ===========================
     // DOM ELEMENTS
@@ -6645,47 +6643,32 @@ document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('addProductForm');
     const messageDiv = document.getElementById('message-div');
     const successDiv = document.getElementById('success-message-product');
-    const saveBtn = form ? form.querySelector("button[type='submit']") : null;
-
-    // Check if all elements exist
-    if (!form) {
-        console.log('⏳ Add Product form not ready, will retry...');
-        return;
-    }
-
-    console.log('✅ All form elements found');
+    const saveBtn = form.querySelector("button[type='submit']");
 
     // ===========================
     // HELPER FUNCTIONS
     // ===========================
     function getCookie(name) {
         let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = cookie.slice(name.length + 1);
+                break;
             }
         }
         return cookieValue;
     }
+    const csrftoken = getCookie('csrftoken');
 
     function showToast(msg, type = "success") {
-        const existingToast = document.querySelector('.toast-message');
-        if (existingToast) existingToast.remove();
-        
         const t = document.createElement("div");
         t.className = `toast-message ${type}`;
         t.innerHTML = msg;
         document.body.appendChild(t);
         setTimeout(() => t.classList.add("show"), 50);
-        setTimeout(() => {
-            t.classList.remove("show");
-            setTimeout(() => t.remove(), 400);
-        }, 3500);
+        setTimeout(() => t.remove(), 3500);
     }
 
     // ===========================
@@ -6695,6 +6678,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const selected = categorySelect.options[categorySelect.selectedIndex];
         
         if (!selected.value) {
+            // No category selected - hide all special fields
             hideAllFields();
             return;
         }
@@ -6799,26 +6783,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
         messageDiv.innerHTML = "";
 
+        // Check category
         if (!category) {
             messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Please select a category.</div>`;
             return false;
         }
 
+        // Check name
         if (!name) {
             messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Product name is required.</div>`;
             return false;
         }
 
+        // Check buying price
         if (isNaN(buy) || buy <= 0) {
             messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Valid buying price is required.</div>`;
             return false;
         }
 
+        // Check selling price
         if (isNaN(sell) || sell <= 0) {
             messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Valid selling price is required.</div>`;
             return false;
         }
 
+        // Check price logic
         if (sell < buy) {
             messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Selling price must be higher than or equal to buying price.</div>`;
             return false;
@@ -6830,6 +6819,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const isBulk = selected.dataset.isBulk === "true";
         const skuType = selected.dataset.skuType || "SKU";
 
+        // Single item validation
         if (isSingle) {
             const skuValue = skuInput.value.trim();
             if (!skuValue) {
@@ -6839,6 +6829,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
+        // Bulk item validation
         if (isBulk) {
             const qty = parseInt(quantityInput.value);
             if (isNaN(qty) || qty <= 0) {
@@ -6855,31 +6846,31 @@ document.addEventListener('DOMContentLoaded', function () {
     // EVENT LISTENERS
     // ===========================
     categorySelect.addEventListener('change', updateFields);
-    updateFields(); // Initialize on page load
+    
+    // Initialize on page load
+    updateFields();
 
     // ===========================
-    // ✅ FIXED: FORM SUBMISSION
+    // FORM SUBMISSION
     // ===========================
     form.addEventListener('submit', function (e) {
         e.preventDefault();
 
-        console.log('📤 Form submitted');
+        console.log('Form submitted');
 
         if (!validateInline()) {
-            console.log('❌ Validation failed');
+            console.log('Validation failed');
             return;
         }
 
-        // Disable button
         saveBtn.disabled = true;
         saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Saving...`;
         messageDiv.innerHTML = "";
 
-        // ✅ CRITICAL FIX: Use FormData for file upload
         const formData = new FormData(form);
 
         // Log form data for debugging
-        console.log('📦 Form data being sent:');
+        console.log('Form data being sent:');
         for (let [key, value] of formData.entries()) {
             if (value instanceof File) {
                 console.log(key, ':', value.name, '(', value.size, 'bytes)');
@@ -6888,18 +6879,15 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // ✅ CRITICAL FIX: Don't set Content-Type header - let browser set it with boundary
         fetch(form.action, {
             method: "POST",
             body: formData,
             headers: {
                 "X-Requested-With": "XMLHttpRequest",
-                "X-CSRFToken": getCookie('csrftoken')
+                "X-CSRFToken": csrftoken
             }
-            // DO NOT set Content-Type - FormData needs browser to set multipart boundary
         })
         .then(response => {
-            console.log("📥 Response status:", response.status);
             const contentType = response.headers.get("content-type");
             
             if (contentType && contentType.includes("application/json")) {
@@ -6916,14 +6904,15 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
         .then(({ status, data, rawText }) => {
-            console.log("📊 Response data:", data);
+            console.log("Response status:", status);
+            console.log("Response data:", data);
             
             if (status === 200 && data.success) {
                 showToast("✅ Product saved successfully!");
 
                 // Reset form
                 form.reset();
-                if (typeof clearImagePreview === 'function') clearImagePreview();
+                clearImagePreview();
                 updateFields();
 
                 // Show success message
@@ -6932,13 +6921,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 setTimeout(() => successDiv.style.display = "none", 5000);
 
                 // Navigate to product list
-                setTimeout(() => {
-                    const listBtn = document.querySelector("[data-section='product-list']");
-                    if (listBtn) {
+                const listBtn = document.querySelector("[data-section='product-list']");
+                if (listBtn) {
+                    setTimeout(() => {
                         listBtn.click();
                         setTimeout(() => window.location.reload(), 500);
-                    }
-                }, 1200);
+                    }, 1200);
+                }
             }
             else {
                 let errorMessage = "Error saving product";
@@ -6951,7 +6940,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         errorMessage = firstError[0];
                     }
                 } else if (rawText) {
-                    console.error("❌ Raw response:", rawText.substring(0, 500));
+                    console.error("Raw response:", rawText.substring(0, 500));
                     errorMessage = "Server error. Check console for details.";
                 }
                 
@@ -6960,7 +6949,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
         .catch(error => {
-            console.error("❌ Network error:", error);
+            console.error("Network error:", error);
             messageDiv.innerHTML = `<div class="alert alert-danger"><strong><i class="bi bi-x-circle"></i> Network Error:</strong> Could not connect to server. Please check your connection.</div>`;
             showToast("Network error occurred", "error");
         })
@@ -6969,11 +6958,7 @@ document.addEventListener('DOMContentLoaded', function () {
             saveBtn.innerHTML = `<i class="bi bi-save"></i><span> Save Product</span>`;
         });
     });
-
-    console.log('✅ Product form initialization complete');
 });
-
-
 
 // ===========================
 // IMAGE PREVIEW FUNCTIONS
@@ -7268,6 +7253,7 @@ function playBeep() {
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.1);
 }
+
 
 
 // ====================================
