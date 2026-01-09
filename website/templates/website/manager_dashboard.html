@@ -1604,6 +1604,88 @@ th.dragging {
 .toast-message.info {
   background: #17a2b8;
 }
+
+#imagePreviewContainer {
+  text-align: center;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+#imagePreview {
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn-group button {
+  flex: 1;
+}
+
+#cameraStream, #cameraCanvas {
+  background: #000;
+  max-height: 500px;
+  width: 100%;
+  object-fit: contain;
+}
+
+/* Ensure modal doesn't block page */
+.modal-backdrop {
+  z-index: 1040;
+}
+
+.modal {
+  z-index: 1050;
+}
+
+#cameraLoading {
+  width: 3rem;
+  height: 3rem;
+  margin: 50px auto;
+}
+
+
+#scanner-container {
+  min-height: 300px;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#barcodeScannerVideo {
+  width: 100%;
+  max-height: 500px;
+  object-fit: contain;
+}
+
+#barcodeScannerCanvas {
+  display: none;
+}
+
+#scanningOverlay {
+  pointer-events: none;
+}
+
+#scannerResult {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.input-group .btn {
+  white-space: nowrap;
+}
+
+
+
+
 </style>
 
 <div class="dashboard-wrapper">
@@ -1696,23 +1778,12 @@ th.dragging {
     </nav>
   </aside>
 
-  
-
-
-
-
-
-
-
-
-
 
 <!-- ======================================= -->
 <!-- MAIN DASHBOARD TEMPLATE -->
 <!-- ======================================= -->
   <main class="dashboard-content">
     
-    <!-- Dashboard Overview Section -->
     <div id="dashboard" class="content-section active">
       <!-- Content Header -->
       <div class="content-header">
@@ -2031,17 +2102,6 @@ th.dragging {
 </div>
 
 
-
-
-
-
-
-
-
-
-
-
-
 <!-- ======================================= -->
 <!-- PRODUCTS TEMPLATE -->
 <!-- ======================================= -->
@@ -2305,21 +2365,9 @@ th.dragging {
 
 
 
-
-
-
-
-
-
-
-
-
-
 <!-- ======================= -->
 <!--  ADD CATEGORY TEMPLATE   -->
 <!-- ======================= -->
-
-<!-- Add Category Section - Fixed Version -->
 <div id="add-category" class="content-section">
   <div class="content-header">
     <h1 class="page-title">Add New Category</h1>
@@ -2511,16 +2559,9 @@ th.dragging {
 
 
 
-
-
-
-
-
-
-<!-- ===================== -->
-<!-- ADD PRODUCT TEMPLATE  -->
-<!-- ===================== -->
-
+<!-- ======================================= -->
+<!-- ADD PRODUCT TEMPLATE -->
+<!-- ======================================= -->
 <div id="add-product" class="content-section">
   <div class="content-header">
     <h1 class="page-title">Add New Product</h1>
@@ -2541,6 +2582,7 @@ th.dragging {
         {% csrf_token %}
 
         <div class="row g-3">
+          
           <!-- Category -->
           <div class="col-12">
             <label for="category-select" class="form-label required">Category</label>
@@ -2557,17 +2599,38 @@ th.dragging {
             </select>
           </div>
 
-      
           <!-- Product Name -->
           <div class="col-12">
             <label for="product-name" class="form-label required">Product Name</label>
             <input type="text" name="name" id="product-name" class="form-control" placeholder="Enter product name" required>
           </div>
 
-          <!-- Product Image -->
+          <!-- Product Image with Camera -->
           <div class="col-12">
             <label for="product-image" class="form-label">Product Image</label>
-            <input type="file" name="image" id="product-image" class="form-control" accept="image/*">
+            
+            <!-- Image Preview -->
+            <div id="imagePreviewContainer" style="margin-bottom: 15px; display: none;">
+              <img id="imagePreview" src="" alt="Preview" style="max-width: 50%; max-height: 300px; border-radius: 8px; border: 2px solid #ddd;">
+              <button type="button" class="btn btn-sm btn-danger mt-2" onclick="clearImage()">
+                <i class="bi bi-trash"></i> Remove Image
+              </button>
+            </div>
+            
+            <!-- Button Group -->
+            <div class="btn-group w-100 mb-2" role="group">
+              <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('product-image').click()">
+                <i class="bi bi-upload"></i> Upload Image
+              </button>
+              <button type="button" class="btn btn-outline-primary" onclick="openCameraModal()">
+                <i class="bi bi-camera"></i> Take Photo
+              </button>
+            </div>
+            
+            <!-- Hidden File Inputs -->
+            <input type="file" name="image" id="product-image" class="form-control d-none" accept="image/*" onchange="previewImage(this)">
+            <input type="file" id="camera-capture" class="form-control d-none" accept="image/*" capture="environment" onchange="previewImage(this)">
+            
             <small class="form-text text-muted">Supported formats: JPG, PNG, GIF (Max 5MB)</small>
           </div>
 
@@ -2586,14 +2649,25 @@ th.dragging {
           <!-- SKU Field (single items - IMEI/Serial) -->
           <div class="col-12" id="sku-field" style="display:none;">
             <label class="form-label" id="sku-label"></label>
-            <input type="text" name="sku_value" id="sku-input" class="form-control">
+            <div class="input-group">
+              <input type="text" name="sku_value" id="sku-input" class="form-control" placeholder="Enter or scan">
+              <button type="button" class="btn btn-outline-primary" onclick="openBarcodeScanner('sku')">
+                <i class="bi bi-upc-scan"></i> Scan
+              </button>
+            </div>
+            <small class="form-text text-muted">Enter manually or use camera to scan IMEI/Serial number</small>
           </div>
 
           <!-- Barcode Field (bulk items only) -->
           <div class="col-12" id="barcode-field" style="display:none;">
             <label for="barcode-input" class="form-label">Barcode</label>
-            <input type="text" name="barcode" id="barcode-input" class="form-control" placeholder="Enter or scan barcode">
-            <small class="form-text text-muted">Optional: You can scan the barcode directly into this field</small>
+            <div class="input-group">
+              <input type="text" name="barcode" id="barcode-input" class="form-control" placeholder="Enter or scan barcode">
+              <button type="button" class="btn btn-outline-primary" onclick="openBarcodeScanner('barcode')">
+                <i class="bi bi-upc-scan"></i> Scan
+              </button>
+            </div>
+            <small class="form-text text-muted">Enter manually or use camera to scan barcode</small>
           </div>
 
           <!-- Quantity Field (bulk items) -->
@@ -2613,21 +2687,12 @@ th.dragging {
               <span>Cancel</span>
             </a>
           </div>
+
         </div>
       </form>
     </div>
   </div>
 </div>
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2921,20 +2986,6 @@ th.dragging {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!-- ============================= -->
 <!--  TRANSFER PRODUCT SECTION   -->
 <!-- ============================= -->
@@ -3070,12 +3121,6 @@ th.dragging {
 </div>
 
 </div>
-
-
-
-
-
-
 
 
 
@@ -3242,19 +3287,6 @@ th.dragging {
   </div>
 
 </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -3523,19 +3555,6 @@ th.dragging {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!--=======================================-->
 <!-- ======================================-->
 <!-- REPORTS GENERATOR SECTION     👁️👁️   -->
@@ -3687,17 +3706,6 @@ th.dragging {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -3838,15 +3846,6 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 
-
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 // ======================
@@ -3970,10 +3969,482 @@ const observer = new MutationObserver((mutations) => {
 observer.observe(sidebar, { attributes: true });
 
 
+// ======================================
+// ======================================
+// CAMERA CAPTURE
+// ======================================
+let cameraStream = null;
+let cameraModal = null;
+
+// Open camera modal
+function openCameraModal() {
+  // Try simple file input first (works on most mobile devices)
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    document.getElementById('camera-capture').click();
+    return;
+  }
+  
+  // Desktop - open modal
+  if (!cameraModal) {
+    cameraModal = new bootstrap.Modal(document.getElementById('cameraModal'), {
+      backdrop: true,
+      keyboard: true
+    });
+  }
+  
+  // Reset modal state
+  resetCameraModal();
+  
+  // Show modal
+  cameraModal.show();
+  
+  // Start camera after modal is shown
+  document.getElementById('cameraModal').addEventListener('shown.bs.modal', function() {
+    startCamera();
+  }, { once: true });
+}
+
+// Close camera modal properly
+function closeCameraModal() {
+  stopCamera();
+  if (cameraModal) {
+    cameraModal.hide();
+  }
+  // Remove any lingering backdrops
+  setTimeout(() => {
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+  }, 300);
+}
+
+// Reset modal state
+function resetCameraModal() {
+  document.getElementById('cameraStream').style.display = 'none';
+  document.getElementById('cameraCanvas').style.display = 'none';
+  document.getElementById('cameraError').style.display = 'none';
+  document.getElementById('cameraLoading').style.display = 'none';
+  document.getElementById('captureBtn').style.display = 'none';
+  document.getElementById('retakeBtn').style.display = 'none';
+  document.getElementById('usePhotoBtn').style.display = 'none';
+}
+
+// Start camera stream
+async function startCamera() {
+  try {
+    const video = document.getElementById('cameraStream');
+    const errorDiv = document.getElementById('cameraError');
+    const loading = document.getElementById('cameraLoading');
+    
+    loading.style.display = 'block';
+    
+    // Request camera access with fallback
+    const constraints = {
+      video: { 
+        facingMode: 'environment', // Use back camera on mobile
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    };
+    
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (err) {
+      // Fallback: try with any camera
+      cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+    }
+    
+    video.srcObject = cameraStream;
+    
+    // Wait for video to load
+    video.onloadedmetadata = function() {
+      loading.style.display = 'none';
+      video.style.display = 'block';
+      document.getElementById('captureBtn').style.display = 'inline-block';
+      errorDiv.style.display = 'none';
+    };
+    
+  } catch (error) {
+    console.error('Camera error:', error);
+    document.getElementById('cameraLoading').style.display = 'none';
+    document.getElementById('cameraError').textContent = 'Unable to access camera. Please check permissions or use the upload option.';
+    document.getElementById('cameraError').style.display = 'block';
+  }
+}
+
+// Stop camera stream
+function stopCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+  }
+  const video = document.getElementById('cameraStream');
+  if (video) {
+    video.srcObject = null;
+  }
+}
+
+// Capture photo from video stream
+function capturePhoto() {
+  const video = document.getElementById('cameraStream');
+  const canvas = document.getElementById('cameraCanvas');
+  const context = canvas.getContext('2d');
+  
+  // Set canvas size to video size
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  
+  // Draw video frame to canvas
+  context.drawImage(video, 0, 0);
+  
+  // Hide video, show canvas
+  video.style.display = 'none';
+  canvas.style.display = 'block';
+  
+  // Show retake and use buttons
+  document.getElementById('captureBtn').style.display = 'none';
+  document.getElementById('retakeBtn').style.display = 'inline-block';
+  document.getElementById('usePhotoBtn').style.display = 'inline-block';
+  
+  // Stop camera
+  stopCamera();
+}
+
+// Retake photo
+function retakePhoto() {
+  document.getElementById('cameraCanvas').style.display = 'none';
+  document.getElementById('retakeBtn').style.display = 'none';
+  document.getElementById('usePhotoBtn').style.display = 'none';
+  startCamera();
+}
+
+// Use captured photo
+function usePhoto() {
+  const canvas = document.getElementById('cameraCanvas');
+  
+  // Convert canvas to blob
+  canvas.toBlob(function(blob) {
+    // Create file from blob
+    const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+    
+    // Add to file input
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('product-image').files = dt.files;
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('imagePreview').src = e.target.result;
+      document.getElementById('imagePreviewContainer').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+    
+    // Close modal
+    closeCameraModal();
+  }, 'image/jpeg', 0.9);
+}
+
+// Preview image before upload
+function previewImage(input) {
+  const file = input.files[0];
+  if (file) {
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      input.value = '';
+      return;
+    }
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPG, PNG, GIF, WEBP)');
+      input.value = '';
+      return;
+    }
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('imagePreview').src = e.target.result;
+      document.getElementById('imagePreviewContainer').style.display = 'block';
+      
+      // Sync the file to the actual form input
+      if (input.id === 'camera-capture') {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        document.getElementById('product-image').files = dt.files;
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+// Clear image preview
+function clearImage() {
+  document.getElementById('product-image').value = '';
+  document.getElementById('camera-capture').value = '';
+  document.getElementById('imagePreview').src = '';
+  document.getElementById('imagePreviewContainer').style.display = 'none';
+}
+
+// Clean up on page unload
+window.addEventListener('beforeunload', function() {
+  stopCamera();
+});
+
+// Handle modal close events
+document.getElementById('cameraModal').addEventListener('hidden.bs.modal', function() {
+  stopCamera();
+  resetCameraModal();
+});
 
 
 
 
+let barcodeScannerModal = null;
+let barcodeStream = null;
+let barcodeReader = null;
+let currentScanTarget = null; // 'sku' or 'barcode'
+let detectedBarcodeValue = null;
+let isScanning = false;
+
+// Open barcode scanner
+function openBarcodeScanner(target) {
+  currentScanTarget = target;
+  
+  if (!barcodeScannerModal) {
+    barcodeScannerModal = new bootstrap.Modal(document.getElementById('barcodeScannerModal'), {
+      backdrop: true,
+      keyboard: true
+    });
+  }
+  
+  // Reset modal state
+  resetBarcodeScanner();
+  
+  // Show modal
+  barcodeScannerModal.show();
+  
+  // Start scanner after modal is shown
+  document.getElementById('barcodeScannerModal').addEventListener('shown.bs.modal', function() {
+    startBarcodeScanner();
+  }, { once: true });
+}
+
+// Close barcode scanner
+function closeBarcodeScanner() {
+  stopBarcodeScanner();
+  if (barcodeScannerModal) {
+    barcodeScannerModal.hide();
+  }
+  // Remove any lingering backdrops
+  setTimeout(() => {
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+  }, 300);
+}
+
+// Reset scanner modal
+function resetBarcodeScanner() {
+  document.getElementById('barcodeScannerVideo').style.display = 'none';
+  document.getElementById('scanningOverlay').style.display = 'none';
+  document.getElementById('scannerStatus').style.display = 'none';
+  document.getElementById('scannerError').style.display = 'none';
+  document.getElementById('scannerLoading').style.display = 'none';
+  document.getElementById('scannerResult').style.display = 'none';
+  document.getElementById('useBarcodeBtn').style.display = 'none';
+  document.getElementById('rescanBtn').style.display = 'none';
+  detectedBarcodeValue = null;
+  isScanning = false;
+}
+
+// Start barcode scanner
+async function startBarcodeScanner() {
+  try {
+    const video = document.getElementById('barcodeScannerVideo');
+    const loading = document.getElementById('scannerLoading');
+    const statusDiv = document.getElementById('scannerStatus');
+    const statusText = document.getElementById('scannerStatusText');
+    const errorDiv = document.getElementById('scannerError');
+    
+    loading.style.display = 'block';
+    statusDiv.style.display = 'block';
+    statusText.textContent = 'Requesting camera access...';
+    
+    // Request camera access
+    barcodeStream = await navigator.mediaDevices.getUserMedia({
+      video: { 
+        facingMode: 'environment',
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    });
+    
+    video.srcObject = barcodeStream;
+    
+    video.onloadedmetadata = function() {
+      loading.style.display = 'none';
+      video.style.display = 'block';
+      document.getElementById('scanningOverlay').style.display = 'block';
+      statusText.textContent = 'Ready to scan. Position barcode in the frame.';
+      
+      // Initialize barcode reader
+      initBarcodeReader();
+    };
+    
+  } catch (error) {
+    console.error('Scanner error:', error);
+    document.getElementById('scannerLoading').style.display = 'none';
+    document.getElementById('scannerStatus').style.display = 'none';
+    document.getElementById('scannerError').textContent = 'Unable to access camera. Please check permissions.';
+    document.getElementById('scannerError').style.display = 'block';
+  }
+}
+
+// Initialize barcode reader with ZXing
+function initBarcodeReader() {
+  const video = document.getElementById('barcodeScannerVideo');
+  const canvas = document.getElementById('barcodeScannerCanvas');
+  const context = canvas.getContext('2d');
+  
+  // Set canvas size
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  
+  // Create code reader
+  barcodeReader = new ZXing.BrowserMultiFormatReader();
+  isScanning = true;
+  
+  // Start continuous scanning
+  scanBarcode();
+}
+
+// Scan barcode continuously
+function scanBarcode() {
+  if (!isScanning) return;
+  
+  const video = document.getElementById('barcodeScannerVideo');
+  const canvas = document.getElementById('barcodeScannerCanvas');
+  const context = canvas.getContext('2d');
+  
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    
+    try {
+      const code = barcodeReader.decodeFromImageData(imageData);
+      
+      if (code) {
+        // Barcode detected!
+        handleBarcodeDetected(code);
+        return;
+      }
+    } catch (error) {
+      // No barcode detected, continue scanning
+    }
+  }
+  
+  // Continue scanning
+  requestAnimationFrame(scanBarcode);
+}
+
+// Handle detected barcode
+function handleBarcodeDetected(code) {
+  isScanning = false;
+  detectedBarcodeValue = code.text;
+  
+  // Update UI
+  document.getElementById('scanningOverlay').style.display = 'none';
+  document.getElementById('scannerStatus').style.display = 'none';
+  document.getElementById('detectedCode').textContent = code.text;
+  document.getElementById('detectedFormat').textContent = `Format: ${code.format}`;
+  document.getElementById('scannerResult').style.display = 'block';
+  document.getElementById('useBarcodeBtn').style.display = 'inline-block';
+  document.getElementById('rescanBtn').style.display = 'inline-block';
+  
+  // Play success sound (optional)
+  playBeep();
+  
+  // Stop camera
+  stopBarcodeScanner();
+}
+
+// Use detected barcode
+function useDetectedBarcode() {
+  if (detectedBarcodeValue) {
+    if (currentScanTarget === 'sku') {
+      document.getElementById('sku-input').value = detectedBarcodeValue;
+    } else if (currentScanTarget === 'barcode') {
+      document.getElementById('barcode-input').value = detectedBarcodeValue;
+    }
+  }
+  closeBarcodeScanner();
+}
+
+// Restart scanner
+function restartScanner() {
+  resetBarcodeScanner();
+  startBarcodeScanner();
+}
+
+// Stop barcode scanner
+function stopBarcodeScanner() {
+  isScanning = false;
+  
+  if (barcodeStream) {
+    barcodeStream.getTracks().forEach(track => track.stop());
+    barcodeStream = null;
+  }
+  
+  const video = document.getElementById('barcodeScannerVideo');
+  if (video) {
+    video.srcObject = null;
+  }
+  
+  if (barcodeReader) {
+    barcodeReader.reset();
+  }
+}
+
+// Play success beep sound
+function playBeep() {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  oscillator.frequency.value = 800;
+  oscillator.type = 'sine';
+  
+  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+  
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.1);
+}
+
+// Clean up on page unload
+window.addEventListener('beforeunload', function() {
+  stopBarcodeScanner();
+});
+
+// Handle modal close events
+document.getElementById('barcodeScannerModal').addEventListener('hidden.bs.modal', function() {
+  stopBarcodeScanner();
+  resetBarcodeScanner();
+});
 
 
 
@@ -4171,16 +4642,6 @@ function loadFilterState() {
 }
 
 
-
-
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 // ================================
@@ -4220,18 +4681,6 @@ function initializeProductFilters() {
 
 // Auto-initialize on page load
 document.addEventListener('DOMContentLoaded', initializeProductFilters);
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -4327,15 +4776,6 @@ async function loadSellers() {
 }
 
 
-
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 // ================================
@@ -4400,17 +4840,6 @@ function filterSales() {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 // ================================
@@ -4433,12 +4862,6 @@ function updateSalesStats(visibleCount, activeCount, reversedCount) {
   
   console.log('📊 Stats updated:', { visible: visibleCount, active: activeCount, reversed: reversedCount });
 }
-
-
-
-
-
-
 
 
 // ====================================
@@ -4486,15 +4909,6 @@ function searchSale() {
   
   updateSalesStats(visibleCount, totalActive, totalReversed);
 }
-
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -4551,10 +4965,6 @@ function loadSalesFilterState() {
 }
 
 
-
-
-
-
 // ====================================
 // ====================================
 // ================================
@@ -4577,14 +4987,6 @@ function calculateInitialSalesStats() {
   updateSalesStats(rows.length, totalActive, totalReversed);
   console.log('📊 Initial stats calculated');
 }
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -4672,15 +5074,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Wait a bit for the page to settle
   setTimeout(initializeSalesFilters, 500);
 });
-
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -4878,14 +5271,6 @@ function closeProductDetails() {
 }
 
 
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 // ================================
@@ -4958,14 +5343,6 @@ function showToast(message, type = 'success') {
 }
 
 
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 // ================================
@@ -5013,18 +5390,6 @@ function initializeSalesFilters() {
 
 // Auto-initialize on page load
 document.addEventListener('DOMContentLoaded', initializeSalesFilters);
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -5347,14 +5712,6 @@ function showToast(message, type = 'success') {
 }
 
 
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 // ====================================
@@ -5602,15 +5959,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
-
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -5927,14 +6275,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
-
-
-
-
-
-
-
-
 
 
 
@@ -6775,14 +7115,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-
-
-
-
-
-
-
-
 // ====================================
 // ====================================
 // =====================================
@@ -6812,19 +7144,6 @@ function transferProduct(btn) {
     const isSKU = qty === 1;
     openTransferModal(id, isSKU);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // ====================================
@@ -7468,20 +7787,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // ================================
 // ================================
 // GENERATE REPORT SECTION  👁️👁️
@@ -7724,14 +8029,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-
-
-
-
-
-
-
-
 // ================================
 // ================================
 // ================================
@@ -7872,16 +8169,6 @@ function updateProductRow(product) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
 // ================================
 // ================================
 /* =====================================
@@ -7922,16 +8209,6 @@ fetch('/reverse-sale/12/', { method: 'POST' })
         updateProductRow(data.product);
     });
 */
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -7984,15 +8261,6 @@ function filterProducts() {
 
 
 
-
-
-
-
-
-
-
-
-
 // ================================
 // ================================
 // ========================= 
@@ -8039,10 +8307,6 @@ function updateProductStats() {
 document.addEventListener("DOMContentLoaded", filterProducts);
 
 
-
-
-
-
 // ================================
 // ================================
 /* ================================
@@ -8058,8 +8322,6 @@ const rowsPerPage = 15;  // Adjust if needed
 const table = document.getElementById("productsTable");
 const tbody = table.querySelector("tbody");
 const rows = Array.from(tbody.querySelectorAll(".product-row"));
-
-
 
 
 // ================================
@@ -8090,9 +8352,6 @@ function loadFilterState() {
         document.getElementById("productSearchInput").value = state.search;
     }
 }
-
-
-
 
 
 // ================================
@@ -8144,13 +8403,6 @@ function filterProducts() {
     if (typeof updateProductStats === "function") updateProductStats();
     if (typeof paginateRows === "function") paginateRows();
 }
-
-
-
-
-
-
-
 
 
 
@@ -8265,12 +8517,6 @@ function filterSales() {
 }
 
 
-
-
-
-
-
-
 // ================================
 // ================================
 /* =============================
@@ -8294,11 +8540,6 @@ function setupSearchBox() {
         header.prepend(searchInput);  
     }
 }
-
-
-
-
-
 
 
 // ================================
@@ -8337,11 +8578,6 @@ function enableColumnSorting() {
         th.addEventListener("click", () => sortTable(i));
     });
 }
-
-
-
-
-
 
 
 // ================================
@@ -8405,12 +8641,6 @@ function renderPaginationControls(totalPages) {
     container.appendChild(next);
 }
 
-
-
-
-
-
-
 // ================================
 // ================================
 /* ================================
@@ -8454,11 +8684,6 @@ function initColumnHider() {
 
 
 
-
-
-
-
-
 // ================================
 // ================================
 /* ============================
@@ -8484,14 +8709,6 @@ function exportTableToExcel() {
     a.download = "products_export.csv";
     a.click();
 }
-
-
-
-
-
-
-
-
 
 
 // ================================
