@@ -37,7 +37,6 @@ class Category(models.Model):
     SKU_TYPE_CHOICES = [
         ('imei', 'IMEI NUMBER'),
         ('serial', 'SERIAL NUMBER'),
-        ('barcode', 'BARCODE'),
     ]
     
     ITEM_TYPE_CHOICES = [
