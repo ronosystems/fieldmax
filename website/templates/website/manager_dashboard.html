@@ -5960,60 +5960,62 @@ document.addEventListener('DOMContentLoaded', function () {
         return true;
     }
 
-    function updateFields() {
-        const selected = categorySelect.options[categorySelect.selectedIndex];
-        const isSingle = selected.dataset.isSingle === "true";
-        const isBulk = selected.dataset.isBulk === "true";
-        const skuType = selected.dataset.skuType || "SKU";
+function updateFields() {
+    const selected = categorySelect.options[categorySelect.selectedIndex];
+    const isSingle = selected.dataset.isSingle === "true";
+    const isBulk = selected.dataset.isBulk === "true";
+    const skuType = selected.dataset.skuType || "SKU";
 
-        const barcodeField = document.getElementById('barcode-field');
-        const barcodeInput = document.getElementById('barcode-input');
+    // ✅ FIXED: Changed from 'sku-field' to 'sku-value-container'
+    const skuValueContainer = document.getElementById('sku-value-container');
+    const barcodeField = document.getElementById('barcode-field');
+    const barcodeInput = document.getElementById('barcode-input');
 
-        if (isSingle) {
-            // Single items: show SKU field (IMEI/Serial)
-            skuField.style.display = 'block';
-            skuLabel.textContent = `${skuType} *`;
-            skuInput.required = true;
-            skuInput.disabled = false; // Enable SKU input
-        
-            // Hide and disable barcode field
-            barcodeField.style.display = 'none';
-            barcodeInput.required = false;
-            barcodeInput.disabled = true; // Disable so it won't submit
-            barcodeInput.value = ''; // Clear value
-        
-            quantityField.style.display = 'none';
-            quantityInput.value = 1;
-            quantityInput.required = false;
-        
-        } else if (isBulk) {
-            // Bulk items: show barcode and quantity fields
-            skuField.style.display = 'none';
-            skuInput.required = false;
-            skuInput.disabled = true; // Disable so it won't submit
-            skuInput.value = ''; // Clear value
-        
-            barcodeField.style.display = 'block';
-            barcodeInput.required = false;
-            barcodeInput.disabled = false; // Enable barcode input
-        
-            quantityField.style.display = 'block';
-            quantityInput.required = true;
-        
-        } else {
-            // No category selected: hide all
-            skuField.style.display = 'none';
-            skuInput.required = false;
-            skuInput.disabled = true;
-        
-            barcodeField.style.display = 'none';
-            barcodeInput.required = false;
-            barcodeInput.disabled = true;
-        
-            quantityField.style.display = 'none';
-            quantityInput.required = false;
-        }
+    if (isSingle) {
+        // Single items: show SKU field (IMEI/Serial)
+        skuValueContainer.style.display = 'block';  // ✅ Show the container
+        skuLabel.textContent = `${skuType} *`;
+        skuInput.required = true;
+        skuInput.disabled = false;
+    
+        // Hide and disable barcode field
+        barcodeField.style.display = 'none';
+        barcodeInput.required = false;
+        barcodeInput.disabled = true;
+        barcodeInput.value = '';
+    
+        quantityField.style.display = 'none';
+        quantityInput.value = 1;
+        quantityInput.required = false;
+    
+    } else if (isBulk) {
+        // Bulk items: show barcode and quantity fields
+        skuValueContainer.style.display = 'none';  // ✅ Hide for bulk
+        skuInput.required = false;
+        skuInput.disabled = true;
+        skuInput.value = '';
+    
+        barcodeField.style.display = 'block';
+        barcodeInput.required = false;
+        barcodeInput.disabled = false;
+    
+        quantityField.style.display = 'block';
+        quantityInput.required = true;
+    
+    } else {
+        // No category selected: hide all
+        skuValueContainer.style.display = 'none';  // ✅ Hide when no category
+        skuInput.required = false;
+        skuInput.disabled = true;
+    
+        barcodeField.style.display = 'none';
+        barcodeInput.required = false;
+        barcodeInput.disabled = true;
+    
+        quantityField.style.display = 'none';
+        quantityInput.required = false;
     }
+}
 
     categorySelect.addEventListener('change', updateFields);
     updateFields();
