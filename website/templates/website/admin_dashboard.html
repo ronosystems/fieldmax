@@ -6616,24 +6616,47 @@ function showToast(message, type = 'success') {
 }
 
 
+// ====================================
+// ADD PRODUCT FORM - NAMESPACED VERSION
+// ====================================
 
-// ====================================
-// ====================================
-// ADD PRODUCT  SECTION
-// ====================================
-document.addEventListener('DOMContentLoaded', function () {
+(function() {
+    'use strict';
 
+    // ===========================
+    // DOM ELEMENTS
+    // ===========================
     const categorySelect = document.getElementById('category-select');
     const skuValueContainer = document.getElementById('sku-value-container');
     const skuInput = document.getElementById('sku-input');
     const skuLabel = document.getElementById('sku-label');
+    const skuFieldTitle = document.getElementById('sku-field-title');
+    const skuFieldDescription = document.getElementById('sku-field-description');
+    const skuFieldHint = document.getElementById('sku-field-hint');
+    
+    const barcodeField = document.getElementById('barcode-field');
+    const barcodeInput = document.getElementById('barcode-input');
+    
     const quantityField = document.getElementById('quantity-field');
     const quantityInput = document.getElementById('quantity');
+    
     const form = document.getElementById('addProductForm');
     const messageDiv = document.getElementById('message-div');
     const successDiv = document.getElementById('success-message-product');
-    const saveBtn = form.querySelector("button[type='submit']");
+    const saveBtn = form ? form.querySelector("button[type='submit']") : null;
 
+    // ===========================
+    // SCOPED VARIABLES
+    // ===========================
+    let productCameraStream = null;
+    let productScannerStream = null;
+    let productScannerFrame = null;
+    let productScanTarget = null;
+    let productBarcodeDetector = null;
+
+    // ===========================
+    // HELPER FUNCTIONS
+    // ===========================
     function getCookie(name) {
         let cookieValue = null;
         const cookies = document.cookie.split(';');
@@ -6648,7 +6671,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     const csrftoken = getCookie('csrftoken');
 
-    function showToast(msg, type="success") {
+    function showToast(msg, type = "success") {
         const t = document.createElement("div");
         t.className = `toast-message ${type}`;
         t.innerHTML = msg;
@@ -6657,54 +6680,170 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => t.remove(), 3500);
     }
 
-    function validateInline() {
-        const name = document.getElementById("product-name").value.trim();
-        const category = categorySelect.value;
-        const buy = parseFloat(document.getElementById("buying-price").value);
-        const sell = parseFloat(document.getElementById("selling-price").value);
+    // ===========================
+    // FIELD VISIBILITY LOGIC
+    // ===========================
+    function updateFields() {
+        if (!categorySelect) return;
+        
+        const selected = categorySelect.options[categorySelect.selectedIndex];
+        
+        if (!selected.value) {
+            hideAllFields();
+            return;
+        }
 
-        messageDiv.innerHTML = "";
+        const isSingle = selected.dataset.isSingle === "true";
+        const isBulk = selected.dataset.isBulk === "true";
+        const skuType = selected.dataset.skuType || "SKU";
+
+        console.log('Category changed:', { isSingle, isBulk, skuType });
+
+        if (isSingle) {
+            showSingleItemFields(skuType);
+        } else if (isBulk) {
+            showBulkItemFields();
+        } else {
+            hideAllFields();
+        }
+    }
+
+    function showSingleItemFields(skuType) {
+        if (!skuValueContainer) return;
+        
+        skuValueContainer.style.display = 'block';
+        if (skuFieldTitle) skuFieldTitle.textContent = `${skuType} Required`;
+        if (skuFieldDescription) skuFieldDescription.textContent = `Enter the unique ${skuType.toLowerCase()} for this item`;
+        if (skuLabel) skuLabel.innerHTML = `<i class="bi bi-upc-scan"></i> ${skuType} <span class="text-danger">*</span>`;
+        if (skuFieldHint) skuFieldHint.innerHTML = `<i class="bi bi-lightbulb"></i> Tip: Each ${skuType.toLowerCase()} must be unique`;
+        
+        if (skuInput) {
+            skuInput.required = true;
+            skuInput.disabled = false;
+            skuInput.placeholder = `Enter ${skuType.toLowerCase()}`;
+        }
+
+        if (barcodeField) barcodeField.style.display = 'none';
+        if (barcodeInput) {
+            barcodeInput.required = false;
+            barcodeInput.disabled = true;
+            barcodeInput.value = '';
+        }
+
+        if (quantityField) quantityField.style.display = 'none';
+        if (quantityInput) {
+            quantityInput.value = 1;
+            quantityInput.required = false;
+            quantityInput.disabled = true;
+        }
+
+        console.log('✅ Single item fields shown');
+    }
+
+    function showBulkItemFields() {
+        if (skuValueContainer) skuValueContainer.style.display = 'none';
+        if (skuInput) {
+            skuInput.required = false;
+            skuInput.disabled = true;
+            skuInput.value = '';
+        }
+
+        if (barcodeField) barcodeField.style.display = 'block';
+        if (barcodeInput) {
+            barcodeInput.required = false;
+            barcodeInput.disabled = false;
+        }
+
+        if (quantityField) quantityField.style.display = 'block';
+        if (quantityInput) {
+            quantityInput.required = true;
+            quantityInput.disabled = false;
+            quantityInput.value = '';
+            quantityInput.min = 1;
+        }
+
+        console.log('✅ Bulk item fields shown');
+    }
+
+    function hideAllFields() {
+        if (skuValueContainer) skuValueContainer.style.display = 'none';
+        if (skuInput) {
+            skuInput.required = false;
+            skuInput.disabled = true;
+            skuInput.value = '';
+        }
+
+        if (barcodeField) barcodeField.style.display = 'none';
+        if (barcodeInput) {
+            barcodeInput.required = false;
+            barcodeInput.disabled = true;
+            barcodeInput.value = '';
+        }
+
+        if (quantityField) quantityField.style.display = 'none';
+        if (quantityInput) {
+            quantityInput.required = false;
+            quantityInput.disabled = true;
+            quantityInput.value = '';
+        }
+
+        console.log('✅ All fields hidden');
+    }
+
+    // ===========================
+    // FORM VALIDATION
+    // ===========================
+    function validateInline() {
+        const name = document.getElementById("product-name")?.value.trim();
+        const category = categorySelect?.value;
+        const buy = parseFloat(document.getElementById("buying-price")?.value);
+        const sell = parseFloat(document.getElementById("selling-price")?.value);
+
+        if (messageDiv) messageDiv.innerHTML = "";
 
         if (!category) {
-            messageDiv.innerHTML = `<div class="alert alert-danger">Please select a category.</div>`;
+            if (messageDiv) messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Please select a category.</div>`;
             return false;
         }
 
         if (!name) {
-            messageDiv.innerHTML = `<div class="alert alert-danger">Product name is required.</div>`;
+            if (messageDiv) messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Product name is required.</div>`;
             return false;
         }
 
         if (isNaN(buy) || buy <= 0) {
-            messageDiv.innerHTML = `<div class="alert alert-danger">Valid buying price is required.</div>`;
+            if (messageDiv) messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Valid buying price is required.</div>`;
             return false;
         }
 
         if (isNaN(sell) || sell <= 0) {
-            messageDiv.innerHTML = `<div class="alert alert-danger">Valid selling price is required.</div>`;
+            if (messageDiv) messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Valid selling price is required.</div>`;
             return false;
         }
 
         if (sell < buy) {
-            messageDiv.innerHTML = `<div class="alert alert-danger">Selling price must be higher than buying price.</div>`;
+            if (messageDiv) messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Selling price must be higher than or equal to buying price.</div>`;
             return false;
         }
 
-        // Check if single item needs SKU
         const selected = categorySelect.options[categorySelect.selectedIndex];
         const isSingle = selected.dataset.isSingle === "true";
-        if (isSingle && !skuInput.value.trim()) {
-            messageDiv.innerHTML = `<div class="alert alert-danger">SKU/IMEI/Serial is required for single items.</div>`;
-            skuInput.focus();
-            return false;
+        const isBulk = selected.dataset.isBulk === "true";
+        const skuType = selected.dataset.skuType || "SKU";
+
+        if (isSingle && skuInput) {
+            const skuValue = skuInput.value.trim();
+            if (!skuValue) {
+                if (messageDiv) messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ${skuType} is required for single items.</div>`;
+                skuInput.focus();
+                return false;
+            }
         }
 
-        // Check if bulk item needs quantity
-        const isBulk = selected.dataset.isBulk === "true";
-        if (isBulk) {
+        if (isBulk && quantityInput) {
             const qty = parseInt(quantityInput.value);
             if (isNaN(qty) || qty <= 0) {
-                messageDiv.innerHTML = `<div class="alert alert-danger">Valid quantity is required for bulk items.</div>`;
+                if (messageDiv) messageDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Valid quantity is required for bulk items.</div>`;
                 quantityInput.focus();
                 return false;
             }
@@ -6713,155 +6852,444 @@ document.addEventListener('DOMContentLoaded', function () {
         return true;
     }
 
-function updateFields() {
-    const selected = categorySelect.options[categorySelect.selectedIndex];
-    const isSingle = selected.dataset.isSingle === "true";
-    const isBulk = selected.dataset.isBulk === "true";
-    const skuType = selected.dataset.skuType || "SKU";
+    // ===========================
+    // IMAGE PREVIEW FUNCTIONS
+    // ===========================
+    window.previewImage = function(input) {
+        const file = input.files[0];
+        const preview = document.getElementById('imagePreview');
+        const container = document.getElementById('imagePreviewContainer');
 
-    // ✅ FIXED: Changed from 'sku-field' to 'sku-value-container'
-    const skuValueContainer = document.getElementById('sku-value-container');
-    const barcodeField = document.getElementById('barcode-field');
-    const barcodeInput = document.getElementById('barcode-input');
+        if (!file || !preview || !container) return;
 
-    if (isSingle) {
-        // Single items: show SKU field (IMEI/Serial)
-        skuValueContainer.style.display = 'block';  // ✅ Show the container
-        skuLabel.textContent = `${skuType} *`;
-        skuInput.required = true;
-        skuInput.disabled = false;
-    
-        // Hide and disable barcode field
-        barcodeField.style.display = 'none';
-        barcodeInput.required = false;
-        barcodeInput.disabled = true;
-        barcodeInput.value = '';
-    
-        quantityField.style.display = 'none';
-        quantityInput.value = 1;
-        quantityInput.required = false;
-    
-    } else if (isBulk) {
-        // Bulk items: show barcode and quantity fields
-        skuValueContainer.style.display = 'none';  // ✅ Hide for bulk
-        skuInput.required = false;
-        skuInput.disabled = true;
-        skuInput.value = '';
-    
-        barcodeField.style.display = 'block';
-        barcodeInput.required = false;
-        barcodeInput.disabled = false;
-    
-        quantityField.style.display = 'block';
-        quantityInput.required = true;
-    
-    } else {
-        // No category selected: hide all
-        skuValueContainer.style.display = 'none';  // ✅ Hide when no category
-        skuInput.required = false;
-        skuInput.disabled = true;
-    
-        barcodeField.style.display = 'none';
-        barcodeInput.required = false;
-        barcodeInput.disabled = true;
-    
-        quantityField.style.display = 'none';
-        quantityInput.required = false;
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size must be less than 5MB');
+            input.value = '';
+            return;
+        }
+
+        if (!file.type.startsWith('image/')) {
+            alert('Please select a valid image file');
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            container.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    };
+
+    window.clearImage = function() {
+        const productImage = document.getElementById('product-image');
+        const cameraCapture = document.getElementById('camera-capture');
+        const preview = document.getElementById('imagePreview');
+        const container = document.getElementById('imagePreviewContainer');
+
+        if (productImage) productImage.value = '';
+        if (cameraCapture) cameraCapture.value = '';
+        if (preview) preview.src = '';
+        if (container) container.style.display = 'none';
+    };
+
+    // ===========================
+    // CAMERA MODAL FUNCTIONS
+    // ===========================
+    window.openCameraModal = function() {
+        const modal = new bootstrap.Modal(document.getElementById('cameraModal'));
+        modal.show();
+        startProductCamera();
+    };
+
+    window.closeCameraModal = function() {
+        stopProductCamera();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('cameraModal'));
+        if (modal) modal.hide();
+    };
+
+    async function startProductCamera() {
+        const video = document.getElementById('cameraStream');
+        const loading = document.getElementById('cameraLoading');
+        const errorDiv = document.getElementById('cameraError');
+        const captureBtn = document.getElementById('captureBtn');
+
+        if (!video) return;
+
+        if (loading) loading.style.display = 'block';
+        if (errorDiv) errorDiv.style.display = 'none';
+        video.style.display = 'none';
+
+        try {
+            productCameraStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' } 
+            });
+            video.srcObject = productCameraStream;
+            video.style.display = 'block';
+            if (loading) loading.style.display = 'none';
+            if (captureBtn) captureBtn.style.display = 'inline-block';
+        } catch (error) {
+            if (loading) loading.style.display = 'none';
+            if (errorDiv) {
+                errorDiv.style.display = 'block';
+                errorDiv.textContent = 'Camera access denied or not available: ' + error.message;
+            }
+            console.error('Camera error:', error);
+        }
     }
-}
 
-    categorySelect.addEventListener('change', updateFields);
-    updateFields();
+    function stopProductCamera() {
+        if (productCameraStream) {
+            productCameraStream.getTracks().forEach(track => track.stop());
+            productCameraStream = null;
+        }
+    }
 
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
+    window.capturePhoto = function() {
+        const video = document.getElementById('cameraStream');
+        const canvas = document.getElementById('cameraCanvas');
+        const captureBtn = document.getElementById('captureBtn');
+        const retakeBtn = document.getElementById('retakeBtn');
+        const usePhotoBtn = document.getElementById('usePhotoBtn');
 
-        if (!validateInline()) return;
+        if (!video || !canvas) return;
 
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Saving...`;
-        messageDiv.innerHTML = "";
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
 
-        fetch(form.action, {
-            method: "POST",
-            body: new FormData(form),
-            headers: {
-                "X-Requested-With": "XMLHttpRequest",
-                "X-CSRFToken": csrftoken
-            }
-        })
-        .then(response => {
-            // CRITICAL FIX: Check content type before parsing
-            const contentType = response.headers.get("content-type");
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+        if (captureBtn) captureBtn.style.display = 'none';
+        if (retakeBtn) retakeBtn.style.display = 'inline-block';
+        if (usePhotoBtn) usePhotoBtn.style.display = 'inline-block';
+
+        stopProductCamera();
+    };
+
+    window.retakePhoto = function() {
+        const video = document.getElementById('cameraStream');
+        const canvas = document.getElementById('cameraCanvas');
+        const captureBtn = document.getElementById('captureBtn');
+        const retakeBtn = document.getElementById('retakeBtn');
+        const usePhotoBtn = document.getElementById('usePhotoBtn');
+
+        if (!video || !canvas) return;
+
+        canvas.style.display = 'none';
+        video.style.display = 'block';
+        if (retakeBtn) retakeBtn.style.display = 'none';
+        if (usePhotoBtn) usePhotoBtn.style.display = 'none';
+        if (captureBtn) captureBtn.style.display = 'inline-block';
+
+        startProductCamera();
+    };
+
+    window.usePhoto = function() {
+        const canvas = document.getElementById('cameraCanvas');
+        if (!canvas) return;
+
+        canvas.toBlob(function(blob) {
+            const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
             
-            if (contentType && contentType.includes("application/json")) {
-                return response.json().then(data => ({ 
-                    status: response.status, 
-                    data: data 
-                }));
+            const fileInput = document.getElementById('product-image');
+            if (fileInput) {
+                fileInput.files = dataTransfer.files;
+                window.previewImage(fileInput);
+            }
+            
+            window.closeCameraModal();
+        }, 'image/jpeg', 0.9);
+    };
+
+    // ===========================
+    // BARCODE SCANNER FUNCTIONS
+    // ===========================
+    window.openBarcodeScanner = function(target) {
+        productScanTarget = target;
+        const modal = new bootstrap.Modal(document.getElementById('barcodeScannerModal'));
+        modal.show();
+        initProductBarcodeScanner();
+    };
+
+    window.closeBarcodeScanner = function() {
+        stopProductBarcodeScanner();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('barcodeScannerModal'));
+        if (modal) modal.hide();
+    };
+
+    async function initProductBarcodeScanner() {
+        const video = document.getElementById('barcodeScannerVideo');
+        const loading = document.getElementById('scannerLoading');
+        const errorDiv = document.getElementById('scannerError');
+        const statusDiv = document.getElementById('scannerStatus');
+        const overlay = document.getElementById('scanningOverlay');
+
+        if (!video) return;
+
+        if (loading) loading.style.display = 'block';
+        if (errorDiv) errorDiv.style.display = 'none';
+        if (statusDiv) statusDiv.style.display = 'none';
+        video.style.display = 'none';
+
+        try {
+            if (!('BarcodeDetector' in window)) {
+                throw new Error('Barcode detection not supported in this browser. Use Chrome or Edge.');
+            }
+
+            productScannerStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' } 
+            });
+            
+            video.srcObject = productScannerStream;
+            video.style.display = 'block';
+            if (overlay) overlay.style.display = 'block';
+            if (loading) loading.style.display = 'none';
+            if (statusDiv) {
+                statusDiv.style.display = 'block';
+                const statusText = statusDiv.querySelector('#scannerStatusText');
+                if (statusText) statusText.textContent = 'Scanning... Position barcode in frame';
+            }
+
+            productBarcodeDetector = new BarcodeDetector({ 
+                formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'] 
+            });
+
+            scanProductBarcodes();
+        } catch (error) {
+            if (loading) loading.style.display = 'none';
+            if (errorDiv) {
+                errorDiv.style.display = 'block';
+                errorDiv.textContent = 'Error: ' + error.message;
+            }
+            console.error('Scanner error:', error);
+        }
+    }
+
+    async function scanProductBarcodes() {
+        const video = document.getElementById('barcodeScannerVideo');
+        const resultDiv = document.getElementById('scannerResult');
+        const statusDiv = document.getElementById('scannerStatus');
+        const detectedCode = document.getElementById('detectedCode');
+        const detectedFormat = document.getElementById('detectedFormat');
+        const useBarcodeBtn = document.getElementById('useBarcodeBtn');
+        const rescanBtn = document.getElementById('rescanBtn');
+
+        if (!video || !video.srcObject) return;
+
+        try {
+            const barcodes = await productBarcodeDetector.detect(video);
+            
+            if (barcodes.length > 0) {
+                const barcode = barcodes[0];
+                
+                stopProductBarcodeScanner();
+                
+                if (detectedCode) detectedCode.textContent = barcode.rawValue;
+                if (detectedFormat) detectedFormat.textContent = `Format: ${barcode.format}`;
+                if (resultDiv) resultDiv.style.display = 'block';
+                if (statusDiv) statusDiv.style.display = 'none';
+                if (useBarcodeBtn) useBarcodeBtn.style.display = 'inline-block';
+                if (rescanBtn) rescanBtn.style.display = 'inline-block';
+                
+                playProductBeep();
             } else {
-                // Non-JSON response (probably HTML redirect or error page)
-                return response.text().then(text => ({ 
-                    status: response.status, 
-                    data: { success: false, message: "Unexpected response from server" },
-                    rawText: text
-                }));
+                productScannerFrame = requestAnimationFrame(scanProductBarcodes);
             }
-        })
-        .then(({ status, data, rawText }) => {
-            console.log("Response status:", status);
-            console.log("Response data:", data);
+        } catch (error) {
+            console.error('Scan error:', error);
+            productScannerFrame = requestAnimationFrame(scanProductBarcodes);
+        }
+    }
+
+    function stopProductBarcodeScanner() {
+        if (productScannerFrame) {
+            cancelAnimationFrame(productScannerFrame);
+            productScannerFrame = null;
+        }
+        if (productScannerStream) {
+            productScannerStream.getTracks().forEach(track => track.stop());
+            productScannerStream = null;
+        }
+        const overlay = document.getElementById('scanningOverlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+
+    window.useDetectedBarcode = function() {
+        const detectedCode = document.getElementById('detectedCode');
+        const code = detectedCode ? detectedCode.textContent : '';
+        
+        if (productScanTarget === 'sku' && skuInput) {
+            skuInput.value = code;
+        } else if (productScanTarget === 'barcode' && barcodeInput) {
+            barcodeInput.value = code;
+        }
+        
+        window.closeBarcodeScanner();
+    };
+
+    window.restartScanner = function() {
+        const resultDiv = document.getElementById('scannerResult');
+        const useBarcodeBtn = document.getElementById('useBarcodeBtn');
+        const rescanBtn = document.getElementById('rescanBtn');
+
+        if (resultDiv) resultDiv.style.display = 'none';
+        if (useBarcodeBtn) useBarcodeBtn.style.display = 'none';
+        if (rescanBtn) rescanBtn.style.display = 'none';
+        
+        initProductBarcodeScanner();
+    };
+
+    function playProductBeep() {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
             
-            if (status === 200 && data.success) {
-                showToast("✅ Product saved successfully!");
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            gainNode.gain.value = 0.3;
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        } catch (error) {
+            console.log('Beep sound not available');
+        }
+    }
 
-                form.reset();
-                updateFields();
+    // ===========================
+    // FORM SUBMISSION
+    // ===========================
+    function initFormSubmission() {
+        if (!form) return;
 
-                successDiv.style.display = "block";
-                setTimeout(() => successDiv.style.display = "none", 5000);
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
 
-                // Navigate to product list
-                const listBtn = document.querySelector("[data-section='product-list']");
-                if (listBtn) {
-                    setTimeout(() => {
-                        listBtn.click();
-                        // Optionally reload to show new product
-                        setTimeout(() => window.location.reload(), 500);
-                    }, 1200);
+            console.log('Form submitted');
+
+            if (!validateInline()) {
+                console.log('Validation failed');
+                return;
+            }
+
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Saving...`;
+            }
+            if (messageDiv) messageDiv.innerHTML = "";
+
+            const formData = new FormData(form);
+
+            console.log('Form data being sent:');
+            for (let [key, value] of formData.entries()) {
+                if (value instanceof File) {
+                    console.log(key, ':', value.name, '(', value.size, 'bytes)');
+                } else {
+                    console.log(key, ':', value);
                 }
             }
-            else {
-                // Error response
-                let errorMessage = "Error saving product";
+
+            fetch(form.action, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRFToken": csrftoken
+                }
+            })
+            .then(response => {
+                const contentType = response.headers.get("content-type");
                 
-                if (data.message) {
-                    errorMessage = data.message;
-                } else if (data.errors) {
-                    const firstError = Object.values(data.errors)[0];
-                    if (Array.isArray(firstError) && firstError.length > 0) {
-                        errorMessage = firstError[0];
+                if (contentType && contentType.includes("application/json")) {
+                    return response.json().then(data => ({ 
+                        status: response.status, 
+                        data: data 
+                    }));
+                } else {
+                    return response.text().then(text => ({ 
+                        status: response.status, 
+                        data: { success: false, message: "Unexpected response from server" },
+                        rawText: text
+                    }));
+                }
+            })
+            .then(({ status, data, rawText }) => {
+                console.log("Response status:", status);
+                console.log("Response data:", data);
+                
+                if (status === 200 && data.success) {
+                    showToast("✅ Product saved successfully!");
+
+                    form.reset();
+                    if (window.clearImage) window.clearImage();
+                    updateFields();
+
+                    if (successDiv) {
+                        successDiv.style.display = "block";
+                        successDiv.innerHTML = `<i class="bi bi-check-circle"></i> Product "${data.product_code}" saved successfully!`;
+                        setTimeout(() => successDiv.style.display = "none", 5000);
                     }
-                } else if (rawText) {
-                    console.error("Raw response:", rawText);
-                    errorMessage = "Server error. Check console for details.";
+
+                    const listBtn = document.querySelector("[data-section='product-list']");
+                    if (listBtn) {
+                        setTimeout(() => {
+                            listBtn.click();
+                            setTimeout(() => window.location.reload(), 500);
+                        }, 1200);
+                    }
                 }
-                
-                messageDiv.innerHTML = `<div class="alert alert-danger"><strong>❌ Error:</strong> ${errorMessage}</div>`;
-                showToast(errorMessage, "error");
-            }
-        })
-        .catch(error => {
-            console.error("Network error:", error);
-            messageDiv.innerHTML = `<div class="alert alert-danger"><strong>❌ Network Error:</strong> Could not connect to server. Please check your connection.</div>`;
-            showToast("Network error occurred", "error");
-        })
-        .finally(() => {
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = `<i class="bi bi-save"></i><span> Save Product</span>`;
+                else {
+                    let errorMessage = "Error saving product";
+                    
+                    if (data.message) {
+                        errorMessage = data.message;
+                    } else if (data.errors) {
+                        const firstError = Object.values(data.errors)[0];
+                        if (Array.isArray(firstError) && firstError.length > 0) {
+                            errorMessage = firstError[0];
+                        }
+                    } else if (rawText) {
+                        console.error("Raw response:", rawText.substring(0, 500));
+                        errorMessage = "Server error. Check console for details.";
+                    }
+                    
+                    if (messageDiv) messageDiv.innerHTML = `<div class="alert alert-danger"><strong><i class="bi bi-x-circle"></i> Error:</strong> ${errorMessage}</div>`;
+                    showToast(errorMessage, "error");
+                }
+            })
+            .catch(error => {
+                console.error("Network error:", error);
+                if (messageDiv) messageDiv.innerHTML = `<div class="alert alert-danger"><strong><i class="bi bi-x-circle"></i> Network Error:</strong> Could not connect to server. Please check your connection.</div>`;
+                showToast("Network error occurred", "error");
+            })
+            .finally(() => {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = `<i class="bi bi-save"></i><span> Save Product</span>`;
+                }
+            });
         });
+    }
+
+    // ===========================
+    // INITIALIZATION
+    // ===========================
+    document.addEventListener('DOMContentLoaded', function() {
+        if (categorySelect) {
+            categorySelect.addEventListener('change', updateFields);
+            updateFields();
+        }
+        initFormSubmission();
     });
-});
+
+})();
 
 
 // ====================================
