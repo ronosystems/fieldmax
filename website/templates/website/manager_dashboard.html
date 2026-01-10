@@ -6357,11 +6357,11 @@ function usePhoto() {
 }
 
 // ===========================
-// BARCODE SCANNER FUNCTIONS
+// BARCODE SCANNER FUNCTIONS - USING ZXING (CROSS-BROWSER)
 // ===========================
-let barcodeDetector = null;
 let scannerStream = null;
 let scannerAnimationFrame = null;
+let codeReader = null;
 
 async function openBarcodeScanner(target) {
     currentScanTarget = target;
@@ -6389,13 +6389,17 @@ async function initBarcodeScanner() {
     video.style.display = 'none';
 
     try {
-        // Check if BarcodeDetector is supported
-        if (!('BarcodeDetector' in window)) {
-            throw new Error('Barcode detection not supported in this browser. Use Chrome or Edge.');
+        // Load ZXing library dynamically
+        if (!window.ZXing) {
+            await loadZXingLibrary();
         }
 
         scannerStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'environment' } 
+            video: { 
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            } 
         });
         
         video.srcObject = scannerStream;
@@ -6405,21 +6409,42 @@ async function initBarcodeScanner() {
         statusDiv.style.display = 'block';
         statusDiv.querySelector('#scannerStatusText').textContent = 'Scanning... Position barcode in frame';
 
-        barcodeDetector = new BarcodeDetector({ 
-            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'] 
+        // Initialize ZXing code reader
+        codeReader = new ZXing.BrowserMultiFormatReader();
+        
+        // Start continuous scanning
+        video.addEventListener('loadedmetadata', () => {
+            scanBarcodes();
         });
 
-        scanBarcodes();
     } catch (error) {
         loading.style.display = 'none';
         errorDiv.style.display = 'block';
-        errorDiv.textContent = 'Error: ' + error.message;
+        errorDiv.textContent = 'Camera error: ' + error.message;
         console.error('Scanner error:', error);
     }
 }
 
+// Load ZXing library dynamically
+function loadZXingLibrary() {
+    return new Promise((resolve, reject) => {
+        if (window.ZXing) {
+            resolve();
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/@zxing/library@latest/umd/index.min.js';
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Failed to load ZXing library'));
+        document.head.appendChild(script);
+    });
+}
+
 async function scanBarcodes() {
     const video = document.getElementById('barcodeScannerVideo');
+    const canvas = document.getElementById('barcodeScannerCanvas');
+    const ctx = canvas.getContext('2d');
     const resultDiv = document.getElementById('scannerResult');
     const statusDiv = document.getElementById('scannerStatus');
     const detectedCode = document.getElementById('detectedCode');
@@ -6430,29 +6455,40 @@ async function scanBarcodes() {
     if (!video.srcObject) return;
 
     try {
-        const barcodes = await barcodeDetector.detect(video);
+        // Set canvas size to match video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
         
-        if (barcodes.length > 0) {
-            const barcode = barcodes[0];
-            
-            // Stop scanning
+        // Draw current video frame to canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Get image data
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        // Try to decode barcode
+        const result = await codeReader.decodeFromImageData(imageData);
+        
+        if (result) {
+            // Barcode detected!
             stopBarcodeScanner();
             
             // Show result
-            detectedCode.textContent = barcode.rawValue;
-            detectedFormat.textContent = `Format: ${barcode.format}`;
+            detectedCode.textContent = result.text;
+            detectedFormat.textContent = `Format: ${result.format}`;
             resultDiv.style.display = 'block';
             statusDiv.style.display = 'none';
+            document.getElementById('scanningOverlay').style.display = 'none';
             useBarcodeBtn.style.display = 'inline-block';
             rescanBtn.style.display = 'inline-block';
             
             // Play success sound
             playBeep();
         } else {
+            // No barcode found, continue scanning
             scannerAnimationFrame = requestAnimationFrame(scanBarcodes);
         }
     } catch (error) {
-        console.error('Scan error:', error);
+        // No barcode in this frame, continue scanning
         scannerAnimationFrame = requestAnimationFrame(scanBarcodes);
     }
 }
@@ -6466,7 +6502,9 @@ function stopBarcodeScanner() {
         scannerStream.getTracks().forEach(track => track.stop());
         scannerStream = null;
     }
-    document.getElementById('scanningOverlay').style.display = 'none';
+    if (codeReader) {
+        codeReader.reset();
+    }
 }
 
 function useDetectedBarcode() {
@@ -6485,25 +6523,29 @@ function restartScanner() {
     document.getElementById('scannerResult').style.display = 'none';
     document.getElementById('useBarcodeBtn').style.display = 'none';
     document.getElementById('rescanBtn').style.display = 'none';
+    document.getElementById('scanningOverlay').style.display = 'block';
     initBarcodeScanner();
 }
 
 function playBeep() {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
-    gainNode.gain.value = 0.3;
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.1);
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.3;
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+    } catch (error) {
+        console.log('Audio beep not supported');
+    }
 }
-
 
 // ====================================
 // ====================================

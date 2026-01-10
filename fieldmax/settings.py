@@ -583,16 +583,20 @@ def validate_settings():
     else:
         print("\n✅ Settings validated successfully!\n")
 
-# Run validation on startup
-if 'runserver' in sys.argv or 'migrate' in sys.argv or 'collectstatic' in sys.argv:
-    validate_settings()
-
 # ============================================
-# FINAL STARTUP MESSAGE
+# RUN VALIDATION ONLY ONCE (Fix for duplicate output)
 # ============================================
-print(f"\n🚀 FieldMax initialized successfully!")
-print(f"   Environment: {'DEVELOPMENT' if DEBUG else 'PRODUCTION'}")
-print(f"   Platform: {'Render' if RENDER_EXTERNAL_HOSTNAME else 'Local'}")
-print(f"   Database: {DATABASES['default']['ENGINE']}")
-print(f"   Allowed Hosts: {ALLOWED_HOSTS}")
-print("="*50 + "\n")
+if os.environ.get('RUN_MAIN') == 'true' or 'runserver' not in sys.argv:
+    # Run validation on startup
+    if 'runserver' in sys.argv or 'migrate' in sys.argv or 'collectstatic' in sys.argv:
+        validate_settings()
+    
+    # ============================================
+    # FINAL STARTUP MESSAGE
+    # ============================================
+    print(f"\n🚀 FieldMax initialized successfully!")
+    print(f"   Environment: {'DEVELOPMENT' if DEBUG else 'PRODUCTION'}")
+    print(f"   Platform: {'Render' if RENDER_EXTERNAL_HOSTNAME else 'Local'}")
+    print(f"   Database: {DATABASES['default']['ENGINE']}")
+    print(f"   Allowed Hosts: {ALLOWED_HOSTS}")
+    print("="*50 + "\n")
