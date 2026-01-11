@@ -152,6 +152,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
                 'django.template.context_processors.static',
+                'django.template.context_processors.tz',
 
                 # ✅ CUSTOM CONTEXT PROCESSORS
                 'website.context_processors.categories_processor',

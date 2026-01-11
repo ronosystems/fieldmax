@@ -1125,14 +1125,22 @@ def pending_orders_count(request):
             'error': str(e)
         })
 
+
+
+
+
+
+
+
 # ============================================
-# 5. STAFF ACTION: APPROVE ORDER
+# UPDATED: APPROVE ORDER WITH ETR GENERATION
 # ============================================
+
 @login_required
 @require_http_methods(["POST"])
 def approve_order(request, order_id):
     """
-    Staff approves order → Creates actual Sale
+    ✅ FIXED: Staff approves order → Creates actual Sale with ETR number
     URL: /staff/approve-order/<order_id>/
     """
     try:
@@ -1151,16 +1159,23 @@ def approve_order(request, order_id):
             # Parse cart items
             cart_items = pending_order.cart_items
             
-            # Create the Sale
+            # ============================================
+            # STEP 1: CREATE THE SALE
+            # ============================================
             sale = Sale.objects.create(
                 seller=request.user,
                 buyer_name=pending_order.buyer_name,
                 buyer_phone=pending_order.buyer_phone,
                 buyer_id_number=pending_order.buyer_id_number,
                 payment_method=pending_order.payment_method,
+                etr_status='pending'  # ✅ Add this
             )
             
-            # Add items to sale
+            logger.info(f"[ORDER APPROVAL] Created Sale {sale.sale_id} from pending order {order_id}")
+            
+            # ============================================
+            # STEP 2: ADD ITEMS TO SALE
+            # ============================================
             created_items = []
             errors = []
             
@@ -1209,8 +1224,39 @@ def approve_order(request, order_id):
             if not created_items:
                 raise Exception("No items could be processed: " + "; ".join(errors))
             
-            # Update pending order
+            # Refresh sale to get calculated totals
             sale.refresh_from_db()
+            
+            # ============================================
+            # ✅ STEP 3: GENERATE ETR NUMBER FROM SALE ID
+            # ============================================
+            from sales.views import generate_etr_from_sale_id
+            
+            etr_number = generate_etr_from_sale_id(sale.sale_id)
+            
+            sale.etr_receipt_number = etr_number
+            sale.etr_status = 'generated'
+            sale.etr_processed_at = timezone.now()
+            
+            if hasattr(sale, 'fiscal_receipt_number'):
+                sale.fiscal_receipt_number = etr_number
+            
+            sale.save(update_fields=[
+                'etr_receipt_number',
+                'fiscal_receipt_number',
+                'etr_status',
+                'etr_processed_at'
+            ])
+            
+            logger.info(
+                f"[ETR GENERATED] Sale: {sale.sale_id} | "
+                f"ETR: {etr_number} | "
+                f"From pending order: {order_id}"
+            )
+            
+            # ============================================
+            # STEP 4: UPDATE PENDING ORDER
+            # ============================================
             pending_order.status = 'completed'
             pending_order.sale_id = sale.sale_id
             pending_order.reviewed_by = request.user
@@ -1220,15 +1266,20 @@ def approve_order(request, order_id):
             logger.info(
                 f"[ORDER APPROVED] {pending_order.order_id} → Sale {sale.sale_id} | "
                 f"Staff: {request.user.username} | "
-                f"Items: {len(created_items)}/{len(cart_items)}"
+                f"Items: {len(created_items)}/{len(cart_items)} | "
+                f"ETR: {etr_number}"
             )
             
             return JsonResponse({
                 'success': True,
                 'message': f'Order approved! Sale {sale.sale_id} created with {len(created_items)} items.',
                 'sale_id': sale.sale_id,
+                'etr_receipt_number': etr_number,  # ✅ Include ETR in response
+                'fiscal_receipt_number': etr_number,
                 'items_processed': len(created_items),
                 'total_items': len(cart_items),
+                'total_amount': float(sale.total_amount),
+                'receipt_url': f'/sales/receipt/{sale.sale_id}/',  # ✅ Add receipt URL
                 'errors': errors if errors else None
             })
             
@@ -1243,6 +1294,53 @@ def approve_order(request, order_id):
             'success': False,
             'message': f'Failed to approve order: {str(e)}'
         }, status=500)
+
+
+# ============================================
+# ALTERNATIVE: If generate_etr_from_sale_id is not in sales.views
+# Add this helper function to website/views.py
+# ============================================
+
+def generate_etr_from_sale_id(sale_id):
+    """
+    ✅ Generate ETR number from Sale ID
+    Extracts numeric portion from sale_id (e.g., #SALE-0501 → 0501)
+    
+    Args:
+        sale_id: Sale ID string (e.g., "#SALE-0501")
+    
+    Returns:
+        String: Just the numeric portion (e.g., "0501")
+    """
+    try:
+        # Extract numeric portion after the last hyphen
+        # Handles formats: #SALE-0501, SALE-0501, 0501
+        if '-' in str(sale_id):
+            numeric_part = str(sale_id).split('-')[-1]
+        else:
+            # If no hyphen, use the whole thing
+            numeric_part = str(sale_id).replace('#', '').replace('SALE', '')
+        
+        # Clean and validate
+        numeric_part = numeric_part.strip()
+        
+        # Ensure it's numeric
+        if not numeric_part.isdigit():
+            logger.warning(f"[ETR WARNING] Non-numeric sale_id: {sale_id}, using fallback")
+            return "0000"
+        
+        logger.info(f"[ETR GENERATION] Sale ID: {sale_id} → ETR: {numeric_part}")
+        
+        return numeric_part
+    
+    except Exception as e:
+        logger.error(f"[ETR ERROR] Failed to extract from {sale_id}: {e}")
+        return "0000"
+
+
+
+
+
 
 # ============================================
 # 6. STAFF ACTION: REJECT ORDER

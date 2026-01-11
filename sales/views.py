@@ -31,7 +31,7 @@ from .models import Sale, SaleReversal, SaleItem
 from .forms import SaleForm
 from .serializers import SaleSerializer
 from inventory.models import Product, StockEntry
-
+import pytz
 try:
     import pdfkit
 except ImportError:
@@ -43,44 +43,68 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
-# ============================================
-# ETR HELPER FUNCTION - MUST BE AT THE TOP
-# ============================================
 
-def generate_next_etr_number():
+# ============================================
+# ETR HELPER FUNCTION - UPDATED TO USE SALE ID
+# ============================================
+def convert_to_local_time(utc_time):
+    """Helper function to convert UTC time to Nairobi time"""
+    if utc_time is None:
+        return timezone.now()
+    
+    local_tz = pytz.timezone('Africa/Nairobi')
+    
+    if timezone.is_aware(utc_time):
+        return utc_time.astimezone(local_tz)
+    
+    utc_tz = pytz.UTC
+    aware_time = utc_tz.localize(utc_time)
+    return aware_time.astimezone(local_tz)
+
+
+
+
+
+
+
+def generate_etr_from_sale_id(sale_id):
     """
-    ✅ CENTRALIZED ETR NUMBER GENERATION
-    Used by ALL sale creation endpoints
-    Returns: Sequential 4-digit string like "0001", "0002", etc.
+    ✅ UPDATED: Generate ETR number from Sale ID
+    Extracts numeric portion from sale_id (e.g., #SALE-0501 → 0501)
+    
+    Args:
+        sale_id: Sale ID string (e.g., "#SALE-0501")
+    
+    Returns:
+        String: Just the numeric portion (e.g., "0501")
     """
-    existing_receipts = Sale.objects.filter(
-        etr_receipt_number__isnull=False
-    ).exclude(
-        etr_receipt_number=''
-    ).values_list('etr_receipt_number', flat=True)
+    try:
+        # Extract numeric portion after the last hyphen
+        # Handles formats: #SALE-0501, SALE-0501, 0501
+        if '-' in str(sale_id):
+            numeric_part = str(sale_id).split('-')[-1]
+        else:
+            # If no hyphen, use the whole thing
+            numeric_part = str(sale_id).replace('#', '').replace('SALE', '')
+        
+        # Clean and validate
+        numeric_part = numeric_part.strip()
+        
+        # Ensure it's numeric
+        if not numeric_part.isdigit():
+            logger.warning(f"[ETR WARNING] Non-numeric sale_id: {sale_id}, using fallback")
+            return "0000"
+        
+        logger.info(f"[ETR GENERATION] Sale ID: {sale_id} → ETR: {numeric_part}")
+        
+        return numeric_part
     
-    numeric_receipts = []
-    for receipt in existing_receipts:
-        try:
-            clean_number = receipt.strip()
-            if clean_number.isdigit():
-                numeric_receipts.append(int(clean_number))
-        except (ValueError, AttributeError):
-            continue
-    
-    if numeric_receipts:
-        next_number = max(numeric_receipts) + 1
-    else:
-        next_number = 1
-    
-    formatted_number = f"{next_number:04d}"
-    
-    logger.info(
-        f"[ETR GENERATION] Previous highest: {max(numeric_receipts) if numeric_receipts else 0} | "
-        f"New number: {formatted_number}"
-    )
-    
-    return formatted_number
+    except Exception as e:
+        logger.error(f"[ETR ERROR] Failed to extract from {sale_id}: {e}")
+        return "0000"
+
+
+
 
 
 # =========================================
@@ -98,6 +122,13 @@ def get_sellers(request):
     })
 
 
+
+
+
+
+
+
+
 # =========================================
 # SALE CREATION VIEW WITH FIFO LOGIC
 # =========================================
@@ -105,48 +136,41 @@ def get_sellers(request):
 @method_decorator(login_required, name='dispatch')
 class SaleCreateView(View):
     """
-    ✅ UPDATED FOR NEW MODEL: Create sale with Sale/SaleItem structure
-    - STRICT FIFO logic for single items
-    - Agent restrictions (can only sell their own products)
-    - Compatible with NEW Sale/SaleItem model structure
-    - UNIFIED ETR generation (same as BatchSaleCreateView)
+    ✅ UPDATED: ETR number now uses Sale ID
     """
     
     @transaction.atomic
     def post(self, request):
         try:
-            # ✅ AGENT RESTRICTION CHECK
-            user_is_agent = hasattr(request.user, 'profile') and request.user.profile.role == 'agent'
+            # ... [Keep all existing code until STEP 4: GENERATE ETR] ...
             
-            # Parse request data
+            # ============================================
+            # EXISTING CODE FOR SALE CREATION
+            # ============================================
+            user_is_agent = hasattr(request.user, 'profile') and request.user.profile.role == 'agent'
             data = json.loads(request.body) if request.content_type == "application/json" else request.POST
             
             product_code = data.get("product_code", "").strip()
             quantity = int(data.get("quantity", 1) or 1)
             unit_price_input = data.get("unit_price", "")
             
-            # Client details
             buyer_name = data.get("buyer_name", "").strip()
             buyer_phone = data.get("buyer_phone", "").strip()
             buyer_id_number = data.get("buyer_id_number", "").strip()
             nok_name = data.get("nok_name", "").strip()
             nok_phone = data.get("nok_phone", "").strip()
 
-            # Validations
             if not product_code:
                 return JsonResponse({"status": "error", "message": "Product code/SKU is required"}, status=400)
             if quantity <= 0:
                 return JsonResponse({"status": "error", "message": "Quantity must be greater than 0"}, status=400)
 
-            # Parse price
             try:
                 unit_price = Decimal(str(unit_price_input)) if unit_price_input else Decimal('0')
             except (ValueError, TypeError):
                 unit_price = Decimal('0')
 
-            # ============================================
-            # FIFO PRODUCT LOOKUP (WITH AGENT FILTER)
-            # ============================================
+            # FIFO product lookup
             products = Product.objects.filter(
                 Q(product_code__iexact=product_code) | Q(sku_value__iexact=product_code),
                 is_active=True
@@ -154,20 +178,16 @@ class SaleCreateView(View):
                 status='sold'
             ).select_related('category').select_for_update().order_by('created_at')
             
-            # ✅ AGENT RESTRICTION: Filter to only their products
             if user_is_agent:
                 products = products.filter(owner=request.user)
 
             if not products.exists():
-                # Check if product exists but is sold
                 sold_check = Product.objects.filter(
                     Q(product_code__iexact=product_code) | Q(sku_value__iexact=product_code),
                     status='sold'
                 )
-                
                 if user_is_agent:
                     sold_check = sold_check.filter(owner=request.user)
-                
                 sold_check = sold_check.first()
                 
                 if sold_check:
@@ -183,111 +203,48 @@ class SaleCreateView(View):
 
             first_product = products.first()
             
-            # ============================================
-            # SINGLE ITEMS: STRICT FIFO SELECTION
-            # ============================================
+            # Single item FIFO selection
             if first_product.category.is_single_item:
-                logger.info(f"[FIFO SINGLE ITEM] Searching for oldest available unit...")
-                
-                available_product = products.filter(
-                    status='available',
-                    quantity=1
-                ).first()
-                
+                available_product = products.filter(status='available', quantity=1).first()
                 if not available_product:
-                    total_units = Product.objects.filter(
-                        Q(product_code__iexact=product_code) | Q(sku_value__iexact=product_code)
-                    )
-                    
-                    if user_is_agent:
-                        total_units = total_units.filter(owner=request.user)
-                    
-                    total_units = total_units.count()
-                    
-                    sold_units = Product.objects.filter(
-                        Q(product_code__iexact=product_code) | Q(sku_value__iexact=product_code),
-                        status='sold'
-                    )
-                    
-                    if user_is_agent:
-                        sold_units = sold_units.filter(owner=request.user)
-                    
-                    sold_units = sold_units.count()
-                    
                     return JsonResponse({
                         "status": "error",
-                        "message": (
-                            f"❌ No available units of {first_product.name}. "
-                            f"Total units: {total_units}, Sold: {sold_units}. "
-                            f"Reverse a sale to make units available."
-                        )
+                        "message": f"❌ No available units of {first_product.name}."
                     }, status=400)
-                
                 if quantity != 1:
                     return JsonResponse({
                         "status": "error",
                         "message": "❌ Can only sell 1 single item at a time"
                     }, status=400)
-                
                 product_to_sell = available_product
-                
-                logger.info(
-                    f"[FIFO SELECTED] Product: {product_to_sell.product_code} | "
-                    f"SKU: {product_to_sell.sku_value} | "
-                    f"Status: {product_to_sell.status} | "
-                    f"Created: {product_to_sell.created_at} | "
-                    f"Age: {(timezone.now() - product_to_sell.created_at).days} days"
-                )
-
-            # ============================================
-            # BULK ITEMS: QUANTITY DEDUCTION
-            # ============================================
             else:
-                logger.info(f"[BULK ITEM] Processing sale...")
                 product_to_sell = first_product
-                
                 if product_to_sell.status == 'outofstock':
                     return JsonResponse({
                         "status": "error",
                         "message": f"❌ {product_to_sell.name} is OUT OF STOCK"
                     }, status=400)
-                
                 if product_to_sell.quantity < quantity:
                     return JsonResponse({
                         "status": "error",
                         "message": f"❌ Insufficient stock! Only {product_to_sell.quantity} available."
                     }, status=400)
 
-            # ============================================
-            # DOUBLE-CHECK: Validate Product Status
-            # ============================================
-            if product_to_sell.status == 'sold':
+            if product_to_sell.status in ['sold', 'outofstock']:
                 return JsonResponse({
                     "status": "error",
-                    "message": "❌ This product has already been SOLD."
-                }, status=400)
-            
-            if product_to_sell.status == 'outofstock':
-                return JsonResponse({
-                    "status": "error",
-                    "message": f"❌ {product_to_sell.name} is OUT OF STOCK"
+                    "message": f"❌ This product is {product_to_sell.status}"
                 }, status=400)
 
-            # ============================================
-            # PRICE VALIDATION
-            # ============================================
             if unit_price <= 0:
                 unit_price = product_to_sell.selling_price or Decimal('0')
-            
             if unit_price <= 0:
                 return JsonResponse({
                     "status": "error",
                     "message": "Invalid selling price"
                 }, status=400)
 
-            # ============================================
-            # ✅ STEP 1: CREATE SALE
-            # ============================================
+            # CREATE SALE
             sale = Sale.objects.create(
                 seller=request.user,
                 buyer_name=buyer_name,
@@ -298,11 +255,7 @@ class SaleCreateView(View):
                 etr_status='pending'
             )
             
-            logger.info(f"[SALE CREATED] Sale #{sale.sale_id} for {buyer_name or 'Walk-in'}")
-
-            # ============================================
-            # ✅ STEP 2: CREATE SALE ITEM
-            # ============================================
+            # CREATE SALE ITEM
             sale_item = SaleItem.objects.create(
                 sale=sale,
                 product=product_to_sell,
@@ -313,39 +266,21 @@ class SaleCreateView(View):
                 unit_price=unit_price,
             )
             
-            logger.info(f"[SALE ITEM CREATED] {product_to_sell.product_code} x{quantity}")
-
-            # ============================================
-            # ✅ STEP 3: PROCESS SALE
-            # ============================================
-            logger.info(
-                f"[PRE-SALE] Product: {product_to_sell.product_code} | "
-                f"Qty: {product_to_sell.quantity} | Status: {product_to_sell.status}"
-            )
-            
+            # PROCESS SALE
             sale_item.process_sale()
             product_to_sell.refresh_from_db()
             sale.refresh_from_db()
-            
-            logger.info(
-                f"[POST-SALE] Product: {product_to_sell.product_code} | "
-                f"Qty: {product_to_sell.quantity} | Status: {product_to_sell.status}"
-            )
 
-            # ============================================
-            # VERIFY: Single items marked as sold
-            # ============================================
+            # Verify single items marked as sold
             if first_product.category.is_single_item and product_to_sell.status != 'sold':
-                logger.error(f"[STATUS ERROR] {product_to_sell.product_code} not marked sold!")
                 product_to_sell.status = 'sold'
                 product_to_sell.quantity = 0
                 product_to_sell.save(update_fields=['status', 'quantity'])
-                logger.warning(f"[FORCED UPDATE] Manually set to SOLD")
 
             # ============================================
-            # ✅ STEP 4: GENERATE ETR (UNIFIED)
+            # ✅ UPDATED: GENERATE ETR FROM SALE ID
             # ============================================
-            etr_number = generate_next_etr_number()
+            etr_number = generate_etr_from_sale_id(sale.sale_id)
             
             sale.etr_receipt_number = etr_number
             sale.etr_status = 'generated'
@@ -363,14 +298,10 @@ class SaleCreateView(View):
             
             logger.info(
                 f"[SALE COMPLETE] Sale: {sale.sale_id} | "
-                f"User: {request.user.username} | "
                 f"ETR: {etr_number} | "
                 f"Total: KSh {sale.total_amount}"
             )
 
-            # ============================================
-            # RESPONSE
-            # ============================================
             return JsonResponse({
                 "status": "success",
                 "message": f"✅ Sale recorded! {product_to_sell.name} sold for KSH {float(sale.total_amount):,.2f}",
@@ -398,10 +329,6 @@ class SaleCreateView(View):
                 "stock_alert": self._get_stock_alert(product_to_sell),
             }, status=200)
 
-        except ValidationError as ve:
-            logger.error(f"ValidationError: {ve}")
-            return JsonResponse({"status": "error", "message": str(ve)}, status=400)
-        
         except Exception as e:
             logger.exception(f"SaleCreateView error: {e}")
             return JsonResponse({"status": "error", "message": f"Server error: {str(e)}"}, status=500)
@@ -418,6 +345,213 @@ class SaleCreateView(View):
             return f"✓ {product.quantity} units remaining"
 
 
+
+
+
+
+# ============================================
+# UPDATED: BATCH SALE CREATE VIEW
+# ============================================
+
+@method_decorator(login_required, name='dispatch')
+class BatchSaleCreateView(View):
+    """
+    ✅ UPDATED: ETR number now uses Sale ID
+    """
+    
+    @transaction.atomic
+    def post(self, request):
+        try:
+            user_is_agent = hasattr(request.user, 'profile') and request.user.profile.role == 'agent'
+            
+            data = json.loads(request.body)
+            sales_cart = data.get("sales_cart", [])
+            
+            if not sales_cart:
+                return JsonResponse({
+                    "status": "error",
+                    "message": "❌ Cart is empty. Please add items to proceed."
+                }, status=400)
+            
+            first_item = sales_cart[0]
+            buyer_name = first_item.get("buyer_name", "").strip() or "Walk-in Customer"
+            buyer_phone = first_item.get("buyer_phone", "").strip()
+            buyer_id_number = first_item.get("buyer_id_number", "").strip()
+            nok_name = first_item.get("nok_name", "").strip()
+            nok_phone = first_item.get("nok_phone", "").strip()
+            
+            # CREATE THE SALE
+            sale = Sale.objects.create(
+                seller=request.user,
+                buyer_name=buyer_name,
+                buyer_phone=buyer_phone,
+                buyer_id_number=buyer_id_number,
+                nok_name=nok_name,
+                nok_phone=nok_phone,
+                etr_status="pending"
+            )
+            
+            logger.info(f"[SALE CREATED] Sale ID: {sale.sale_id} | Buyer: {buyer_name}")
+            
+            # PROCESS EACH ITEM
+            created_items = []
+            errors = []
+            
+            for idx, item_data in enumerate(sales_cart, 1):
+                try:
+                    product_code = item_data.get("product_code", "").strip()
+                    quantity = int(item_data.get("quantity", 1))
+                    unit_price_input = item_data.get("unit_price", "")
+                    
+                    if not product_code:
+                        errors.append(f"Item {idx}: Product code is required")
+                        continue
+                    if quantity <= 0:
+                        errors.append(f"Item {idx}: Quantity must be greater than 0")
+                        continue
+                    
+                    try:
+                        unit_price = Decimal(str(unit_price_input)) if unit_price_input else Decimal('0')
+                    except (ValueError, TypeError):
+                        unit_price = Decimal('0')
+                    
+                    # FIFO product lookup
+                    products = Product.objects.filter(
+                        Q(product_code__iexact=product_code) | Q(sku_value__iexact=product_code),
+                        is_active=True
+                    ).exclude(
+                        status='sold'
+                    ).select_related('category').select_for_update().order_by('created_at')
+                    
+                    if user_is_agent:
+                        products = products.filter(owner=request.user)
+                    
+                    if not products.exists():
+                        errors.append(f"Item {idx}: Product not found")
+                        continue
+                    
+                    first_product = products.first()
+                    
+                    # Single item FIFO
+                    if first_product.category.is_single_item:
+                        available_product = products.filter(status='available', quantity=1).first()
+                        if not available_product:
+                            errors.append(f"Item {idx}: No available units")
+                            continue
+                        if quantity != 1:
+                            errors.append(f"Item {idx}: Single items can only be sold one at a time")
+                            continue
+                        product_to_sell = available_product
+                    else:
+                        product_to_sell = first_product
+                        if product_to_sell.status == 'outofstock':
+                            errors.append(f"Item {idx}: OUT OF STOCK")
+                            continue
+                        if product_to_sell.quantity < quantity:
+                            errors.append(f"Item {idx}: Insufficient stock")
+                            continue
+                    
+                    if product_to_sell.status in ['sold', 'outofstock']:
+                        errors.append(f"Item {idx}: Product unavailable")
+                        continue
+                    
+                    if unit_price <= 0:
+                        unit_price = product_to_sell.selling_price or Decimal('0')
+                    if unit_price <= 0:
+                        errors.append(f"Item {idx}: Invalid price")
+                        continue
+                    
+                    # CREATE SALE ITEM
+                    sale_item = SaleItem.objects.create(
+                        sale=sale,
+                        product=product_to_sell,
+                        product_code=product_to_sell.product_code,
+                        product_name=product_to_sell.name,
+                        sku_value=product_to_sell.sku_value,
+                        quantity=quantity,
+                        unit_price=unit_price
+                    )
+                    
+                    # PROCESS SALE
+                    sale_item.process_sale()
+                    product_to_sell.refresh_from_db()
+                    
+                    # Verify single items
+                    if first_product.category.is_single_item and product_to_sell.status != 'sold':
+                        product_to_sell.status = 'sold'
+                        product_to_sell.quantity = 0
+                        product_to_sell.save(update_fields=['status', 'quantity'])
+                    
+                    created_items.append({
+                        "product_name": product_to_sell.name,
+                        "product_code": product_to_sell.product_code,
+                        "sku": product_to_sell.sku_value or product_to_sell.product_code,
+                        "quantity": quantity,
+                        "unit_price": float(unit_price),
+                        "total_price": float(sale_item.total_price),
+                    })
+                    
+                except Exception as item_error:
+                    logger.error(f"[ITEM {idx} ERROR] {str(item_error)}", exc_info=True)
+                    errors.append(f"Item {idx}: {str(item_error)}")
+                    continue
+            
+            if not created_items:
+                raise Exception("No items could be processed. " + "; ".join(errors[:3]))
+            
+            sale.refresh_from_db()
+            
+            # ============================================
+            # ✅ UPDATED: GENERATE ETR FROM SALE ID
+            # ============================================
+            etr_number = generate_etr_from_sale_id(sale.sale_id)
+            
+            sale.etr_receipt_number = etr_number
+            if hasattr(sale, 'fiscal_receipt_number'):
+                sale.fiscal_receipt_number = etr_number
+            
+            sale.etr_status = "generated"
+            sale.etr_processed_at = timezone.now()
+            sale.save(update_fields=[
+                'etr_receipt_number', 
+                'fiscal_receipt_number', 
+                'etr_status',
+                'etr_processed_at'
+            ])
+            
+            logger.info(
+                f"[SALE COMPLETE] Sale: {sale.sale_id} | "
+                f"ETR: {etr_number} | "
+                f"Items: {len(created_items)} | "
+                f"Total: KSh {sale.total_amount}"
+            )
+            
+            success_count = len(created_items)
+            response_message = f"✅ Sale recorded! {success_count} items with receipt #{etr_number}"
+            if errors:
+                response_message += f" ({len(errors)} items skipped)"
+            
+            return JsonResponse({
+                "status": "success",
+                "message": response_message,
+                "sale_id": sale.sale_id,
+                "total_items": success_count,
+                "skipped_items": len(errors),
+                "total_amount": float(sale.total_amount),
+                "etr_receipt_number": etr_number,
+                "fiscal_receipt_number": etr_number,
+                "receipt_number": etr_number,
+                "items": created_items,
+                "errors": errors if errors else None,
+                "receipt_url": f"/sales/receipt/{sale.sale_id}/",
+            }, status=200)
+            
+        except Exception as e:
+            logger.exception(f"Batch sale error: {e}")
+            return JsonResponse({
+                "status": "error",
+                "message": f"Server error: {str(e)}"
+            }, status=500)
 
 
 
@@ -787,6 +921,9 @@ def sale_etr_view(request, sale_id):
     sale = get_object_or_404(Sale, sale_id=sale_id)
     sale_items = sale.items.select_related('product', 'product__category').all()
 
+    # ✅ Convert to local timezone
+    local_time = convert_to_local_time(sale.sale_date)
+
     items_data = []
     gross_total = 0
 
@@ -811,8 +948,11 @@ def sale_etr_view(request, sale_id):
         "address": "NAIROBI, KENYA",
         "tel": "254 722 558 544",
         "pin": "--------",
-        "date": sale.sale_date.strftime("%Y-%m-%d"),
-        "time": sale.sale_date.strftime("%H:%M:%S"),
+
+        # ✅ Use local_time
+        "date": local_time.strftime("%Y-%m-%d"),
+        "time": local_time.strftime("%H:%M:%S"),
+
         "user": sale.seller.username if sale.seller else "N/A",
         "client_name": sale.buyer_name or "",
         "client_phone": sale.buyer_phone or "",
@@ -927,6 +1067,9 @@ def batch_receipt_view(request, batch_id):
         }, status=404)
     
     first_sale = sales.first()
+       
+     # ✅ Convert to local timezone
+    local_time = convert_to_local_time(first_sale.sale_date)
     
     # ============================================
     # BUILD SINGLE RECEIPT WITH MULTIPLE ROWS
@@ -939,8 +1082,11 @@ def batch_receipt_view(request, batch_id):
         "address": "NAIROBI, KENYA",
         "tel": "254 722 558 544",
         "pin": "--------",
-        "date": first_sale.sale_date.strftime("%Y-%m-%d"),
-        "time": first_sale.sale_date.strftime("%H:%M:%S"),
+
+        # ✅ Use local_time
+        "date": local_time.strftime("%Y-%m-%d"),
+        "time": local_time.strftime("%H:%M:%S"),
+
         "user": first_sale.seller.username if first_sale.seller else "N/A",
         "client_name": first_sale.buyer_name or "Walk-in Customer",
         "client_phone": first_sale.buyer_phone or "",
@@ -1359,161 +1505,6 @@ def product_lookup(request):
 
 
 
-
-
-# ============================================
-# BATCH CREATE SALE
-# ============================================
-
-@login_required
-@require_http_methods(["POST"])
-def batch_create_sale(request):
-    """
-    API endpoint for creating batch sales (cart checkout)
-    Handles multiple items in a single transaction
-    
-    POST /sales/batch-create/
-    Body: {
-        "sales_cart": [
-            {"product_code": "ABC", "quantity": 2, "unit_price": 100.00},
-            {"product_code": "XYZ", "quantity": 1, "unit_price": 50.00}
-        ],
-        "payment_method": "Cash",
-        "amount_paid": 250.00
-    }
-    """
-    try:
-        data = json.loads(request.body)
-        sales_cart = data.get('sales_cart', [])
-        payment_method = data.get('payment_method', 'Cash')
-        amount_paid = Decimal(str(data.get('amount_paid', 0)))
-        
-        if not sales_cart:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Cart is empty'
-            })
-        
-        # Calculate total
-        total_amount = sum(
-            Decimal(str(item['quantity'])) * Decimal(str(item['unit_price'])) 
-            for item in sales_cart
-        )
-        
-        if amount_paid < total_amount:
-            return JsonResponse({
-                'status': 'error',
-                'message': f'Insufficient payment. Total: {total_amount}, Paid: {amount_paid}'
-            })
-        
-        # Create sales in a transaction
-        with transaction.atomic():
-            sale_items_created = []
-            batch_id = timezone.now().strftime('%Y%m%d%H%M%S')
-            
-            for item in sales_cart:
-                product_code = item['product_code'].upper()
-                quantity = int(item['quantity'])
-                unit_price = Decimal(str(item['unit_price']))
-                
-                # Get product
-                try:
-                    product = Product.objects.select_for_update().get(
-                        product_code=product_code,
-                        is_active=True
-                    )
-                except Product.DoesNotExist:
-                    return JsonResponse({
-                        'status': 'error',
-                        'message': f'Product {product_code} not found'
-                    })
-                
-                # Check stock
-                if product.category.is_single_item:
-                    if product.status != 'available':
-                        return JsonResponse({
-                            'status': 'error',
-                            'message': f'Product {product_code} is not available'
-                        })
-                else:
-                    if product.quantity < quantity:
-                        return JsonResponse({
-                            'status': 'error',
-                            'message': f'Insufficient stock for {product_code}. Available: {product.quantity}'
-                        })
-                
-                # Create sale
-                sale = Sale.objects.create(
-                    seller=request.user,
-                    total_amount=unit_price * quantity,
-                    payment_method=payment_method,
-                    amount_paid=amount_paid if len(sales_cart) == 1 else unit_price * quantity,
-                    sale_date=timezone.now(),
-                    batch_id=batch_id
-                )
-                
-                # Create sale item
-                sale_item = SaleItem.objects.create(
-                    sale=sale,
-                    product=product,
-                    quantity=quantity,
-                    unit_price=unit_price
-                )
-                
-                # Update product stock
-                if product.category.is_single_item:
-                    product.status = 'sold'
-                    product.quantity = 0
-                else:
-                    product.quantity -= quantity
-                    if product.quantity == 0:
-                        product.status = 'outofstock'
-                    elif product.quantity <= 5:
-                        product.status = 'lowstock'
-                
-                product.save(update_fields=['status', 'quantity'])
-                
-                sale_items_created.append({
-                    'sale_id': sale.id,
-                    'product': product_code,
-                    'quantity': quantity
-                })
-            
-            logger.info(f"Batch sale completed: {len(sale_items_created)} items, Batch ID: {batch_id}")
-            
-            return JsonResponse({
-                'status': 'success',
-                'message': 'Sale completed successfully',
-                'batch_id': batch_id,
-                'items_sold': len(sale_items_created),
-                'total_amount': float(total_amount),
-                'amount_paid': float(amount_paid),
-                'change': float(amount_paid - total_amount),
-                'receipt_url': f'/sales/batch-receipt/{batch_id}/'
-            })
-            
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'status': 'error',
-            'message': 'Invalid JSON data'
-        })
-    except Exception as e:
-        logger.error(f"Error in batch sale creation: {str(e)}")
-        return JsonResponse({
-            'status': 'error',
-            'message': f'Error processing sale: {str(e)}'
-        })
-
-
-
-
-
-
-
-
-
-
-
 # ============================================
 # BATCH RECEIPT
 # ============================================
@@ -1553,396 +1544,6 @@ def batch_receipt(request, batch_id):
 
 
 
-
-
-
-# ============================================
-# BATCH SALE CREATE VIEW
-# ============================================
-
-@method_decorator(login_required, name='dispatch')
-class BatchSaleCreateView(View):
-    """
-    ✅ COMPLETE & FIXED: Creates ONE Sale record for entire transaction
-    - Supports multiple items in one transaction
-    - STRICT FIFO for single items
-    - Agent ownership restrictions
-    - Automatic ETR receipt generation for ALL users
-    - Proper error handling and validation
-    """
-    
-    @transaction.atomic
-    def post(self, request):
-        try:
-            # ============================================
-            # STEP 0: USER ROLE CHECK
-            # ============================================
-            user_is_agent = hasattr(request.user, 'profile') and request.user.profile.role == 'agent'
-            
-            logger.info(
-                f"[BATCH SALE START] User: {request.user.username} | "
-                f"Role: {'agent' if user_is_agent else 'staff'}"
-            )
-            
-            # ============================================
-            # STEP 1: PARSE REQUEST DATA
-            # ============================================
-            data = json.loads(request.body)
-            sales_cart = data.get("sales_cart", [])
-            
-            # Validate cart not empty
-            if not sales_cart:
-                return JsonResponse({
-                    "status": "error",
-                    "message": "❌ Cart is empty. Please add items to proceed."
-                }, status=400)
-            
-            # Get client details from first item (applies to entire sale)
-            first_item = sales_cart[0]
-            buyer_name = first_item.get("buyer_name", "").strip() or "Walk-in Customer"
-            buyer_phone = first_item.get("buyer_phone", "").strip()
-            buyer_id_number = first_item.get("buyer_id_number", "").strip()
-            nok_name = first_item.get("nok_name", "").strip()
-            nok_phone = first_item.get("nok_phone", "").strip()
-            
-            logger.info(
-                f"[CART INFO] Items: {len(sales_cart)} | Buyer: {buyer_name}"
-            )
-            
-            # ============================================
-            # STEP 2: CREATE THE SALE (ONE RECORD)
-            # ============================================
-            sale = Sale.objects.create(
-                seller=request.user,
-                buyer_name=buyer_name,
-                buyer_phone=buyer_phone,
-                buyer_id_number=buyer_id_number,
-                nok_name=nok_name,
-                nok_phone=nok_phone,
-                etr_status="pending"
-            )
-            
-            logger.info(f"[SALE CREATED] Sale ID: {sale.sale_id} | Buyer: {buyer_name}")
-            
-            # ============================================
-            # STEP 3: PROCESS EACH ITEM IN CART
-            # ============================================
-            created_items = []
-            errors = []
-            
-            for idx, item_data in enumerate(sales_cart, 1):
-                try:
-                    product_code = item_data.get("product_code", "").strip()
-                    quantity = int(item_data.get("quantity", 1))
-                    unit_price_input = item_data.get("unit_price", "")
-                    
-                    # Validate basic fields
-                    if not product_code:
-                        errors.append(f"Item {idx}: Product code is required")
-                        continue
-                    
-                    if quantity <= 0:
-                        errors.append(f"Item {idx}: Quantity must be greater than 0")
-                        continue
-                    
-                    # Parse price
-                    try:
-                        unit_price = Decimal(str(unit_price_input)) if unit_price_input else Decimal('0')
-                    except (ValueError, TypeError):
-                        unit_price = Decimal('0')
-                    
-                    # ============================================
-                    # FIFO PRODUCT LOOKUP (WITH AGENT FILTER)
-                    # ============================================
-                    products = Product.objects.filter(
-                        Q(product_code__iexact=product_code) | Q(sku_value__iexact=product_code),
-                        is_active=True
-                    ).exclude(
-                        status='sold'
-                    ).select_related('category').select_for_update().order_by('created_at')
-                    
-                    # ✅ AGENT RESTRICTION: Filter to only their products
-                    if user_is_agent:
-                        products = products.filter(owner=request.user)
-                    
-                    if not products.exists():
-                        error_msg = (
-                            f"Product '{product_code}' not found in your inventory" 
-                            if user_is_agent 
-                            else f"Product '{product_code}' not found or already sold"
-                        )
-                        errors.append(f"Item {idx}: {error_msg}")
-                        continue
-                    
-                    first_product = products.first()
-                    
-                    # ============================================
-                    # SINGLE ITEM: STRICT FIFO SELECTION
-                    # ============================================
-                    if first_product.category.is_single_item:
-                        logger.info(f"[ITEM {idx}] SINGLE ITEM - FIFO mode")
-                        
-                        # Find oldest available unit
-                        available_product = products.filter(
-                            status='available',
-                            quantity=1
-                        ).first()
-                        
-                        if not available_product:
-                            errors.append(
-                                f"Item {idx}: No available units of {first_product.name}"
-                            )
-                            continue
-                        
-                        if quantity != 1:
-                            errors.append(
-                                f"Item {idx}: Single items can only be sold one at a time"
-                            )
-                            continue
-                        
-                        product_to_sell = available_product
-                        
-                        logger.info(
-                            f"[FIFO SELECTED] Product: {product_to_sell.product_code} | "
-                            f"SKU: {product_to_sell.sku_value} | "
-                            f"Age: {(timezone.now() - product_to_sell.created_at).days} days"
-                        )
-                    
-                    # ============================================
-                    # BULK ITEM: QUANTITY VALIDATION
-                    # ============================================
-                    else:
-                        logger.info(f"[ITEM {idx}] BULK ITEM - Quantity mode")
-                        product_to_sell = first_product
-                        
-                        # Validate stock status
-                        if product_to_sell.status == 'outofstock':
-                            errors.append(
-                                f"Item {idx}: {product_to_sell.name} is OUT OF STOCK"
-                            )
-                            continue
-                        
-                        # Validate sufficient quantity
-                        if product_to_sell.quantity < quantity:
-                            errors.append(
-                                f"Item {idx}: Insufficient stock for {product_to_sell.name}. "
-                                f"Only {product_to_sell.quantity} available."
-                            )
-                            continue
-                    
-                    # ============================================
-                    # VALIDATE PRODUCT STATUS
-                    # ============================================
-                    if product_to_sell.status == 'sold':
-                        errors.append(
-                            f"Item {idx}: Product has already been SOLD"
-                        )
-                        continue
-                    
-                    # ============================================
-                    # PRICE VALIDATION
-                    # ============================================
-                    if unit_price <= 0:
-                        unit_price = product_to_sell.selling_price or Decimal('0')
-                    
-                    if unit_price <= 0:
-                        errors.append(f"Item {idx}: Invalid selling price")
-                        continue
-                    
-                    # ============================================
-                    # CREATE SALE ITEM
-                    # ============================================
-                    sale_item = SaleItem.objects.create(
-                        sale=sale,
-                        product=product_to_sell,
-                        product_code=product_to_sell.product_code,
-                        product_name=product_to_sell.name,
-                        sku_value=product_to_sell.sku_value,
-                        quantity=quantity,
-                        unit_price=unit_price
-                    )
-                    
-                    logger.info(
-                        f"[SALE ITEM CREATED] Item {idx}/{len(sales_cart)} | "
-                        f"Product: {product_to_sell.product_code} | "
-                        f"Qty: {quantity}"
-                    )
-                    
-                    # ============================================
-                    # PROCESS THE SALE (DEDUCT STOCK)
-                    # ============================================
-                    logger.info(
-                        f"[PRE-SALE] Product: {product_to_sell.product_code} | "
-                        f"Qty: {product_to_sell.quantity} | Status: {product_to_sell.status}"
-                    )
-                    
-                    sale_item.process_sale()
-                    
-                    # Refresh to see updated values
-                    product_to_sell.refresh_from_db()
-                    
-                    logger.info(
-                        f"[POST-SALE] Product: {product_to_sell.product_code} | "
-                        f"Qty: {product_to_sell.quantity} | Status: {product_to_sell.status}"
-                    )
-                    
-                    # ============================================
-                    # VERIFY SINGLE ITEMS MARKED AS SOLD
-                    # ============================================
-                    if first_product.category.is_single_item and product_to_sell.status != 'sold':
-                        logger.error(
-                            f"[STATUS ERROR] {product_to_sell.product_code} not marked sold!"
-                        )
-                        product_to_sell.status = 'sold'
-                        product_to_sell.quantity = 0
-                        product_to_sell.save(update_fields=['status', 'quantity'])
-                        logger.warning(f"[FORCED UPDATE] Manually set to SOLD")
-                    
-                    # Add to successful items
-                    created_items.append({
-                        "product_name": product_to_sell.name,
-                        "product_code": product_to_sell.product_code,
-                        "sku": product_to_sell.sku_value or product_to_sell.product_code,
-                        "quantity": quantity,
-                        "unit_price": float(unit_price),
-                        "total_price": float(sale_item.total_price),
-                    })
-                    
-                    logger.info(
-                        f"[ITEM {idx} COMPLETE] Total: KSh {sale_item.total_price}"
-                    )
-                    
-                except Exception as item_error:
-                    logger.error(
-                        f"[ITEM {idx} ERROR] {str(item_error)}", 
-                        exc_info=True
-                    )
-                    errors.append(f"Item {idx}: {str(item_error)}")
-                    continue
-            
-            # ============================================
-            # STEP 4: VALIDATE RESULTS
-            # ============================================
-            if not created_items:
-                # No items processed successfully - rollback
-                raise Exception(
-                    "No items could be processed. " + 
-                    "; ".join(errors[:3])  # Show first 3 errors
-                )
-            
-            # Refresh sale to get calculated totals
-            sale.refresh_from_db()
-            
-            # ============================================
-            # STEP 5: GENERATE ETR RECEIPT NUMBER
-            # ============================================
-            fiscal_receipt_number = self._generate_etr_number()
-            
-            # Assign to sale
-            sale.etr_receipt_number = fiscal_receipt_number
-            
-            # Optional: Also set fiscal_receipt_number if field exists
-            if hasattr(sale, 'fiscal_receipt_number'):
-                sale.fiscal_receipt_number = fiscal_receipt_number
-            
-            # Update ETR status
-            sale.etr_status = "generated"
-            sale.etr_processed_at = timezone.now()
-            sale.save(update_fields=[
-                'etr_receipt_number', 
-                'fiscal_receipt_number', 
-                'etr_status',
-                'etr_processed_at'
-            ])
-            
-            logger.info(
-                f"[SALE COMPLETE] Sale: {sale.sale_id} | "
-                f"User: {request.user.username} | "
-                f"Role: {'agent' if user_is_agent else 'staff'} | "
-                f"ETR Receipt: {sale.etr_receipt_number} | "
-                f"Items: {len(created_items)} | "
-                f"Total: KSh {sale.total_amount}"
-            )
-            
-            # ============================================
-            # STEP 6: PREPARE SUCCESS RESPONSE
-            # ============================================
-            success_count = len(created_items)
-            total_count = len(sales_cart)
-            
-            response_message = f"✅ Sale recorded! {success_count} items with receipt #{sale.etr_receipt_number}"
-            if errors:
-                response_message += f" ({len(errors)} items skipped)"
-            
-            return JsonResponse({
-                "status": "success",
-                "message": response_message,
-                "sale_id": sale.sale_id,
-                "total_items": success_count,
-                "skipped_items": len(errors),
-                "total_amount": float(sale.total_amount),
-                "etr_receipt_number": sale.etr_receipt_number,
-                "fiscal_receipt_number": sale.etr_receipt_number,
-                "receipt_number": fiscal_receipt_number,
-                "items": created_items,
-                "errors": errors if errors else None,
-                "receipt_url": f"/sales/receipt/{sale.sale_id}/",
-            }, status=200)
-            
-        except ValueError as ve:
-            logger.error(f"Validation error: {ve}")
-            return JsonResponse({
-                "status": "error",
-                "message": str(ve)
-            }, status=400)
-        
-        except Exception as e:
-            logger.exception(f"Batch sale error: {e}")
-            return JsonResponse({
-                "status": "error",
-                "message": f"Server error: {str(e)}"
-            }, status=500)
-    
-    def _generate_etr_number(self):
-        """
-        ✅ FIXED: Generate next sequential ETR receipt number
-        Works for ALL users (admin, manager, agent, cashier)
-        Returns: String like "0001", "0002", etc.
-        """
-        # Get all existing ETR numbers that are purely numeric
-        existing_receipts = Sale.objects.filter(
-            etr_receipt_number__isnull=False
-        ).exclude(
-            etr_receipt_number=''
-        ).values_list('etr_receipt_number', flat=True)
-        
-        # Extract numeric values
-        numeric_receipts = []
-        for receipt in existing_receipts:
-            try:
-                # Remove any whitespace
-                clean_number = receipt.strip()
-                # Check if it's a valid number
-                if clean_number.isdigit():
-                    numeric_receipts.append(int(clean_number))
-            except (ValueError, AttributeError):
-                continue
-        
-        # Determine next number
-        if numeric_receipts:
-            next_number = max(numeric_receipts) + 1
-        else:
-            next_number = 1  # Start from 0001
-        
-        # Format as 4-digit string
-        formatted_number = f"{next_number:04d}"
-        
-        logger.info(
-            f"[ETR GENERATION] Previous highest: {max(numeric_receipts) if numeric_receipts else 0} | "
-            f"New number: {formatted_number}"
-        )
-        
-        return formatted_number
 
 
 # ============================================
@@ -2033,6 +1634,9 @@ def sale_receipt_view(request, sale_id):
         sale_id=sale_id
     )
     
+     # ✅ CRITICAL: Convert to local time BEFORE formatting
+    local_time = convert_to_local_time(sale.sale_date)
+
     # Build receipt data
     receipt = {
         "receipt_number": sale.etr_receipt_number,
@@ -2040,8 +1644,11 @@ def sale_receipt_view(request, sale_id):
         "address": "NAIROBI, KENYA",
         "tel": "254 722 558 544",
         "pin": "----------",
-        "date": sale.sale_date.strftime("%Y-%m-%d"),
-        "time": sale.sale_date.strftime("%H:%M:%S"),
+
+        # ✅ Use local_time instead of sale.sale_date
+        "date": local_time.strftime("%Y-%m-%d"),
+        "time": local_time.strftime("%H:%M:%S"),
+
         "user": sale.seller.username if sale.seller else "N/A",
         "client_name": sale.buyer_name or "Walk-in Customer",
         "client_phone": sale.buyer_phone or "",

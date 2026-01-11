@@ -1,5 +1,6 @@
 {% extends "website/base.html" %}
 {% load static %}
+{% load tz %}  <!-- ✅ ADD THIS - Load timezone template tags -->
 {% block title %}Batch Receipt #{{ receipt.receipt_number }}{% endblock %}
 
 {% block content %}
@@ -216,7 +217,7 @@ body {
 
 .qr-code-label {
     font-size: 10px;
-    color: #000000; /* Improved contrast */
+    color: #000000;
     margin-bottom: 5px;
 }
 
@@ -251,7 +252,6 @@ body {
     outline-offset: 2px;
 }
 
-/* Error/Empty state */
 .empty-state {
     text-align: center;
     padding: 40px 20px;
@@ -338,14 +338,50 @@ body {
         <div class="receipt-column">
             <div class="receipt-row">
                 <span class="receipt-label">Date:</span>
+                <!-- ✅ OPTION 1: If passing receipt dict from view -->
                 <span class="receipt-value">{{ receipt.date|default:"N/A" }}</span>
             </div>
             <div class="receipt-row">
                 <span class="receipt-label">Time:</span>
+                <!-- ✅ OPTION 1: If passing receipt dict from view -->
                 <span class="receipt-value">{{ receipt.time|default:"N/A" }}</span>
             </div>
         </div>
     </div>
+
+    <!-- ✅ ALTERNATIVE: If you want to use the sale object directly -->
+    {% comment %}
+    <div class="receipt-details">
+        <div class="receipt-column">
+            <div class="receipt-row">
+                <span class="receipt-label">Rcpt_No:</span>
+                <span class="receipt-value">{{ sale.etr_receipt_number|default:"N/A" }}</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label">User:</span>
+                <span class="receipt-value">{{ sale.seller.username|default:"Unknown" }}</span>
+            </div>
+        </div>
+        <div class="receipt-column">
+            <div class="receipt-row">
+                <span class="receipt-label">Date:</span>
+                <span class="receipt-value">
+                    {% timezone "Africa/Nairobi" %}
+                        {{ sale.sale_date|date:"Y-m-d" }}
+                    {% endtimezone %}
+                </span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label">Time:</span>
+                <span class="receipt-value">
+                    {% timezone "Africa/Nairobi" %}
+                        {{ sale.sale_date|date:"H:i:s" }}
+                    {% endtimezone %}
+                </span>
+            </div>
+        </div>
+    </div>
+    {% endcomment %}
 
     <!-- Client Information -->
     {% if receipt.client_name %}
@@ -455,8 +491,6 @@ body {
 
 <script>
 function downloadPDF() {
-    // Trigger print dialog (user can save as PDF)
-    // For true PDF generation, consider using jsPDF or server-side solution
     alert('Please use "Save as PDF" option in the print dialog');
     window.print();
 }
@@ -465,12 +499,10 @@ function goToDashboard() {
     window.location.href = '/agent-dashboard/';
 }
 
-// Prevent accidental navigation
 window.addEventListener('beforeunload', function(e) {
     if (!document.querySelector('.receipt-container')) {
         return;
     }
-    // Only warn if user hasn't printed yet
     const hasInteracted = sessionStorage.getItem('receipt_printed');
     if (!hasInteracted) {
         e.preventDefault();
@@ -478,7 +510,6 @@ window.addEventListener('beforeunload', function(e) {
     }
 });
 
-// Mark as interacted when printing
 window.addEventListener('beforeprint', function() {
     sessionStorage.setItem('receipt_printed', 'true');
 });
