@@ -63,7 +63,7 @@
     animation: gradientShift 20s ease infinite;
   }
 
-  /* ===== IMPROVED HERO SECTION ===== */
+  /* ===== MODIFIED HERO SECTION ===== */
   .hero {
     position: relative;
     min-height: 90vh;
@@ -193,6 +193,132 @@
     border-color: rgba(255, 255, 255, 0.5);
     transform: translateY(-3px);
   }
+
+  /* ===== MODIFIED SLIDESHOW SECTION WITH TITLES ===== */
+  .hero-slideshow {
+    position: relative;
+    width: 100%;
+    height: 550px;
+    overflow: hidden;
+    animation: fadeInRight 1.2s ease;
+  }
+  
+  .slideshow-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  
+  .slide.active {
+    opacity: 1;
+    z-index: 2;
+  }
+  
+  .slide-title {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 25px;
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+  }
+  
+  .slide.active .slide-title {
+    animation: titleFadeIn 0.8s ease;
+  }
+  
+  .slide img {
+    max-width: 90%;
+    max-height: 70%;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
+    transition: transform 0.4s ease;
+  }
+  
+  .slide:hover img {
+    transform: scale(1.05);
+  }
+  
+  .slide:hover .slide-title {
+    background: rgba(0, 0, 0, 0.7);
+    transform: translateY(-5px);
+  }
+  
+  /* Slideshow navigation */
+  .slideshow-nav {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+  }
+  
+  .nav-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+  }
+  
+  .nav-dot.active {
+    background: #667eea;
+    transform: scale(1.4);
+    box-shadow: 0 0 15px rgba(102, 126, 234, 0.8);
+  }
+  
+  .slideshow-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 24px;
+    transition: all 0.3s ease;
+    z-index: 10;
+  }
+  
+  .slideshow-arrow:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  .slideshow-arrow.prev { left: 20px; }
+  .slideshow-arrow.next { right: 20px; }
 
   /* ===== IMPROVED PRODUCTS SECTION ===== */
   .products-section {
@@ -469,114 +595,6 @@
     color: rgba(255, 255, 255, 0.9);
   }
 
-  /* ===== FIXED SLIDESHOW ===== */
-  .hero-slideshow {
-    position: relative;
-    width: 100%;
-    height: 450px;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-    animation: fadeInRight 1.2s ease;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(20px);
-  }
-  
-  .slideshow-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-  }
-  
-  .slide {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 30px;
-  }
-  
-  .slide.active {
-    opacity: 1;
-    z-index: 2;
-  }
-  
-  .slide img {
-    max-width: 85%;
-    max-height: 85%;
-    object-fit: contain;
-    border-radius: 15px;
-    filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4));
-    transition: transform 0.4s ease;
-  }
-  
-  .slide:hover img {
-    transform: scale(1.05);
-  }
-  
-  /* Slideshow navigation */
-  .slideshow-nav {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 10px;
-    z-index: 10;
-  }
-  
-  .nav-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
-  }
-  
-  .nav-dot.active {
-    background: #667eea;
-    transform: scale(1.4);
-    box-shadow: 0 0 15px rgba(102, 126, 234, 0.8);
-  }
-  
-  .slideshow-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #ffffff;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 24px;
-    transition: all 0.3s ease;
-    z-index: 10;
-  }
-  
-  .slideshow-arrow:hover {
-    background: rgba(255, 255, 255, 0.25);
-    transform: translateY(-50%) scale(1.1);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-  }
-  
-  .slideshow-arrow.prev { left: 20px; }
-  .slideshow-arrow.next { right: 20px; }
-
   /* ===== MARQUEE FIX ===== */
   .marquee-container {
     position: absolute;
@@ -632,6 +650,11 @@
     to { opacity: 1; transform: translateX(0); }
   }
   
+  @keyframes titleFadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
   @keyframes shimmer {
     0%, 100% { filter: brightness(1) hue-rotate(0deg); }
     50% { filter: brightness(1.2) hue-rotate(10deg); }
@@ -663,7 +686,7 @@
     
     .hero-slideshow {
       order: -1;
-      height: 350px;
+      height: 450px;
     }
     
     .hero-subtitle {
@@ -686,7 +709,12 @@
     }
     
     .hero-slideshow {
-      height: 300px;
+      height: 400px;
+    }
+    
+    .slide-title {
+      font-size: 1.25rem;
+      padding: 8px 20px;
     }
     
     .section-title {
@@ -713,6 +741,15 @@
     
     .hero-title {
       font-size: 1.75rem;
+    }
+    
+    .hero-slideshow {
+      height: 350px;
+    }
+    
+    .slide-title {
+      font-size: 1rem;
+      padding: 6px 15px;
     }
     
     .hero-buttons {
@@ -805,19 +842,23 @@
         </div>
       </div>
       
-      <!-- Slideshow Side -->
+      <!-- MODIFIED: Slideshow with titles -->
       <div class="hero-slideshow">
         <div class="slideshow-container" id="slideshow">
           <div class="slide active">
+            <div class="slide-title">NOKIA PREMIUM EDITION</div>
             <img src="{% static 'images/NN1.png' %}" alt="Nokia Premium Phone" loading="lazy">
           </div>
           <div class="slide">
+            <div class="slide-title">TECNO SPARK SERIES</div>
             <img src="{% static 'images/NT1.png' %}" alt="Tecno Smartphone" loading="lazy">
           </div>
           <div class="slide">
+            <div class="slide-title">OKING GAMING PHONE</div>
             <img src="{% static 'images/NO1.png' %}" alt="Oking Phone" loading="lazy">
           </div>
           <div class="slide">
+            <div class="slide-title">ITEL VISION SERIES</div>
             <img src="{% static 'images/NI1.png' %}" alt="Itel Device" loading="lazy">
           </div>
         </div>
