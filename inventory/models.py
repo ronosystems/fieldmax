@@ -11,16 +11,27 @@ import logging
 
 
 
-
-
-
-
-
-
 logger = logging.getLogger(__name__)
 
 
 
+
+# ====================================
+#  SUPLIER MODEL
+# ====================================
+class Supplier(models.Model):
+    """Your product suppliers"""
+    name = models.CharField(max_length=200)
+    contact_person = models.CharField(max_length=200, blank=True)
+    phone = models.CharField(max_length=20)
+    email = models.EmailField(blank=True)
+    address = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.name
 
 
 
@@ -77,13 +88,6 @@ class Category(models.Model):
     @property
     def is_bulk_item(self):
         return self.item_type == 'bulk'
-
-
-
-
-
-
-
 
 
 
@@ -156,6 +160,56 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+
+    brand = models.CharField(max_length=100, blank=True, null=True)
+    model = models.CharField(max_length=200, blank=True, null=True)
+    
+    # Specifications as JSON
+    specifications = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Store RAM, storage, color, screen size, etc."
+    )
+    
+    # Example: {"ram": "8GB", "storage": "256GB", "color": "Black", "condition": "New"}
+    
+    condition = models.CharField(
+        max_length=20,
+        choices=[
+            ('new', 'Brand New'),
+            ('refurbished', 'Refurbished'),
+            ('used', 'Used - Excellent'),
+            ('used_good', 'Used - Good'),
+        ],
+        default='new'
+    )
+    
+    warranty_months = models.PositiveIntegerField(
+        default=12,
+        help_text="Warranty period in months"
+    )
+    
+    description = models.TextField(blank=True, null=True)
+    
+    supplier = models.ForeignKey(
+         Supplier, 
+         on_delete=models.SET_NULL, 
+         null=True, 
+         blank=True,
+         related_name='products'
+    )
+
+    reorder_level = models.PositiveIntegerField(
+        default=5,
+        null=True,  # Makes it safe for existing records
+        blank=True
+    )
+    
+    last_restocked = models.DateTimeField(
+        null=True, 
+        blank=True,
+        help_text="When was this last restocked"
+    )
 
     class Meta:
         ordering = ['-created_at']
@@ -272,10 +326,49 @@ class Product(models.Model):
             return Decimal('0.0')
         return (selling - buying) / buying * 100
 
+    @property
+    def needs_reorder(self):
+        if self.category.is_bulk_item and self.reorder_level:
+            return self.quantity <= self.reorder_level
+        return False
+    
+    @property
+    def display_name(self):
+        if self.brand and self.model:
+            return f"{self.brand} {self.model}"
+        return self.name
+    
+    @property
+    def is_in_warranty(self):
+        """Check if item still under warranty"""
+        if not self.warranty_months:
+            return False
+        from datetime import timedelta
+        from django.utils import timezone
+        warranty_end = self.created_at + timedelta(days=self.warranty_months * 30)
+        return timezone.now() < warranty_end
+    
 
 
 
 
+
+# ====================================
+#  PRODUCTIMAGE MODELS
+# ====================================
+class ProductImage(models.Model):
+    """Multiple images per product"""
+    product = models.ForeignKey(
+        Product, 
+        on_delete=models.CASCADE, 
+        related_name='images'
+    )
+    image = CloudinaryField('image')
+    is_primary = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['order']
 
 
 
@@ -475,3 +568,40 @@ class StockEntry(models.Model):
     def absolute_quantity(self):
         return abs(self.quantity)
     
+
+
+
+
+
+
+# ====================================
+# STOCKalert MODELS
+# ====================================
+class StockAlert(models.Model):
+    """Alert when products are running low"""
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    alert_level = models.PositiveIntegerField(default=5)
+    is_active = models.BooleanField(default=True)
+    last_alerted = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"Alert: {self.product.name} (Level: {self.alert_level})"
+
+
+
+
+
+# ====================================
+# product preview MODELS
+# ====================================
+class ProductReview(models.Model):
+    """Customer product reviews"""
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    customer_name = models.CharField(max_length=200)
+    rating = models.PositiveIntegerField(default=5)  # 1-5 stars
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']

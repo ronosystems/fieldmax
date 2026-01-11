@@ -1,9 +1,553 @@
 {% extends "website/base.html" %}
+{% load static %}
+
+{% block title %}Staff Login - FieldMax Shop{% endblock %}
+
 {% block content %}
-<h2>Login</h2>
-<form method="post">
-{% csrf_token %}
-{{ form.as_p }}
-<button type="submit">Login</button>
-</form>
+<style>
+    .login-page {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+
+    .login-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        max-width: 480px;
+        width: 100%;
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .login-header {
+        background: linear-gradient(135deg, #0dcaf0 0%, #0ab4d6 100%);
+        padding: 2.5rem 2rem;
+        text-align: center;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .login-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 10%, transparent 10%);
+        background-size: 50px 50px;
+        animation: movePattern 20s linear infinite;
+    }
+
+    @keyframes movePattern {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(50px, 50px); }
+    }
+
+    .login-brand {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .login-logo {
+        width: 70px;
+        height: 70px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        object-fit: cover;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .login-brand-name {
+        font-size: 1.8rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .login-icon {
+        position: relative;
+        z-index: 1;
+        font-size: 3.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .login-title {
+        position: relative;
+        z-index: 1;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .login-subtitle {
+        position: relative;
+        z-index: 1;
+        font-size: 0.95rem;
+        opacity: 0.95;
+        margin-top: 0.5rem;
+    }
+
+    .login-body {
+        padding: 2.5rem 2rem;
+    }
+
+    .alert-messages {
+        margin-bottom: 1.5rem;
+    }
+
+    .alert {
+        padding: 1rem 1.25rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.95rem;
+        animation: slideInRight 0.4s ease-out;
+    }
+
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .alert-error {
+        background: #fee2e2;
+        color: #991b1b;
+        border-left: 4px solid #ef4444;
+    }
+
+    .alert-success {
+        background: #d1fae5;
+        color: #065f46;
+        border-left: 4px solid #10b981;
+    }
+
+    .alert-info {
+        background: #dbeafe;
+        color: #1e40af;
+        border-left: 4px solid #3b82f6;
+    }
+
+    .alert i {
+        font-size: 1.3rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1a1f2e;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-label i {
+        color: #0dcaf0;
+        font-size: 1.1rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.875rem 1.125rem;
+        font-size: 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        font-family: 'Poppins', sans-serif;
+        background: #f9fafb;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #0dcaf0;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(13, 202, 240, 0.1);
+    }
+
+    .form-control::placeholder {
+        color: #9ca3af;
+    }
+
+    .password-wrapper {
+        position: relative;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #6b7280;
+        cursor: pointer;
+        font-size: 1.2rem;
+        padding: 0.5rem;
+        transition: color 0.2s ease;
+    }
+
+    .password-toggle:hover {
+        color: #0dcaf0;
+    }
+
+    .form-control.has-toggle {
+        padding-right: 3rem;
+    }
+
+    .form-help {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-help i {
+        font-size: 0.9rem;
+    }
+
+    .error-text {
+        color: #ef4444;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .error-text i {
+        font-size: 0.9rem;
+    }
+
+    .btn-login {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #0dcaf0 0%, #0ab4d6 100%);
+        color: white;
+        font-weight: 700;
+        font-size: 1.05rem;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        box-shadow: 0 4px 15px rgba(13, 202, 240, 0.3);
+        margin-top: 2rem;
+    }
+
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(13, 202, 240, 0.4);
+    }
+
+    .btn-login:active {
+        transform: translateY(0);
+    }
+
+    .btn-login i {
+        font-size: 1.3rem;
+    }
+
+    .login-footer {
+        padding: 1.5rem 2rem;
+        background: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+        text-align: center;
+    }
+
+    .login-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .login-link {
+        color: #6b7280;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: color 0.2s ease;
+    }
+
+    .login-link:hover {
+        color: #0dcaf0;
+    }
+
+    .login-link i {
+        font-size: 1rem;
+    }
+
+    .divider {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 1.5rem 0;
+        color: #9ca3af;
+        font-size: 0.85rem;
+    }
+
+    .divider::before,
+    .divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #e5e7eb;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 576px) {
+        .login-card {
+            border-radius: 15px;
+        }
+
+        .login-header {
+            padding: 2rem 1.5rem;
+        }
+
+        .login-brand-name {
+            font-size: 1.5rem;
+        }
+
+        .login-logo {
+            width: 60px;
+            height: 60px;
+        }
+
+        .login-icon {
+            font-size: 3rem;
+        }
+
+        .login-title {
+            font-size: 1.3rem;
+        }
+
+        .login-body,
+        .login-footer {
+            padding: 2rem 1.5rem;
+        }
+
+        .btn-login {
+            padding: 0.875rem;
+        }
+    }
+</style>
+
+<div class="login-page">
+    <div class="login-card">
+        <!-- Header -->
+        <div class="login-header">
+            <div class="login-brand">
+                <img src="{% static 'images/LOGO.jpg' %}" alt="FieldMax Logo" class="login-logo">
+                <div class="login-brand-name">FIELDMAX</div>
+            </div>
+            <div class="login-icon">
+                <i class="bi bi-shield-lock"></i>
+            </div>
+            <h2 class="login-title">Staff Login</h2>
+            <p class="login-subtitle">Sign in to access your dashboard</p>
+        </div>
+
+        <!-- Body -->
+        <div class="login-body">
+            <!-- Messages/Alerts -->
+            {% if messages %}
+            <div class="alert-messages">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {% if message.tags == 'error' %}
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                    {% elif message.tags == 'success' %}
+                        <i class="bi bi-check-circle-fill"></i>
+                    {% else %}
+                        <i class="bi bi-info-circle-fill"></i>
+                    {% endif %}
+                    <span>{{ message }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Form Errors (non-field errors) -->
+            {% if form.non_field_errors %}
+            <div class="alert-messages">
+                <div class="alert alert-error">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    <span>{{ form.non_field_errors.0 }}</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Login Form -->
+            <form method="post" action="" novalidate>
+                {% csrf_token %}
+
+                <!-- Username Field -->
+                <div class="form-group">
+                    <label for="id_username" class="form-label">
+                        <i class="bi bi-person-circle"></i>
+                        Username
+                    </label>
+                    <input 
+                        type="text" 
+                        name="username" 
+                        id="id_username"
+                        class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+                        placeholder="Enter your username"
+                        value="{{ form.username.value|default:'' }}"
+                        required
+                        autofocus
+                    >
+                    {% if form.username.errors %}
+                        <div class="error-text">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <span>{{ form.username.errors.0 }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Password Field -->
+                <div class="form-group">
+                    <label for="id_password" class="form-label">
+                        <i class="bi bi-key"></i>
+                        Password
+                    </label>
+                    <div class="password-wrapper">
+                        <input 
+                            type="password" 
+                            name="password" 
+                            id="id_password"
+                            class="form-control has-toggle {% if form.password.errors %}is-invalid{% endif %}"
+                            placeholder="Enter your password"
+                            required
+                        >
+                        <button type="button" class="password-toggle" onclick="togglePassword()">
+                            <i class="bi bi-eye-fill" id="passwordIcon"></i>
+                        </button>
+                    </div>
+                    {% if form.password.errors %}
+                        <div class="error-text">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <span>{{ form.password.errors.0 }}</span>
+                        </div>
+                    {% endif %}
+                    <div class="form-help">
+                        <i class="bi bi-info-circle"></i>
+                        <span>Enter your staff credentials to access the system</span>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-login">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    <span>Sign In</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="login-footer">
+            <div class="login-links">
+                <a href="{% url 'home' %}" class="login-link">
+                    <i class="bi bi-house-door"></i>
+                    <span>Back to Home</span>
+                </a>
+                <div class="divider">Need help?</div>
+                <a href="#" class="login-link">
+                    <i class="bi bi-question-circle"></i>
+                    <span>Contact Administrator</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Password visibility toggle
+    function togglePassword() {
+        const passwordInput = document.getElementById('id_password');
+        const passwordIcon = document.getElementById('passwordIcon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            passwordIcon.classList.remove('bi-eye-fill');
+            passwordIcon.classList.add('bi-eye-slash-fill');
+        } else {
+            passwordInput.type = 'password';
+            passwordIcon.classList.remove('bi-eye-slash-fill');
+            passwordIcon.classList.add('bi-eye-fill');
+        }
+    }
+
+    // Auto-hide alerts after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                alert.style.animation = 'slideOutRight 0.4s ease-out';
+                setTimeout(() => {
+                    alert.remove();
+                }, 400);
+            }, 5000);
+        });
+    });
+
+    // Add slide out animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideOutRight {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
 {% endblock %}
