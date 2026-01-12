@@ -2202,7 +2202,7 @@ th.dragging {
         <thead>
           <tr>
             <th><strong style="color:#1100ff;">PRODUCT CODE</strong></th>
-            <th><strong style="color:#ff0000;">PRODUCT SKU</strong></th>
+            <th><strong style="color:#ff0000;">PRODUCT SKU/BARCODE</strong></th>
             <th><strong style="color:#1100ff;">SKU TYPE</strong></th>
             <th><strong style="color:#1100ff;">PRODUCT NAME</strong></th>
             <th><strong style="color:#1100ff;">CATEGORY</strong></th>
@@ -2232,8 +2232,29 @@ th.dragging {
               </code>
             </td>
 
-            <!-- Product sku -->
-            <td>{{ product.sku_value }}</td>
+<td>
+  {% if product.category.is_single_item %}
+    <!-- Single items: Show IMEI/Serial (sku_value) -->
+    {% if product.sku_value %}
+      <code style="background: #e0f7ff; padding: 4px 8px; border-radius: 4px; font-weight: 600; color: #0369a1;">
+        <i class="bi bi-phone"></i> {{ product.sku_value }}
+      </code>
+    {% else %}
+      <span class="text-muted">Not Set</span>
+    {% endif %}
+  {% else %}
+    <!-- Bulk items: Show Barcode (barcode field) -->
+    {% if product.barcode %}
+      <span class="badge" style="background: #fef3c7; color: #92400e; font-weight: 500;">
+        <i class="bi bi-upc-scan"></i> {{ product.barcode }}
+      </span>
+    {% else %}
+      <span class="badge" style="background: #f3f4f6; color: #6b7280; font-weight: 500;">
+        <i class="bi bi-box-seam"></i> No Barcode
+      </span>
+    {% endif %}
+  {% endif %}
+</td>
             
             <!-- Type Badge -->
             <td>

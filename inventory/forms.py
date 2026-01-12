@@ -74,6 +74,7 @@ class ProductForm(forms.ModelForm):
             'category',
             'name',
             'sku_value',
+            'barcode',      # ✅ ADD THIS LINE
             'quantity',
             'buying_price',
             'selling_price',
@@ -92,6 +93,10 @@ class ProductForm(forms.ModelForm):
             'sku_value': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Enter SKU/IMEI/Serial'
+            }),
+            'barcode': forms.TextInput(attrs={      # ✅ ADD THIS WIDGET
+                'class': 'form-control',
+                'placeholder': 'Enter barcode for bulk items'
             }),
             'quantity': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -115,8 +120,9 @@ class ProductForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Make sku_value and quantity optional by default
+        # Make sku_value, barcode, and quantity optional by default
         self.fields['sku_value'].required = False
+        self.fields['barcode'].required = False    # ✅ ADD THIS LINE
         self.fields['quantity'].required = False
         
         # Set default quantity to 1 if not provided
@@ -129,6 +135,7 @@ class ProductForm(forms.ModelForm):
         category = cleaned_data.get('category')
         name = cleaned_data.get('name')
         sku_value = (cleaned_data.get('sku_value') or '').strip()
+        barcode = (cleaned_data.get('barcode') or '').strip()  # ✅ ADD THIS LINE
         quantity = cleaned_data.get('quantity')
         buying_price = cleaned_data.get('buying_price')
         selling_price = cleaned_data.get('selling_price')
@@ -147,14 +154,29 @@ class ProductForm(forms.ModelForm):
                 
                 # Single items always have quantity = 1
                 cleaned_data['quantity'] = 1
+                # Clear barcode for single items
+                cleaned_data['barcode'] = None  # ✅ ADD THIS LINE
             
             # Bulk items require quantity > 0
             elif category.is_bulk_item:
                 if not quantity or quantity <= 0:
                     self.add_error('quantity', 'Quantity must be greater than 0 for bulk items')
                 
-                # For bulk items, we'll check if product exists in the view
-                # (by name + category) and add to existing stock instead of creating duplicate
+                # ✅ ADD THIS: Validate unique barcode for bulk items
+                if barcode:
+                    existing_barcode = Product.objects.filter(
+                        barcode__iexact=barcode, 
+                        is_active=True
+                    )
+                    # Exclude current instance if editing
+                    if self.instance.pk:
+                        existing_barcode = existing_barcode.exclude(pk=self.instance.pk)
+                    
+                    if existing_barcode.exists():
+                        self.add_error('barcode', f'Barcode "{barcode}" already exists for another product')
+                
+                # Clear sku_value for bulk items
+                cleaned_data['sku_value'] = None  # ✅ ADD THIS LINE
         
         # Validate pricing
         if buying_price and selling_price:
@@ -166,9 +188,14 @@ class ProductForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         
-        # Ensure single items have quantity = 1
+        # Ensure single items have quantity = 1 and no barcode
         if instance.category and instance.category.is_single_item:
             instance.quantity = 1
+            instance.barcode = None  # ✅ ADD THIS LINE
+        
+        # Ensure bulk items have no sku_value (use barcode instead)
+        if instance.category and instance.category.is_bulk_item:
+            instance.sku_value = None  # ✅ ADD THIS LINE
         
         if commit:
             instance.save()

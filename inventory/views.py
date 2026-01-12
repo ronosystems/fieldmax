@@ -704,6 +704,7 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
                 category = form.cleaned_data.get('category')
                 name = form.cleaned_data.get('name')
                 sku_value = (form.cleaned_data.get('sku_value') or "").strip()
+                barcode = (form.cleaned_data.get('barcode') or "").strip() 
                 quantity = form.cleaned_data.get('quantity') or 1
                 buying_price = form.cleaned_data.get('buying_price')
                 selling_price = form.cleaned_data.get('selling_price')
@@ -726,10 +727,8 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
                     
                     form.instance.owner = self.request.user
                     form.instance.quantity = 1
-                    
-                    # ✅ Set the image on the instance
                     form.instance.image = image
-                    
+                    form.instance.barcode = None                    
                     self.object = form.save()
                     
                     # Create stock entry
@@ -755,7 +754,13 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
                         category=category,
                         is_active=True
                     ).first()
-                    
+
+                    # ✅ If barcode provided, also check for duplicate barcode
+                    if barcode and Product.objects.filter(barcode__iexact=barcode, is_active=True).exists():
+                        existing_by_barcode = Product.objects.filter(barcode__iexact=barcode, is_active=True).first()
+                        if existing_by_barcode and existing_by_barcode != existing_product:
+                            raise ValidationError(f"Barcode '{barcode}' already exists for product: {existing_by_barcode.name}")
+                                    
                     if existing_product:
                         self.object = existing_product
                         logger.info(f"[BULK ITEM] Found existing product: {existing_product.product_code}")
@@ -763,8 +768,10 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
                         # ✅ If new image uploaded, update the product image
                         if image and existing_product:
                             existing_product.image = image
-                            existing_product.save()
-                            logger.info(f"[BULK ITEM] Updated image for existing product")
+                        if barcode:
+                            existing_product.barcode = barcode
+                        existing_product.save()
+                        logger.info(f"[BULK ITEM] Updated image for existing product")
                     else:
                         # Create new product with quantity=0
                         form.instance.owner = self.request.user
@@ -772,9 +779,11 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
                         
                         # ✅ Set the image on the instance
                         form.instance.image = image
-                        
+                        form.instance.barcode = barcode
+                        form.instance.sku_value = None
+
                         self.object = form.save()
-                        logger.info(f"[BULK ITEM] Created new product: {self.object.product_code}")
+                        logger.info(f"[BULK ITEM] Created new product: {self.object.product_code} with barcode: {barcode}")
                         if self.object.image:
                             logger.info(f"[BULK ITEM] Image saved: {self.object.image.url}")
 
@@ -803,6 +812,7 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
                         "product_id": self.object.pk,
                         "product_code": self.object.product_code,
                         "quantity": self.object.quantity,
+                        "barcode": self.object.barcode,
                         "image_url": image_url  # ✅ Include image URL in response
                     })
                 else:

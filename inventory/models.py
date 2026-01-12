@@ -134,7 +134,14 @@ class Product(models.Model):
         blank=True,    
         null=True 
     )
-    
+    # ✅ ADD THIS: Barcode for bulk items
+    barcode = models.CharField(
+        max_length=200,
+        help_text="Barcode for bulk items",
+        db_index=True,
+        blank=True,
+        null=True
+    )
     # Quantity
     quantity = models.PositiveIntegerField(
         null=True,
