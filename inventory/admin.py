@@ -167,6 +167,9 @@ class CategoryAdmin(admin.ModelAdmin):
 # ============================================
 # PRODUCT ADMIN
 # ============================================
+# ============================================
+# PRODUCT ADMIN - WITH BARCODE SUPPORT
+# ============================================
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -175,7 +178,7 @@ class ProductAdmin(admin.ModelAdmin):
         'product_code',
         'name',
         'category_link',
-        'sku_value_short',
+        'identifier_display',  # ✅ CHANGED: Shows SKU or Barcode based on item type
         'quantity_display',
         'status_badge',
         'pricing_info',
@@ -194,6 +197,7 @@ class ProductAdmin(admin.ModelAdmin):
         'product_code',
         'name',
         'sku_value',
+        'barcode',  # ✅ ADD: Search by barcode
         'owner__username'
     ]
     readonly_fields = [
@@ -213,8 +217,14 @@ class ProductAdmin(admin.ModelAdmin):
                 'product_code',
                 'name',
                 'category',
-                'sku_value',
             )
+        }),
+        ('Identifiers', {  # ✅ NEW SECTION
+            'fields': (
+                'sku_value',
+                'barcode',
+            ),
+            'description': 'SKU for single items (IMEI/Serial), Barcode for bulk items'
         }),
         ('Product Image', {
             'fields': (
@@ -262,7 +272,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_per_page = 50
 
     # ============================================
-    # ✅ ADD JAVASCRIPT FOR LIVE IMAGE PREVIEW
+    # MEDIA FOR LIVE IMAGE PREVIEW
     # ============================================
     
     class Media:
@@ -270,6 +280,54 @@ class ProductAdmin(admin.ModelAdmin):
         css = {
             'all': ('admin/css/base.css',)
         }
+
+    # ============================================
+    # ✅ NEW: IDENTIFIER DISPLAY (SKU OR BARCODE)
+    # ============================================
+
+    def identifier_display(self, obj):
+        """Display SKU for single items, Barcode for bulk items"""
+        if obj.category.is_single_item:
+            # Single items: Show SKU (IMEI/Serial)
+            if obj.sku_value:
+                sku_short = obj.sku_value[:15] + '...' if len(obj.sku_value) > 15 else obj.sku_value
+                return format_html(
+                    '<div style="display: flex; align-items: center; gap: 4px;">'
+                    '<span style="background: #e0f7ff; color: #0369a1; padding: 2px 6px; '
+                    'border-radius: 4px; font-size: 11px; font-weight: 600;">'
+                    '📱 SKU</span>'
+                    '<code style="font-size: 11px;">{}</code>'
+                    '</div>',
+                    sku_short
+                )
+            else:
+                return format_html(
+                    '<span style="color: #999; font-size: 11px;">No SKU</span>'
+                )
+        else:
+            # Bulk items: Show Barcode
+            if obj.barcode:
+                barcode_short = obj.barcode[:15] + '...' if len(obj.barcode) > 15 else obj.barcode
+                return format_html(
+                    '<div style="display: flex; align-items: center; gap: 4px;">'
+                    '<span style="background: #fef3c7; color: #92400e; padding: 2px 6px; '
+                    'border-radius: 4px; font-size: 11px; font-weight: 600;">'
+                    '🔍 BARCODE</span>'
+                    '<code style="font-size: 11px;">{}</code>'
+                    '</div>',
+                    barcode_short
+                )
+            else:
+                return format_html(
+                    '<span style="color: #999; font-size: 11px;">No Barcode</span>'
+                )
+    
+    identifier_display.short_description = 'SKU / Barcode'
+    identifier_display.admin_order_field = 'sku_value'  # Default sort by SKU
+
+    # ============================================
+    # EXISTING METHODS (KEEP AS IS)
+    # ============================================
 
     def show_image(self, obj):
         if obj.image:
@@ -282,35 +340,32 @@ class ProductAdmin(admin.ModelAdmin):
         return qs.select_related('category', 'owner')
     
     def has_change_permission(self, request, obj=None):
-        # Explicitly allow changes
         return True
     
     def has_delete_permission(self, request, obj=None):
-        # Explicitly allow deletions if needed
         return True
 
     # ============================================
-    # ✅ LIVE IMAGE PREVIEW WITH JAVASCRIPT
+    # LIVE IMAGE PREVIEW (KEEP AS IS)
     # ============================================
 
     def live_image_preview(self, obj):
         """Live preview that updates when image is uploaded"""
         
-        # Get current image if exists
         current_image_html = ''
         if obj and obj.image:
             try:
                 public_id = obj.image.name
                 img_url = CloudinaryImage(public_id).build_url(
-                    width=50,
-                    height=50,
+                    width=400,
+                    height=400,
                     crop='limit',
                     quality='auto',
                     fetch_format='auto'
                 )
                 current_image_html = f'''
                 <img src="{img_url}" 
-                     style="max-width: 50px; max-height: 50px; border-radius: 8px; 
+                     style="max-width: 400px; max-height: 400px; border-radius: 8px; 
                             box-shadow: 0 2px 8px rgba(0,0,0,0.1);" 
                      loading="lazy" 
                      alt="Product preview" />
@@ -342,7 +397,6 @@ class ProductAdmin(admin.ModelAdmin):
                 
                 <script>
                 (function() {{
-                    // Wait for page to load
                     if (document.readyState === 'loading') {{
                         document.addEventListener('DOMContentLoaded', initImagePreview);
                     }} else {{
@@ -356,7 +410,6 @@ class ProductAdmin(admin.ModelAdmin):
                         
                         if (!imageInput || !previewContainer) return;
                         
-                        // Handle file selection
                         imageInput.addEventListener('change', function(e) {{
                             const file = e.target.files[0];
                             
@@ -386,7 +439,6 @@ class ProductAdmin(admin.ModelAdmin):
                             }}
                         }});
                         
-                        // Handle clear checkbox
                         if (clearCheckbox) {{
                             clearCheckbox.addEventListener('change', function(e) {{
                                 if (e.target.checked) {{
@@ -400,7 +452,6 @@ class ProductAdmin(admin.ModelAdmin):
                                         </div>
                                     `;
                                 }} else {{
-                                    // Restore original preview
                                     location.reload();
                                 }}
                             }});
@@ -414,43 +465,7 @@ class ProductAdmin(admin.ModelAdmin):
     live_image_preview.short_description = '📸 Live Image Preview'
 
     # ============================================
-    # LIST VIEW IMAGE THUMBNAIL
-    # ============================================
-
-    def image_thumbnail(self, obj):
-        """Display image that fits in the row"""
-        if obj.image:
-            try:
-                public_id = obj.image.name
-                img_url = CloudinaryImage(public_id).build_url(
-                    width=50,
-                    height=50,
-                    crop='fit',
-                    quality='auto',
-                    fetch_format='auto'
-                )
-                
-                return format_html(
-                    '<img src="{}" style="max-width: 200px; height: auto; max-height: 60px; '
-                    'object-fit: contain; display: block;" loading="lazy" alt="Product" />',
-                    img_url
-                )
-            except:
-                try:
-                    return format_html(
-                        '<img src="{}" style="max-width: 200px; height: auto; max-height: 60px; '
-                        'object-fit: contain; display: block;" loading="lazy" alt="Product" />',
-                        obj.image.url
-                    )
-                except:
-                    return format_html('<span style="color: #dc3545;">❌</span>')
-        
-        return format_html('<span style="color: #6c757d; font-size: 1.5rem;">📷</span>')
-    
-    image_thumbnail.short_description = 'Image'
-
-    # ============================================
-    # OTHER DISPLAY METHODS
+    # OTHER DISPLAY METHODS (KEEP AS IS)
     # ============================================
 
     def category_link(self, obj):
@@ -460,12 +475,6 @@ class ProductAdmin(admin.ModelAdmin):
         return '-'
     category_link.short_description = 'Category'
     category_link.admin_order_field = 'category__name'
-
-    def sku_value_short(self, obj):
-        sku = obj.sku_value or ''
-        return sku[:20] + '...' if len(sku) > 20 else sku
-    sku_value_short.short_description = 'SKU'
-    sku_value_short.admin_order_field = 'sku_value'
 
     def quantity_display(self, obj):
         qty = obj.quantity or 0
@@ -503,8 +512,8 @@ class ProductAdmin(admin.ModelAdmin):
     def pricing_info(self, obj):
         buy_price = float(Decimal(obj.buying_price or 0))
         sell_price = float(Decimal(obj.selling_price or 0))
-        formatted_buy = '${:,.2f}'.format(buy_price)
-        formatted_sell = '${:,.2f}'.format(sell_price)
+        formatted_buy = 'KSH {:,.2f}'.format(buy_price)
+        formatted_sell = 'KSH {:,.2f}'.format(sell_price)
         return format_html(
             'Buy: <strong>{}</strong><br>Sell: <strong>{}</strong>',
             formatted_buy,
@@ -516,7 +525,7 @@ class ProductAdmin(admin.ModelAdmin):
         margin = float(Decimal(obj.profit_margin or 0))
         percentage = float(Decimal(obj.profit_percentage or 0))
         color = '#28a745' if margin > 0 else '#dc3545'
-        formatted_margin = '${:,.2f}'.format(margin)
+        formatted_margin = 'KSH {:,.2f}'.format(margin)
         formatted_percentage = '{:.1f}%'.format(percentage)
         return format_html('<span style="color: {};">{} ({})</span>', color, formatted_margin, formatted_percentage)
     profit_display.short_description = 'Profit'
@@ -538,7 +547,14 @@ class ProductAdmin(admin.ModelAdmin):
         adjustments = stock_entries.filter(entry_type='adjustment').aggregate(total=Sum('quantity'))['total'] or 0
 
         total_value = float(Decimal(obj.buying_price or 0) * Decimal(obj.quantity or 0))
-        formatted_value = '${:,.2f}'.format(total_value)
+        formatted_value = 'KSH {:,.2f}'.format(total_value)
+
+        # ✅ ADD: Display identifier info
+        identifier_info = ''
+        if obj.category.is_single_item and obj.sku_value:
+            identifier_info = f'<tr><td style="padding:8px; border:1px solid #dee2e6;">SKU/IMEI</td><td style="padding:8px; text-align:right; border:1px solid #dee2e6;"><code>{obj.sku_value}</code></td></tr>'
+        elif obj.category.is_bulk_item and obj.barcode:
+            identifier_info = f'<tr><td style="padding:8px; border:1px solid #dee2e6;">Barcode</td><td style="padding:8px; text-align:right; border:1px solid #dee2e6;"><code>{obj.barcode}</code></td></tr>'
 
         return format_html(
             """
@@ -547,6 +563,7 @@ class ProductAdmin(admin.ModelAdmin):
                     <th style="padding:8px; text-align:left; border:1px solid #dee2e6;">Metric</th>
                     <th style="padding:8px; text-align:right; border:1px solid #dee2e6;">Value</th>
                 </tr>
+                {}
                 <tr>
                     <td style="padding:8px; border:1px solid #dee2e6;">Total Stock Entries</td>
                     <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{}</td>
@@ -577,6 +594,7 @@ class ProductAdmin(admin.ModelAdmin):
                 </tr>
             </table>
             """,
+            identifier_info,
             total_entries,
             purchases,
             abs(sales),
@@ -586,8 +604,6 @@ class ProductAdmin(admin.ModelAdmin):
             'Yes' if getattr(obj, 'can_restock', False) else 'No'
         )
     inventory_summary.short_description = 'Inventory Summary'
-
-
 
 
 # ============================================
