@@ -6120,11 +6120,14 @@ document.addEventListener("DOMContentLoaded", function() {
                         
                         // Show toast notification
                         showToast('✅ Category created successfully!', 'success');
-                        
+                        //setTimeout(() => {
+                             // window.location.hash = 'product-list';
+                            //  window.location.reload();
+                      //  }, 1500);
                         // Optional: Navigate to category list
-                        // setTimeout(() => {
-                        //     showSection('category-list');
-                        // }, 2000);
+                         setTimeout(() => {
+                             showSection('category-list');
+                         }, 2000);
                         
                     } else {
                         console.error('❌ Server error:', data.message);
@@ -6520,13 +6523,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 setTimeout(() => successDiv.style.display = "none", 5000);
 
                 // Navigate to product list
-                const listBtn = document.querySelector("[data-section='product-list']");
-                if (listBtn) {
                     setTimeout(() => {
-                        listBtn.click();
-                        setTimeout(() => window.location.reload(), 500);
+                        window.location.hash = 'product-list';
+                        window.location.reload();
                     }, 1200);
-                }
             }
             else {
                 let errorMessage = "Error saving product";
@@ -6896,6 +6896,9 @@ function playBeep() {
     }
 }
 
+
+
+
 // ====================================
 // ====================================
 // ============================
@@ -7191,10 +7194,11 @@ document.addEventListener('DOMContentLoaded', function() {
         successDisplay.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         
         // Focus back to quantity
-        setTimeout(() => {
-          quantityInput.focus();
-          successDisplay.style.display = 'none';
-        }, 4000);
+       // Auto-reload to show updated stock
+      setTimeout(() => {
+          window.location.hash = 'product-list';
+          window.location.reload();
+      }, 2000);
       } else {
         throw new Error(data.message || 'Operation failed');
       }
@@ -7935,13 +7939,15 @@ document.addEventListener('DOMContentLoaded', function() {
         showMessage(data.message, 'success');
         
         // Update UI based on transfer type
-        if (currentProduct.is_single_item || data.product.remaining_quantity === 0) {
-          showMessage('Product transferred successfully. Redirecting...', 'success');
-          updateLiveProductPreview('Transfer complete! ✅', 'success');
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
-        } else {
+if (currentProduct.is_single_item || data.product.remaining_quantity === 0) {
+    showMessage('Product transferred successfully. Redirecting...', 'success');
+    updateLiveProductPreview('Transfer complete! ✅', 'success');
+    setTimeout(() => {
+        window.location.hash = 'product-list';
+        window.location.reload();
+    }, 1500);
+}
+         else {
           // Partial transfer - update current product
           currentProduct.current_quantity = data.product.remaining_quantity;
           showMessage(data.message + ' You can transfer more or search for another product.', 'success');
