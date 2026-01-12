@@ -1627,41 +1627,44 @@ th.dragging {
   object-fit: contain;
 }
 
-/* Ensure modal doesn't block page */
-.modal-backdrop {
-  z-index: 1040;
+/* Barcode Scanner Styles */
+#barcodeScannerModal .modal-dialog {
+  max-width: 800px;
 }
 
-.modal {
-  z-index: 1050;
-}
-
-#cameraLoading {
-  width: 3rem;
-  height: 3rem;
-  margin: 50px auto;
-}
-
-
-#scanner-container {
-  min-height: 300px;
+#scannerContainer {
+  position: relative;
   background: #000;
   border-radius: 8px;
   overflow: hidden;
+  min-height: 400px;
 }
 
 #barcodeScannerVideo {
   width: 100%;
-  max-height: 500px;
+  height: 400px;
   object-fit: contain;
+  background: #000;
 }
 
-#barcodeScannerCanvas {
-  display: none;
-}
-
-#scanningOverlay {
+#scannerOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   pointer-events: none;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+#scannerLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
 }
 
 #scannerResult {
@@ -1671,7 +1674,7 @@ th.dragging {
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
@@ -1679,12 +1682,14 @@ th.dragging {
   }
 }
 
-.input-group .btn {
-  white-space: nowrap;
+/* Make sure modal doesn't block page */
+.modal-backdrop {
+  z-index: 1040;
 }
 
-
-
+.modal {
+  z-index: 1050;
+}
 
 </style>
 
@@ -2806,132 +2811,66 @@ th.dragging {
 
 
 <!-- ======================================= -->
-<!-- BARCODE SCANNER MODAL - MOBILE FIXED VERSION -->
+<!-- SIMPLIFIED BARCODE SCANNER MODAL -->
 <!-- ======================================= -->
-<div class="modal fade" id="barcodeScannerModal" tabindex="-1" aria-labelledby="barcodeScannerLabel" aria-hidden="true" data-bs-backdrop="static">
-  <div class="modal-dialog modal-dialog-centered" style="max-width: 95vw;">
+<div class="modal fade" id="simpleBarcodeScanner" tabindex="-1" aria-labelledby="simpleBarcodeScannerLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="barcodeScannerLabel">
-          <i class="bi bi-upc-scan"></i> Scan Barcode/IMEI/Serial
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="simpleBarcodeScannerLabel">
+          <i class="bi bi-camera"></i> Scan Code
         </h5>
-        <button type="button" class="btn-close" onclick="closeBarcodeScanner()"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body p-2">
+      <div class="modal-body text-center">
         <!-- Scanner Container -->
-        <div id="scanner-container" style="position: relative; background: #000; border-radius: 8px; overflow: hidden;">
-          <!-- Video Element -->
-          <video id="barcodeScannerVideo" 
+        <div id="simpleScannerContainer" style="position: relative;">
+          <!-- Camera View -->
+          <video id="simpleScannerVideo" 
                  autoplay 
                  playsinline 
-                 muted
-                 style="width: 100%; height: 60vh; object-fit: cover; display: none;">
+                 style="width: 100%; height: 300px; background: #000; border-radius: 8px;">
           </video>
           
-          <!-- Canvas for processing (hidden) -->
-          <canvas id="barcodeScannerCanvas" style="display: none;"></canvas>
-          
-          <!-- Scanning Guide -->
-          <div id="scanner-guide" style="
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80%;
-            max-width: 400px;
-            height: 150px;
-            border: 3px solid #10b981;
-            border-radius: 8px;
-            pointer-events: none;
-            box-shadow: 0 0 0 100vmax rgba(0,0,0,0.7);
-            display: none;
-          ">
-            <div style="position: absolute; top: -30px; left: 0; right: 0; text-align: center; color: white;">
-              <i class="bi bi-upc-scan"></i> Align barcode inside frame
+          <!-- Scanning Frame -->
+          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                      width: 80%; height: 150px; border: 3px solid #28a745; border-radius: 8px;">
+            <div style="position: absolute; top: -30px; left: 50%; transform: translateX(-50%); 
+                        color: white; font-weight: bold; background: rgba(0,0,0,0.7); padding: 4px 12px; border-radius: 4px;">
+              Align code here
             </div>
           </div>
-          
-          <!-- Permission prompt for mobile -->
-          <div id="mobilePermissionPrompt" style="
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.9);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-          ">
-            <i class="bi bi-camera" style="font-size: 3rem; margin-bottom: 20px;"></i>
-            <h5>Camera Access Required</h5>
-            <p>Please allow camera access to scan barcodes</p>
-            <button class="btn btn-primary mt-3" onclick="requestCameraPermission()">
-              Allow Camera Access
+        </div>
+        
+        <!-- Status Messages -->
+        <div id="simpleScannerStatus" class="mt-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Starting camera...</span>
+          </div>
+          <p class="text-muted mt-2">Starting camera...</p>
+        </div>
+        
+        <!-- Results -->
+        <div id="simpleScannerResult" class="alert alert-success mt-3" style="display: none;">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-1"><i class="bi bi-check-circle-fill"></i> Code Detected!</h6>
+              <code id="simpleDetectedCode" style="font-size: 1.1rem; font-weight: bold;"></code>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-success" onclick="copySimpleBarcode()">
+              <i class="bi bi-copy"></i> Copy
             </button>
           </div>
         </div>
         
-        <!-- Scanner Status -->
-        <div id="scannerStatus" class="alert alert-info mt-2" style="display: none;">
-          <i class="bi bi-info-circle"></i> 
-          <span id="scannerStatusText">Initializing camera...</span>
-        </div>
-        
-        <!-- Scanner Error -->
-        <div id="scannerError" class="alert alert-danger mt-2" style="display: none;"></div>
-        
-        <!-- Loading Spinner -->
-        <div id="scannerLoading" class="text-center mt-3" style="display: none;">
-          <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          <p class="mt-2">Starting camera...</p>
-        </div>
-        
-        <!-- Detected Result -->
-        <div id="scannerResult" class="alert alert-success mt-2" style="display: none;">
-          <div class="d-flex align-items-center">
-            <i class="bi bi-check-circle-fill me-2" style="font-size: 1.5rem;"></i>
-            <div>
-              <h6 class="mb-1">Barcode Detected!</h6>
-              <div class="d-flex align-items-center">
-                <code id="detectedCode" style="
-                  font-family: 'Courier New', monospace;
-                  font-size: 1.2rem;
-                  background: #f8f9fa;
-                  padding: 8px 12px;
-                  border-radius: 4px;
-                  flex: 1;
-                  margin-right: 10px;
-                "></code>
-                <button class="btn btn-sm btn-outline-success" onclick="copyBarcode()">
-                  <i class="bi bi-copy"></i>
-                </button>
-              </div>
-              <small class="text-muted" id="detectedFormat"></small>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Manual Input Fallback -->
-        <div id="manualInputFallback" class="mt-3" style="display: none;">
+        <!-- Manual Input -->
+        <div id="simpleManualInput" class="mt-3" style="display: none;">
           <div class="alert alert-warning">
-            <i class="bi bi-exclamation-triangle"></i>
-            <strong>Camera not available</strong>
-            <p class="mb-2 mt-2">You can enter the barcode manually:</p>
+            <h6><i class="bi bi-exclamation-triangle"></i> Camera Not Available</h6>
+            <p class="mb-2">Enter code manually:</p>
             <div class="input-group">
-              <input type="text" 
-                     id="manualBarcodeInput" 
-                     class="form-control" 
-                     placeholder="Enter barcode manually">
-              <button class="btn btn-primary" onclick="useManualBarcode()">
+              <input type="text" id="simpleManualInputField" class="form-control" placeholder="Enter IMEI/Serial/Barcode">
+              <button class="btn btn-primary" onclick="useSimpleManualBarcode()">
                 <i class="bi bi-check-lg"></i> Use
               </button>
             </div>
@@ -2939,24 +2878,16 @@ th.dragging {
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeBarcodeScanner()">
+        <button type="button" class="btn btn-secondary" onclick="closeSimpleScanner()">
           <i class="bi bi-x-lg"></i> Cancel
         </button>
-        <button type="button" class="btn btn-outline-primary" onclick="toggleCamera()">
-          <i class="bi bi-camera-reverse"></i> Switch Camera
-        </button>
-        <button type="button" id="useBarcodeBtn" class="btn btn-success" onclick="useDetectedBarcode()" style="display: none;">
-          <i class="bi bi-check-lg"></i> Use Code
-        </button>
-        <button type="button" id="rescanBtn" class="btn btn-primary" onclick="restartScanner()" style="display: none;">
-          <i class="bi bi-arrow-repeat"></i> Scan Again
+        <button type="button" id="simpleUseCodeBtn" class="btn btn-success" onclick="useSimpleDetectedCode()" style="display: none;">
+          <i class="bi bi-check-lg"></i> Use This Code
         </button>
       </div>
     </div>
   </div>
 </div>
-
-
 
 
 
@@ -4471,219 +4402,93 @@ document.getElementById('cameraModal').addEventListener('hidden.bs.modal', funct
 
 
 // ========================================
-// IMPROVED BARCODE SCANNER FOR MOBILE
+// SIMPLIFIED BARCODE SCANNER
 // ========================================
 
-let barcodeScannerModal = null;
-let barcodeStream = null;
-let barcodeReader = null;
-let currentScanTarget = null;
-let detectedBarcodeValue = null;
-let isScanning = false;
-let isFrontCamera = false;
-let scannerInterval = null;
+let simpleStream = null;
+let simpleScannerActive = false;
+let simpleTargetField = null;
+let simpleDetectedCode = null;
 
-// Open barcode scanner with mobile optimizations
-function openBarcodeScanner(target) {
-  currentScanTarget = target;
-  
-  if (!barcodeScannerModal) {
-    barcodeScannerModal = new bootstrap.Modal(document.getElementById('barcodeScannerModal'), {
-      backdrop: 'static',
-      keyboard: false,
-      focus: true
-    });
-  }
-  
-  // Reset everything
-  resetBarcodeScanner();
-  barcodeScannerModal.show();
-  
-  // Start scanner after modal shows
-  setTimeout(() => {
-    checkCameraPermissions();
-  }, 300);
+// Open the simplified scanner
+function openSimpleScanner(targetFieldId) {
+    console.log('Opening scanner for field:', targetFieldId);
+    simpleTargetField = targetFieldId;
+    simpleDetectedCode = null;
+    
+    // Reset UI
+    document.getElementById('simpleScannerResult').style.display = 'none';
+    document.getElementById('simpleManualInput').style.display = 'none';
+    document.getElementById('simpleScannerStatus').style.display = 'block';
+    document.getElementById('simpleUseCodeBtn').style.display = 'none';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('simpleBarcodeScanner'));
+    modal.show();
+    
+    // Start camera after modal is shown
+    document.getElementById('simpleBarcodeScanner').addEventListener('shown.bs.modal', function() {
+        startSimpleCamera();
+    }, { once: true });
 }
 
-// Check camera permissions (mobile-friendly)
-async function checkCameraPermissions() {
-  try {
-    // Check if we have permission
-    const permissions = await navigator.permissions.query({ name: 'camera' });
+// Start camera
+async function startSimpleCamera() {
+    const video = document.getElementById('simpleScannerVideo');
+    const statusDiv = document.getElementById('simpleScannerStatus');
     
-    if (permissions.state === 'granted') {
-      startBarcodeScanner();
-    } else if (permissions.state === 'prompt') {
-      document.getElementById('mobilePermissionPrompt').style.display = 'flex';
-    } else {
-      showManualInputFallback();
-    }
-  } catch (error) {
-    // Fallback for browsers that don't support permissions API
-    startBarcodeScanner();
-  }
-}
-
-// Request camera permission explicitly
-async function requestCameraPermission() {
-  try {
-    document.getElementById('mobilePermissionPrompt').style.display = 'none';
-    document.getElementById('scannerLoading').style.display = 'block';
-    
-    // Try to get camera stream
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      video: { facingMode: 'environment' } 
-    });
-    
-    // Stop the test stream
-    stream.getTracks().forEach(track => track.stop());
-    
-    // Permission granted, start scanner
-    startBarcodeScanner();
-  } catch (error) {
-    console.error('Camera permission denied:', error);
-    showManualInputFallback();
-  }
-}
-
-// Start the barcode scanner
-async function startBarcodeScanner() {
-  try {
-    const video = document.getElementById('barcodeScannerVideo');
-    const loading = document.getElementById('scannerLoading');
-    const statusDiv = document.getElementById('scannerStatus');
-    const statusText = document.getElementById('scannerStatusText');
-    const errorDiv = document.getElementById('scannerError');
-    const guide = document.getElementById('scanner-guide');
-    
-    // Show loading state
-    loading.style.display = 'block';
-    statusDiv.style.display = 'block';
-    statusText.textContent = 'Starting camera...';
-    errorDiv.style.display = 'none';
-    
-    // Mobile-optimized camera constraints
-    const constraints = {
-      video: {
-        facingMode: isFrontCamera ? 'user' : 'environment',
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
-        frameRate: { ideal: 30 }
-      }
-    };
-    
-    // Try to get camera stream
     try {
-      barcodeStream = await navigator.mediaDevices.getUserMedia(constraints);
-    } catch (error) {
-      // Fallback to any camera
-      barcodeStream = await navigator.mediaDevices.getUserMedia({ video: true });
-    }
-    
-    // Setup video element
-    video.srcObject = barcodeStream;
-    video.setAttribute('playsinline', 'true');
-    video.setAttribute('muted', 'true');
-    
-    // When video is ready
-    video.onloadedmetadata = () => {
-      video.play().then(() => {
-        loading.style.display = 'none';
+        // Stop any existing stream
+        if (simpleStream) {
+            simpleStream.getTracks().forEach(track => track.stop());
+        }
+        
+        // Try to get camera with back camera preference
+        const constraints = {
+            video: {
+                facingMode: 'environment', // Back camera
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        };
+        
+        simpleStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = simpleStream;
         video.style.display = 'block';
-        guide.style.display = 'block';
-        statusText.textContent = 'Ready to scan. Position barcode in frame.';
+        statusDiv.style.display = 'none';
         
         // Start scanning
-        initBarcodeReader();
-      }).catch(err => {
-        console.error('Video play error:', err);
-        showManualInputFallback();
-      });
-    };
-    
-    // Handle video errors
-    video.onerror = (error) => {
-      console.error('Video error:', error);
-      showManualInputFallback();
-    };
-    
-  } catch (error) {
-    console.error('Scanner initialization error:', error);
-    document.getElementById('scannerLoading').style.display = 'none';
-    document.getElementById('scannerError').innerHTML = `
-      <i class="bi bi-camera-off"></i>
-      <strong>Camera Error:</strong> ${error.message || 'Unable to access camera'}
-    `;
-    document.getElementById('scannerError').style.display = 'block';
-    showManualInputFallback();
-  }
-}
-
-// Show manual input fallback
-function showManualInputFallback() {
-  document.getElementById('manualInputFallback').style.display = 'block';
-  document.getElementById('scannerLoading').style.display = 'none';
-  document.getElementById('scannerStatus').style.display = 'none';
-}
-
-// Use manually entered barcode
-function useManualBarcode() {
-  const manualInput = document.getElementById('manualBarcodeInput');
-  const code = manualInput.value.trim();
-  
-  if (code) {
-    detectedBarcodeValue = code;
-    showBarcodeResult(code, 'Manual Entry');
-  }
-}
-
-// Initialize barcode reader (using ZXing)
-function initBarcodeReader() {
-  if (!window.ZXing) {
-    loadZXingLibrary();
-    return;
-  }
-  
-  barcodeReader = new ZXing.BrowserMultiFormatReader();
-  isScanning = true;
-  
-  // Start scanning loop
-  scanBarcodeLoop();
-}
-
-// Load ZXing library dynamically
-function loadZXingLibrary() {
-  if (window.ZXing) return;
-  
-  const script = document.createElement('script');
-  script.src = 'https://unpkg.com/@zxing/library@latest/umd/index.min.js';
-  script.onload = () => {
-    if (!barcodeReader) {
-      barcodeReader = new ZXing.BrowserMultiFormatReader();
-      isScanning = true;
-      scanBarcodeLoop();
+        simpleScannerActive = true;
+        scanSimpleCode();
+        
+    } catch (error) {
+        console.error('Camera error:', error);
+        statusDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-camera-video-off"></i>
+                <strong>Camera Error:</strong> ${error.message || 'Cannot access camera'}
+            </div>
+        `;
+        
+        // Show manual input option
+        document.getElementById('simpleManualInput').style.display = 'block';
     }
-  };
-  script.onerror = () => {
-    console.error('Failed to load ZXing library');
-    document.getElementById('scannerError').innerHTML = `
-      <i class="bi bi-exclamation-triangle"></i>
-      <strong>Scanner Library Error:</strong> Failed to load barcode scanner
-    `;
-    document.getElementById('scannerError').style.display = 'block';
-  };
-  document.head.appendChild(script);
 }
 
-// Scanning loop (optimized for mobile)
-function scanBarcodeLoop() {
-  if (!isScanning) return;
-  
-  const video = document.getElementById('barcodeScannerVideo');
-  const canvas = document.getElementById('barcodeScannerCanvas');
-  const ctx = canvas.getContext('2d');
-  
-  if (video.readyState >= video.HAVE_CURRENT_DATA) {
+// Simple scanning using image capture and basic pattern matching
+function scanSimpleCode() {
+    if (!simpleScannerActive) return;
+    
+    const video = document.getElementById('simpleScannerVideo');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Check if video is ready
+    if (!video.videoWidth || !video.videoHeight) {
+        setTimeout(() => scanSimpleCode(), 100);
+        return;
+    }
+    
     // Set canvas size
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -4691,241 +4496,329 @@ function scanBarcodeLoop() {
     // Draw video frame
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     
-    // Try to decode
+    // Get image data
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    
+    // Try to detect barcode pattern (simple brightness detection)
+    const code = detectBarcodePattern(imageData);
+    
+    if (code && code.length > 5) { // Minimum length for valid code
+        onSimpleCodeDetected(code);
+    } else {
+        // Continue scanning
+        requestAnimationFrame(() => scanSimpleCode());
+    }
+}
+
+// Basic barcode pattern detection
+function detectBarcodePattern(imageData) {
+    // This is a simplified detection - in production, use a library like ZXing
+    // For now, we'll return null and rely on manual input
+    
+    // Check if we should use ZXing (load it dynamically)
+    if (typeof window.ZXing === 'undefined') {
+        return null; // Library not loaded
+    }
+    
     try {
-      const luminanceSource = new ZXing.RGBLuminanceSource(canvas, canvas.width, canvas.height);
-      const binaryBitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(luminanceSource));
-      const result = barcodeReader.decode(binaryBitmap);
-      
-      if (result) {
-        handleBarcodeDetected(result);
-        return;
-      }
+        const codeReader = new ZXing.BrowserMultiFormatReader();
+        const result = codeReader.decodeFromImageData(imageData);
+        return result ? result.text : null;
     } catch (error) {
-      // No barcode found, continue scanning
+        return null;
     }
-  }
-  
-  // Continue scanning with requestAnimationFrame for smooth performance
-  if (isScanning) {
-    scannerInterval = requestAnimationFrame(scanBarcodeLoop);
-  }
 }
 
-// Handle detected barcode
-function handleBarcodeDetected(code) {
-  isScanning = false;
-  detectedBarcodeValue = code.getText();
-  
-  // Stop scanning loop
-  if (scannerInterval) {
-    cancelAnimationFrame(scannerInterval);
-    scannerInterval = null;
-  }
-  
-  // Show result
-  showBarcodeResult(code.getText(), code.getBarcodeFormat());
-  
-  // Play success sound
-  playBeepSound();
-  
-  // Stop camera to save battery
-  stopBarcodeScanner();
-}
-
-// Show barcode result
-function showBarcodeResult(code, format) {
-  document.getElementById('scanner-guide').style.display = 'none';
-  document.getElementById('scannerStatus').style.display = 'none';
-  document.getElementById('detectedCode').textContent = code;
-  document.getElementById('detectedFormat').textContent = `Format: ${format}`;
-  document.getElementById('scannerResult').style.display = 'block';
-  document.getElementById('useBarcodeBtn').style.display = 'inline-block';
-  document.getElementById('rescanBtn').style.display = 'inline-block';
-  
-  // Scroll result into view on mobile
-  document.getElementById('scannerResult').scrollIntoView({ 
-    behavior: 'smooth', 
-    block: 'nearest' 
-  });
-}
-
-// Copy barcode to clipboard
-function copyBarcode() {
-  const code = document.getElementById('detectedCode').textContent;
-  navigator.clipboard.writeText(code).then(() => {
-    const originalText = event.target.innerHTML;
-    event.target.innerHTML = '<i class="bi bi-check-lg"></i>';
-    setTimeout(() => {
-      event.target.innerHTML = originalText;
-    }, 2000);
-  });
-}
-
-// Use detected barcode
-function useDetectedBarcode() {
-  if (detectedBarcodeValue) {
-    if (currentScanTarget === 'sku') {
-      document.getElementById('sku-input').value = detectedBarcodeValue;
-    } else if (currentScanTarget === 'barcode') {
-      document.getElementById('barcode-input').value = detectedBarcodeValue;
+// Code detected
+function onSimpleCodeDetected(code) {
+    console.log('Code detected:', code);
+    simpleDetectedCode = code;
+    simpleScannerActive = false;
+    
+    // Stop camera
+    if (simpleStream) {
+        simpleStream.getTracks().forEach(track => track.stop());
+        simpleStream = null;
     }
-  }
-  closeBarcodeScanner();
-}
-
-// Toggle between front and back camera
-function toggleCamera() {
-  isFrontCamera = !isFrontCamera;
-  restartScanner();
-}
-
-// Restart scanner
-function restartScanner() {
-  // Reset states
-  isScanning = false;
-  if (scannerInterval) {
-    cancelAnimationFrame(scannerInterval);
-    scannerInterval = null;
-  }
-  
-  // Stop current stream
-  if (barcodeStream) {
-    barcodeStream.getTracks().forEach(track => track.stop());
-    barcodeStream = null;
-  }
-  
-  // Reset UI
-  resetBarcodeScannerUI();
-  
-  // Restart
-  setTimeout(startBarcodeScanner, 500);
-}
-
-// Reset scanner UI
-function resetBarcodeScanner() {
-  const elements = [
-    'barcodeScannerVideo',
-    'scanner-guide',
-    'scannerStatus',
-    'scannerError',
-    'scannerLoading',
-    'scannerResult',
-    'useBarcodeBtn',
-    'rescanBtn',
-    'manualInputFallback',
-    'mobilePermissionPrompt'
-  ];
-  
-  elements.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-  
-  // Clear values
-  detectedBarcodeValue = null;
-  
-  // Clear manual input
-  const manualInput = document.getElementById('manualBarcodeInput');
-  if (manualInput) manualInput.value = '';
-}
-
-// Stop barcode scanner
-function stopBarcodeScanner() {
-  isScanning = false;
-  
-  if (scannerInterval) {
-    cancelAnimationFrame(scannerInterval);
-    scannerInterval = null;
-  }
-  
-  if (barcodeStream) {
-    barcodeStream.getTracks().forEach(track => track.stop());
-    barcodeStream = null;
-  }
-  
-  if (barcodeReader) {
-    barcodeReader.reset();
-  }
-  
-  const video = document.getElementById('barcodeScannerVideo');
-  if (video) {
-    video.srcObject = null;
-  }
-}
-
-// Close barcode scanner
-function closeBarcodeScanner() {
-  stopBarcodeScanner();
-  
-  if (barcodeScannerModal) {
-    barcodeScannerModal.hide();
-  }
-  
-  // Clean up modal backdrop
-  setTimeout(() => {
-    const backdrops = document.querySelectorAll('.modal-backdrop');
-    backdrops.forEach(backdrop => backdrop.remove());
-    document.body.classList.remove('modal-open');
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-  }, 300);
-}
-
-// Play beep sound (mobile compatible)
-function playBeepSound() {
-  try {
-    // Try to use Web Audio API
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
     
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    // Update UI
+    document.getElementById('simpleDetectedCode').textContent = code;
+    document.getElementById('simpleScannerResult').style.display = 'block';
+    document.getElementById('simpleUseCodeBtn').style.display = 'inline-block';
     
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
-    gainNode.gain.value = 0.3;
-    
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.1);
-  } catch (error) {
-    // Fallback: use HTML5 audio if available
+    // Play success sound
+    playSimpleBeep();
+}
+
+// Play beep sound
+function playSimpleBeep() {
     try {
-      const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');
-      audio.volume = 0.3;
-      audio.play();
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.3;
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.1);
     } catch (e) {
-      console.log('Audio not supported');
+        // Audio not supported - silent fail
     }
-  }
 }
 
-// Handle modal close events
-document.getElementById('barcodeScannerModal').addEventListener('hidden.bs.modal', function() {
-  stopBarcodeScanner();
-  resetBarcodeScanner();
+// Copy code to clipboard
+function copySimpleBarcode() {
+    if (!simpleDetectedCode) return;
+    
+    navigator.clipboard.writeText(simpleDetectedCode)
+        .then(() => {
+            const copyBtn = event.target.closest('button');
+            if (copyBtn) {
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+                copyBtn.classList.add('btn-success');
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                    copyBtn.classList.remove('btn-success');
+                }, 2000);
+            }
+        })
+        .catch(err => {
+            console.error('Copy failed:', err);
+        });
+}
+
+// Use detected code
+function useSimpleDetectedCode() {
+    if (!simpleDetectedCode || !simpleTargetField) return;
+    
+    // Find the target input field
+    const targetInput = document.getElementById(simpleTargetField);
+    if (targetInput) {
+        targetInput.value = simpleDetectedCode;
+        targetInput.focus();
+        
+        // Trigger any validation or change events
+        targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+        targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    
+    closeSimpleScanner();
+}
+
+// Use manual input
+function useSimpleManualBarcode() {
+    const input = document.getElementById('simpleManualInputField');
+    const code = input.value.trim();
+    
+    if (!code) {
+        alert('Please enter a code');
+        input.focus();
+        return;
+    }
+    
+    simpleDetectedCode = code;
+    useSimpleDetectedCode();
+}
+
+// Close scanner
+function closeSimpleScanner() {
+    simpleScannerActive = false;
+    
+    // Stop camera
+    if (simpleStream) {
+        simpleStream.getTracks().forEach(track => track.stop());
+        simpleStream = null;
+    }
+    
+    // Hide modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('simpleBarcodeScanner'));
+    if (modal) {
+        modal.hide();
+    }
+}
+
+// Load ZXing library when needed
+function loadZXingLibrary() {
+    return new Promise((resolve, reject) => {
+        if (window.ZXing) {
+            resolve();
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/index.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+// ========================================
+// UPDATE YOUR EXISTING FORM FIELDS
+// ========================================
+
+// Replace your existing SKU field scan button with:
+function setupScanButtons() {
+    // For SKU field
+    const skuScanBtn = document.querySelector('#sku-value-container button');
+    if (skuScanBtn) {
+        skuScanBtn.onclick = function() {
+            openSimpleScanner('sku-input');
+        };
+    }
+    
+    // For barcode field
+    const barcodeScanBtn = document.querySelector('#barcode-field button');
+    if (barcodeScanBtn) {
+        barcodeScanBtn.onclick = function() {
+            openSimpleScanner('barcode-input');
+        };
+    }
+    
+    // For product code in sales
+    const productCodeScanBtn = document.querySelector('#productCode ~ button');
+    if (productCodeScanBtn) {
+        productCodeScanBtn.onclick = function() {
+            openSimpleScanner('productCode');
+        };
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Load ZXing library for better scanning
+    loadZXingLibrary().catch(() => {
+        console.log('ZXing library failed to load, using basic scanning');
+    });
+    
+    setupScanButtons();
 });
 
-// Handle page visibility changes (for mobile)
-document.addEventListener('visibilitychange', function() {
-  if (document.hidden) {
-    stopBarcodeScanner();
-  }
-});
+// ========================================
+// ALTERNATIVE: SIMPLE FILE-BASED SCANNER
+// ========================================
 
-// Handle orientation changes on mobile
-window.addEventListener('orientationchange', function() {
-  if (isScanning) {
+function openFileScanner(targetFieldId) {
+    // Create a hidden file input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment'; // Use camera on mobile
+    input.style.display = 'none';
+    
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        // Read the image
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            processImageForBarcode(event.target.result, targetFieldId);
+        };
+        reader.readAsDataURL(file);
+    };
+    
+    document.body.appendChild(input);
+    input.click();
+    document.body.removeChild(input);
+}
+
+async function processImageForBarcode(imageData, targetFieldId) {
+    try {
+        // Load ZXing if not already loaded
+        if (!window.ZXing) {
+            await loadZXingLibrary();
+        }
+        
+        const codeReader = new ZXing.BrowserMultiFormatReader();
+        
+        // Create image element
+        const img = new Image();
+        img.onload = function() {
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            
+            // Get image data
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            // Decode barcode
+            codeReader.decodeFromImageData(imageData)
+                .then(result => {
+                    if (result && result.text) {
+                        const targetInput = document.getElementById(targetFieldId);
+                        if (targetInput) {
+                            targetInput.value = result.text;
+                            targetInput.focus();
+                            showToast(`✅ Code detected: ${result.text}`, 'success');
+                        }
+                    } else {
+                        showToast('No barcode found in image', 'warning');
+                    }
+                })
+                .catch(() => {
+                    showToast('Could not read barcode from image', 'error');
+                });
+        };
+        
+        img.src = imageData;
+        
+    } catch (error) {
+        console.error('Image processing error:', error);
+        showToast('Error processing image', 'error');
+    }
+}
+
+// ========================================
+// TOAST NOTIFICATION HELPER
+// ========================================
+
+function showToast(message, type = 'success') {
+    // Remove existing toast
+    const existingToast = document.querySelector('.toast-message');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    // Create new toast
+    const toast = document.createElement('div');
+    toast.className = `toast-message ${type}`;
+    toast.textContent = message;
+    
+    // Add icon
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️'
+    };
+    toast.textContent = `${icons[type] || ''} ${message}`;
+    
+    document.body.appendChild(toast);
+    
+    // Show toast
+    setTimeout(() => toast.classList.add('show'), 100);
+    
+    // Auto-hide
     setTimeout(() => {
-      if (isScanning) {
-        restartScanner();
-      }
-    }, 300);
-  }
-});
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400);
+    }, 3000);
+}
 
-
+// Export functions to window
+window.openSimpleScanner = openSimpleScanner;
+window.openFileScanner = openFileScanner;
+window.closeSimpleScanner = closeSimpleScanner;
 
 
 
@@ -4935,7 +4828,6 @@ window.addEventListener('orientationchange', function() {
 // ================================
 // FILTER PRODUCTS - CLEAN VERSION
 // ================================
-// ====================================
 // ====================================
 
 /**
