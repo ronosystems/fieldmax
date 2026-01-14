@@ -1921,11 +1921,24 @@ def admin_dashboard(request):
     context = {}
 
     # ============================================
+    # ✅ ADD ROLES TO CONTEXT (ADD THIS SECTION)
+    # ============================================
+    from users.models import Role
+    
+    try:
+        # Get all roles from database
+        context["roles"] = Role.objects.all().order_by('name')
+        logger.info(f"✅ Loaded {context['roles'].count()} roles for dashboard")
+    except Exception as e:
+        logger.error(f"❌ Error loading roles: {str(e)}")
+        # Fallback to empty queryset
+        context["roles"] = Role.objects.none()
+
+    # ============================================
     # CURRENT TIME CALCULATIONS
     # ============================================
     now = timezone.now()
-    
-    # Calculate start of today
+
     start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
     end_of_day = start_of_day + timezone.timedelta(days=1)
     
