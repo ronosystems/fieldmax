@@ -9675,6 +9675,548 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
+
+
+// ====================================
+// ====================================
+// DASHBOARD AUTO-RELOAD SYSTEM
+// ====================================
+// ====================================
+
+/**
+ * Auto-reload system for Fieldmax Dashboard
+ * Provides multiple strategies for keeping data fresh
+ */
+
+// ============================================
+// STRATEGY 1: EVENT-BASED RELOAD
+// ============================================
+const DashboardReloader = {
+  // Track last update time
+  lastUpdate: Date.now(),
+  
+  // Reload specific sections
+  reloadSection: function(sectionId) {
+    console.log(`🔄 Reloading section: ${sectionId}`);
+    
+    switch(sectionId) {
+      case 'dashboard':
+        this.reloadDashboardStats();
+        this.reloadRecentProducts();
+        this.reloadRecentSales();
+        this.reloadCharts();
+        break;
+      case 'product-list':
+        this.reloadProductList();
+        break;
+      case 'sales-list':
+        this.reloadSalesList();
+        break;
+      case 'users-list':
+        this.reloadUsersList();
+        break;
+      default:
+        console.log('No reload method for:', sectionId);
+    }
+  },
+  
+  // Reload dashboard statistics
+  reloadDashboardStats: function() {
+    fetch('/inventory/api/dashboard-stats/', {
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Update stat cards
+        document.getElementById('totalProductsCount').textContent = data.stats.total_products || 0;
+        document.getElementById('totalSalesCount').textContent = data.stats.total_sales || 0;
+        document.getElementById('totalSalesValue').textContent = data.stats.total_sales_value || '0.00';
+        document.getElementById('totalProfit').textContent = data.stats.total_profit || '0.00';
+        document.getElementById('totalUsersCount').textContent = data.stats.total_users || 0;
+        
+        console.log('✅ Dashboard stats updated');
+      }
+    })
+    .catch(err => console.error('Stats reload error:', err));
+  },
+  
+  // Reload product list
+  reloadProductList: function() {
+    fetch('/inventory/api/products-list/', {
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        this.updateProductTable(data.products);
+        this.updateProductStats(data.stats);
+        console.log('✅ Product list updated');
+      }
+    })
+    .catch(err => console.error('Product list reload error:', err));
+  },
+  
+  // Update product table
+  updateProductTable: function(products) {
+    const tbody = document.querySelector('#productsTable tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = products.map(product => this.createProductRow(product)).join('');
+  },
+  
+  // Create product row HTML
+  createProductRow: function(product) {
+    const statusBadge = this.getStatusBadge(product);
+    const stockInfo = this.getStockInfo(product);
+    const marginBadge = this.getMarginBadge(product.margin_pct);
+    
+    return `
+      <tr class="product-row" 
+          id="product-row-${product.id}"
+          data-product-id="${product.id}"
+          data-category="${product.category_id}"
+          data-stock-status="${product.status}"
+          data-type="${product.is_single ? 'single' : 'bulk'}">
+        <td><code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-weight: 600;">${product.product_code}</code></td>
+        <td>${product.is_single ? '<span class="badge" style="background: #3b82f6; color: white;"><i class="bi bi-tag"></i> Single</span>' : '<span class="badge" style="background: #8b5cf6; color: white;"><i class="bi bi-box-seam"></i> Bulk</span>'}</td>
+        <td class="product-name"><strong>${product.name}</strong></td>
+        <td><span class="badge bg-secondary">${product.category}</span></td>
+        <td>${statusBadge}</td>
+        <td class="product-quantity">${stockInfo}</td>
+        <td class="product-buying-price"><strong style="color:#10b981;">KSH ${parseFloat(product.buying_price).toFixed(2)}</strong></td>
+        <td class="product-selling-price"><strong style="color:#10b981;">KSH ${parseFloat(product.selling_price).toFixed(2)}</strong></td>
+        <td>${marginBadge}</td>
+        <td class="product-owner"><div style="display: flex; align-items: center; gap: 6px;"><i class="bi bi-person-circle" style="color: #6c757d;"></i><span>${product.owner}</span></div></td>
+        <td><span style="color: #6c757d;">${product.created_at}</span></td>
+      </tr>
+    `;
+  },
+  
+  // Get status badge HTML
+  getStatusBadge: function(product) {
+    if (product.is_single) {
+      return product.status === 'sold' 
+        ? '<span class="badge badge-danger"><i class="bi bi-x-circle-fill"></i> Sold Out</span>'
+        : '<span class="badge badge-success"><i class="bi bi-check-circle-fill"></i> In Stock</span>';
+    } else {
+      if (product.quantity === 0) {
+        return '<span class="badge badge-danger"><i class="bi bi-x-circle-fill"></i> Out of Stock</span>';
+      } else if (product.quantity <= 5) {
+        return '<span class="badge badge-warning"><i class="bi bi-exclamation-triangle-fill"></i> Low Stock</span>';
+      } else {
+        return '<span class="badge badge-success"><i class="bi bi-check-circle-fill"></i> In Stock</span>';
+      }
+    }
+  },
+  
+  // Get stock info HTML
+  getStockInfo: function(product) {
+    if (product.is_single) {
+      return product.status === 'sold'
+        ? '<strong style="color: #dc3545; font-weight: bold;"><i class="bi bi-x-circle-fill"></i> SOLD</strong>'
+        : '<strong style="color: #28a745; font-weight: bold;"><i class="bi bi-check-circle-fill"></i> Available</strong>';
+    } else {
+      if (product.quantity > 5) {
+        return `<strong style="color: #28a745; font-weight: bold;">${product.quantity} units</strong>`;
+      } else if (product.quantity > 0) {
+        return `<strong style="color: #ffc107; font-weight: bold;">${product.quantity} units (Low)</strong>`;
+      } else {
+        return '<strong style="color: #dc3545; font-weight: bold;">0 units (Out)</strong>';
+      }
+    }
+  },
+  
+  // Get margin badge HTML
+  getMarginBadge: function(marginPct) {
+    const badgeClass = marginPct >= 30 ? 'margin-high' : marginPct >= 15 ? 'margin-medium' : 'margin-low';
+    return `<span class="badge ${badgeClass}">+${marginPct.toFixed(0)}%</span>`;
+  },
+  
+  // Update product stats
+  updateProductStats: function(stats) {
+    if (document.getElementById('totalProductsCount')) {
+      document.getElementById('totalProductsCount').textContent = stats.total || 0;
+    }
+    if (document.getElementById('inStockCount')) {
+      document.getElementById('inStockCount').textContent = stats.in_stock || 0;
+    }
+    if (document.getElementById('lowStockCount')) {
+      document.getElementById('lowStockCount').textContent = stats.low_stock || 0;
+    }
+    if (document.getElementById('outOfStockCount')) {
+      document.getElementById('outOfStockCount').textContent = stats.out_of_stock || 0;
+    }
+  },
+  
+  // Reload sales list
+  reloadSalesList: function() {
+    fetch('/sales/api/sales-list/', {
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        this.updateSalesTable(data.sales);
+        this.updateSalesStats(data.stats);
+        console.log('✅ Sales list updated');
+      }
+    })
+    .catch(err => console.error('Sales list reload error:', err));
+  },
+  
+  // Update sales table
+  updateSalesTable: function(sales) {
+    const tbody = document.querySelector('#salesTable tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = sales.map(sale => this.createSaleRow(sale)).join('');
+  },
+  
+  // Create sale row HTML
+  createSaleRow: function(sale) {
+    return `
+      <tr class="sale-row"
+          id="sale-row-${sale.sale_id}"
+          data-status="${sale.is_reversed ? 'reversed' : 'active'}"
+          data-type="${sale.has_sku_items ? 'single' : 'bulk'}"
+          data-seller="${sale.seller_id}"
+          data-sale-id="${sale.sale_id}">
+        <td>
+          <strong>#${sale.sale_id}</strong>
+          ${sale.is_reversed ? '<span class="badge badge-warning" style="font-size: 10px; background:#fef3c7; color:#92400e;"><i class="bi bi-arrow-counterclockwise"></i> REVERSED</span>' : ''}
+        </td>
+        <td>${sale.etr_receipt_number}</td>
+        <td>${sale.buyer_name || 'Walk-in'}</td>
+        <td><strong style="color:#10b981;">${sale.total_amount}</strong></td>
+        <td>${sale.seller_username}</td>
+        <td>${sale.sale_date}</td>
+        <td style="text-align: center;">
+          <div class="action-buttons" style="display: flex; gap: 0.5rem; justify-content: center;">
+            ${!sale.is_reversed ? `
+              <a href="#" class="reverse-sale-btn btn btn-warning btn-sm" data-sale-id="${sale.sale_id}">Reverse Sale</a>
+              <a href="/sales/sale/${sale.sale_id}/etr/" target="_blank" class="btn btn-primary"><i class="bi bi-receipt"></i> View Receipt</a>
+            ` : '<span class="text-muted">Reversed</span>'}
+          </div>
+        </td>
+      </tr>
+    `;
+  },
+  
+  // Update sales stats
+  updateSalesStats: function(stats) {
+    if (document.getElementById('dailySalesCount')) {
+      document.getElementById('dailySalesCount').textContent = stats.daily_count || 0;
+    }
+    if (document.getElementById('weeklySalesCount')) {
+      document.getElementById('weeklySalesCount').textContent = stats.weekly_count || 0;
+    }
+    if (document.getElementById('monthlySalesCount')) {
+      document.getElementById('monthlySalesCount').textContent = stats.monthly_count || 0;
+    }
+    if (document.getElementById('activeSalesCount')) {
+      document.getElementById('activeSalesCount').textContent = stats.active_count || 0;
+    }
+    if (document.getElementById('reversedSalesCount')) {
+      document.getElementById('reversedSalesCount').textContent = stats.reversed_count || 0;
+    }
+  },
+  
+  // Reload recent products
+  reloadRecentProducts: function() {
+    fetch('/inventory/api/recent-products/', {
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        const tbody = document.querySelector('#dashboard #productsTable tbody');
+        if (tbody) {
+          tbody.innerHTML = data.products.map(p => this.createProductRow(p)).join('');
+        }
+        console.log('✅ Recent products updated');
+      }
+    })
+    .catch(err => console.error('Recent products reload error:', err));
+  },
+  
+  // Reload recent sales
+  reloadRecentSales: function() {
+    fetch('/sales/api/recent-sales/', {
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        const tbody = document.querySelector('#dashboard .data-table tbody');
+        if (tbody && tbody.closest('.dashboard-section')) {
+          tbody.innerHTML = data.sales.map(s => this.createRecentSaleRow(s)).join('');
+        }
+        console.log('✅ Recent sales updated');
+      }
+    })
+    .catch(err => console.error('Recent sales reload error:', err));
+  },
+  
+  // Create recent sale row
+  createRecentSaleRow: function(sale) {
+    return `
+      <tr>
+        <td>
+          <strong>#${sale.sale_id}</strong>
+          ${sale.is_reversed ? '<span class="badge badge-warning" style="font-size: 10px;"><i class="bi bi-arrow-counterclockwise"></i> REVERSED</span>' : ''}
+        </td>
+        <td>${sale.etr_receipt_number}</td>
+        <td>${sale.buyer_name || 'Walk-in'}</td>
+        <td>${sale.total_amount}</td>
+        <td>${sale.seller_username}</td>
+        <td>${sale.sale_date}</td>
+        <td>
+          ${sale.is_reversed ? '<span class="btn btn-secondary disabled">ETR Returned</span>' : `
+            ${sale.batch_id ? 
+              `<a href="/sales/batch/${sale.batch_id}/receipt/" class="btn btn-primary">View Receipt (${sale.batch_total_sales} items)</a>` :
+              `<a href="/sales/sale/${sale.sale_id}/etr/" class="btn btn-primary">View Receipt</a>`
+            }
+          `}
+        </td>
+      </tr>
+    `;
+  },
+  
+  // Reload charts
+  reloadCharts: function() {
+    // Charts will be reinitialized when dashboard stats are updated
+    console.log('✅ Charts will refresh with page');
+  },
+  
+  // Reload users list
+  reloadUsersList: function() {
+    fetch('/users/api/users-list/', {
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        this.updateUsersTable(data.users);
+        console.log('✅ Users list updated');
+      }
+    })
+    .catch(err => console.error('Users list reload error:', err));
+  },
+  
+  // Update users table
+  updateUsersTable: function(users) {
+    const tbody = document.querySelector('#usersTable tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = users.map(user => this.createUserRow(user)).join('');
+  },
+  
+  // Create user row
+  createUserRow: function(user) {
+    const roleBadge = this.getUserRoleBadge(user.role);
+    const statusBadge = user.is_active 
+      ? '<span class="badge badge-success"><i class="bi bi-check-circle-fill"></i> Active</span>'
+      : '<span class="badge badge-danger"><i class="bi bi-x-circle-fill"></i> Inactive</span>';
+    
+    return `
+      <tr class="user-row" 
+          id="user-row-${user.id}"
+          data-user-id="${user.id}"
+          data-role="${user.role ? user.role.toLowerCase() : 'none'}"
+          data-status="${user.is_active ? 'active' : 'inactive'}">
+        <td><code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-weight: 600;">#${user.id}</code></td>
+        <td><strong>${user.username}</strong></td>
+        <td>${user.full_name || '<span style="color: #999;">N/A</span>'}</td>
+        <td>${user.email || '<span style="color: #999;">N/A</span>'}</td>
+        <td>${roleBadge}</td>
+        <td>${user.phone || '<span style="color: #999;">N/A</span>'}</td>
+        <td>${user.id_number || '<span style="color: #999;">N/A</span>'}</td>
+        <td>${statusBadge}</td>
+        <td><span style="color: #6c757d;">${user.date_joined}</span></td>
+      </tr>
+    `;
+  },
+  
+  // Get user role badge
+  getUserRoleBadge: function(role) {
+    const badges = {
+      'Admin': '<span class="badge" style="background: #ef4444; color: white;"><i class="bi bi-shield-fill"></i> Admin</span>',
+      'Manager': '<span class="badge" style="background: #3b82f6; color: white;"><i class="bi bi-person-badge"></i> Manager</span>',
+      'Cashier': '<span class="badge" style="background: #10b981; color: white;"><i class="bi bi-cash-stack"></i> Cashier</span>',
+      'Agent': '<span class="badge" style="background: #f59e0b; color: white;"><i class="bi bi-person"></i> Agent</span>'
+    };
+    return badges[role] || '<span class="badge bg-secondary"><i class="bi bi-question-circle"></i> No Role</span>';
+  }
+};
+
+// ============================================
+// STRATEGY 2: AUTO-RELOAD AFTER OPERATIONS
+// ============================================
+
+// Extend existing form submission handlers
+function enhanceFormSubmissions() {
+  // Product form
+  const productForm = document.getElementById('addProductForm');
+  if (productForm) {
+    const originalSubmit = productForm.onsubmit;
+    productForm.addEventListener('submit', function(e) {
+      // After successful submission
+      setTimeout(() => {
+        DashboardReloader.reloadSection('dashboard');
+        DashboardReloader.reloadSection('product-list');
+      }, 1500);
+    });
+  }
+  
+  // Sale form
+  const saleForm = document.getElementById('saleForm');
+  if (saleForm) {
+    const recordBtn = document.getElementById('recordSaleBtn');
+    const addAnotherBtn = document.getElementById('addAnotherBtn');
+    
+    if (recordBtn) {
+      recordBtn.addEventListener('click', () => {
+        setTimeout(() => {
+          DashboardReloader.reloadSection('dashboard');
+          DashboardReloader.reloadSection('sales-list');
+        }, 2000);
+      });
+    }
+    
+    if (addAnotherBtn) {
+      addAnotherBtn.addEventListener('click', () => {
+        DashboardReloader.reloadSection('dashboard');
+        DashboardReloader.reloadSection('sales-list');
+      });
+    }
+  }
+  
+  // Restock form
+  const restockForm = document.getElementById('restockForm');
+  if (restockForm) {
+    restockForm.addEventListener('submit', function(e) {
+      setTimeout(() => {
+        DashboardReloader.reloadSection('product-list');
+        DashboardReloader.reloadSection('dashboard');
+      }, 1500);
+    });
+  }
+  
+  // Transfer form
+  const submitTransferBtn = document.getElementById('transferSubmitBtn');
+  if (submitTransferBtn) {
+    submitTransferBtn.addEventListener('click', () => {
+      setTimeout(() => {
+        DashboardReloader.reloadSection('product-list');
+      }, 2000);
+    });
+  }
+}
+
+// ============================================
+// STRATEGY 3: PERIODIC AUTO-REFRESH
+// ============================================
+
+const AutoRefresh = {
+  interval: null,
+  refreshRate: 30000, // 30 seconds
+  
+  start: function() {
+    if (this.interval) return;
+    
+    console.log('🔄 Starting auto-refresh (every 30s)');
+    this.interval = setInterval(() => {
+      const activeSection = document.querySelector('.content-section.active');
+      if (activeSection) {
+        const sectionId = activeSection.id;
+        DashboardReloader.reloadSection(sectionId);
+      }
+    }, this.refreshRate);
+  },
+  
+  stop: function() {
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
+      console.log('⏸️ Auto-refresh stopped');
+    }
+  },
+  
+  setRate: function(seconds) {
+    this.refreshRate = seconds * 1000;
+    if (this.interval) {
+      this.stop();
+      this.start();
+    }
+  }
+};
+
+// ============================================
+// STRATEGY 4: MANUAL REFRESH BUTTON
+// ============================================
+
+function addRefreshButton() {
+  document.querySelectorAll('.content-header').forEach(header => {
+    if (header.querySelector('.refresh-btn')) return; // Already added
+    
+    const refreshBtn = document.createElement('button');
+    refreshBtn.className = 'btn btn-sm btn-outline-primary refresh-btn';
+    refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Refresh';
+    refreshBtn.style.marginLeft = '10px';
+    
+    refreshBtn.addEventListener('click', function() {
+      const section = this.closest('.content-section');
+      if (section) {
+        const icon = this.querySelector('i');
+        icon.style.animation = 'spin 1s linear';
+        DashboardReloader.reloadSection(section.id);
+        setTimeout(() => {
+          icon.style.animation = '';
+        }, 1000);
+      }
+    });
+    
+    header.appendChild(refreshBtn);
+  });
+}
+
+// Add spin animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(style);
+
+// ============================================
+// INITIALIZE ALL SYSTEMS
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Dashboard Auto-Reload System Initializing...');
+  
+  // Enhance form submissions
+  enhanceFormSubmissions();
+  
+  // Add refresh buttons
+  addRefreshButton();
+  
+  // Start auto-refresh (optional - uncomment to enable)
+  // AutoRefresh.start();
+  
+  console.log('✅ Auto-Reload System Ready');
+  console.log('💡 Use DashboardReloader.reloadSection("section-id") to manually refresh');
+  console.log('💡 Use AutoRefresh.start() to enable periodic refresh');
+});
+
+// Make reloader globally accessible
+window.DashboardReloader = DashboardReloader;
+window.AutoRefresh = AutoRefresh;
+
+
 </script>
 
 {% endblock %}
