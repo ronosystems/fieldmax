@@ -4278,7 +4278,7 @@ strong[style*="background-color"] {
         <h3 class="stat-value" id="totalUsersCount">{{ users.count }}</h3>
       </div>
     </div>
-    
+
     <div class="stat-card stat-card-success">
       <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
       <div class="stat-content">
@@ -4286,20 +4286,28 @@ strong[style*="background-color"] {
         <h3 class="stat-value" id="activeUsersCount">{{ active_users_count }}</h3>
       </div>
     </div>
-    
+
+    <div class="stat-card stat-card-primary">
+      <div class="stat-icon"><i class="bi bi-person-workspace"></i></div>
+      <div class="stat-content">
+        <span class="stat-label">Managers</span>
+        <h3 class="stat-value" id="managerUsersCount">{{ total_cashiers|default:0 }}</h3>
+      </div>
+    </div>   
+
     <div class="stat-card stat-card-warning">
       <div class="stat-icon"><i class="bi bi-person-badge"></i></div>
       <div class="stat-content">
-        <span class="stat-label">Admins</span>
-        <h3 class="stat-value" id="adminUsersCount">{{ admin_count }}</h3>
+        <span class="stat-label">Agents</span>
+        <h3 class="stat-value" id="agentUsersCount">{{ total_agents|default:0 }}</h3>
       </div>
     </div>
     
     <div class="stat-card stat-card-primary">
       <div class="stat-icon"><i class="bi bi-person-workspace"></i></div>
       <div class="stat-content">
-        <span class="stat-label">Managers</span>
-        <h3 class="stat-value" id="managerUsersCount">{{ manager_count }}</h3>
+        <span class="stat-label">Cashiers</span>
+        <h3 class="stat-value" id="managerUsersCount">{{ total_cashiers|default:0 }}</h3>
       </div>
     </div>
   </div>
