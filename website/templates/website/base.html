@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Fieldmax Shop{% endblock %}</title>
   
-  <!-- Add this line for favicon -->
+  <!-- Favicon -->
   <link rel="icon" href="{% static 'images/LOGO.jpg' %}" type="image/jpeg">
   
   <!-- Bootstrap CSS -->
@@ -20,17 +20,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/static/manifest.json">
 
-<!-- PWA Manifest -->
-<link rel="manifest" href="/static/manifest.json">
-
-<!-- iOS PWA Support -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="FieldMax">
-<link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
-<meta name="theme-color" content="#0dcaf0">
-
+  <!-- iOS PWA Support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="FieldMax">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+  <meta name="theme-color" content="#0dcaf0">
 
   <style>
 /* Base Styles */
@@ -59,7 +57,7 @@ body {
   top: 0;
   z-index: 1001;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  height: 70px; /* Fixed height for desktop */
+  height: 70px;
 }
 
 .navbar-content {
@@ -214,12 +212,12 @@ body {
   font-size: 0.9rem;
 }
 
-/* Login Dropdown - EXACTLY LIKE CATEGORIES BUTTON */
+/* Login/User Dropdown */
 .login-dropdown-wrapper {
   position: relative;
 }
 
-.login-btn {
+.login-btn, .user-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -233,24 +231,33 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
+  border: none;
+  font-family: inherit;
 }
 
-.login-btn:hover {
+.login-btn:hover, .user-btn:hover {
   background: rgba(255, 255, 255, 0.25);
   color: #ffffff;
   transform: translateY(-1px);
 }
 
-.login-btn.active {
+.login-btn.active, .user-btn.active {
   background: rgba(255, 255, 255, 0.3);
 }
 
-.login-btn i {
+.login-btn i, .user-btn i {
   font-size: 1rem;
 }
 
-/* Login Dropdown - EXACT SAME POSITIONING AS CATEGORIES */
-.login-dropdown {
+.login-btn span, .user-btn span {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Login/User Dropdown */
+.login-dropdown, .user-dropdown {
   position: absolute;
   top: 100%;
   right: 0;
@@ -267,13 +274,13 @@ body {
   z-index: 1002;
 }
 
-.login-dropdown.show {
+.login-dropdown.show, .user-dropdown.show {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
 }
 
-.login-dropdown-header {
+.login-dropdown-header, .user-dropdown-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -282,12 +289,12 @@ body {
   border-bottom: 2px solid #0dcaf0;
 }
 
-.login-dropdown-header i {
+.login-dropdown-header i, .user-dropdown-header i {
   font-size: 1.5rem;
   color: #0dcaf0;
 }
 
-.login-dropdown-title {
+.login-dropdown-title, .user-dropdown-title {
   font-size: 1.1rem;
   font-weight: 600;
   color: #1a1f2e;
@@ -322,7 +329,7 @@ body {
   box-shadow: 0 0 0 3px rgba(13, 202, 240, 0.1);
 }
 
-.login-submit-btn {
+.login-submit-btn, .logout-submit-btn {
   width: 100%;
   padding: 0.75rem;
   background: linear-gradient(135deg, #0dcaf0 0%, #0ab4d6 100%);
@@ -340,12 +347,16 @@ body {
   margin-top: 1.25rem;
 }
 
-.login-submit-btn:hover {
+.logout-submit-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.login-submit-btn:hover, .logout-submit-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(13, 202, 240, 0.3);
 }
 
-.login-submit-btn:active {
+.login-submit-btn:active, .logout-submit-btn:active {
   transform: translateY(0);
 }
 
@@ -361,6 +372,24 @@ body {
 
 .login-error.show {
   display: block;
+}
+
+.user-info {
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.user-role-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #0dcaf0, #0ab4d6);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
 }
 
 .mobile-menu-toggle {
@@ -623,7 +652,7 @@ body {
   }
 
   .main-navbar {
-    height: 64px; /* Fixed height for tablets */
+    height: 64px;
   }
 
   .navbar-content {
@@ -694,7 +723,6 @@ body {
     right: -5px;
   }
 
-  /* Categories dropdown on tablets */
   .categories-dropdown {
     position: absolute;
     top: 100%;
@@ -702,13 +730,12 @@ body {
     margin-top: 0.5rem;
   }
 
-  /* Login dropdown on tablets - keep it visible in navbar */
   .login-dropdown-wrapper {
     display: flex;
     align-items: center;
   }
 
-  .login-dropdown {
+  .login-dropdown, .user-dropdown {
     position: absolute;
     top: 100%;
     right: 0;
@@ -724,7 +751,7 @@ body {
   }
 
   .main-navbar {
-    height: 60px; /* Fixed height for mobile */
+    height: 60px;
   }
 
   .navbar-content {
@@ -732,9 +759,9 @@ body {
     gap: 0.75rem;
   }
 
-  /* Hide text on buttons for mobile */
   .categories-toggle span,
-  .login-btn span {
+  .login-btn span,
+  .user-btn span {
     display: none;
   }
 
@@ -742,11 +769,10 @@ body {
     padding: 0.5rem;
   }
 
-  .login-btn {
+  .login-btn, .user-btn {
     padding: 0.5rem;
   }
 
-  /* Categories dropdown on mobile */
   .categories-dropdown {
     position: absolute;
     top: 100%;
@@ -755,8 +781,7 @@ body {
     width: 100%;
   }
 
-  /* Login dropdown on mobile */
-  .login-dropdown {
+  .login-dropdown, .user-dropdown {
     position: absolute;
     top: 100%;
     right: 0;
@@ -807,7 +832,7 @@ body {
   }
 
   .main-navbar {
-    height: 56px; /* Fixed height for small mobile */
+    height: 56px;
   }
 
   .categories-toggle {
@@ -815,7 +840,7 @@ body {
     padding: 0.4rem;
   }
 
-  .login-btn {
+  .login-btn, .user-btn {
     padding: 0.4rem;
   }
 
@@ -831,11 +856,11 @@ body {
   }
 
   .login-btn i,
+  .user-btn i,
   .categories-toggle i {
     font-size: 1.2rem;
   }
 
-  /* Categories dropdown on small mobile */
   .categories-dropdown {
     position: absolute;
     top: 100%;
@@ -844,8 +869,7 @@ body {
     width: 100%;
   }
 
-  /* Login dropdown on small mobile */
-  .login-dropdown {
+  .login-dropdown, .user-dropdown {
     position: absolute;
     top: 100%;
     right: 0;
@@ -985,7 +1009,6 @@ body {
   to { transform: translateX(400px); opacity: 0; }
 }
 
-
 .category-count {
   font-size: 0.75rem;
   color: #6b7280;
@@ -1010,7 +1033,6 @@ body {
   color: #0dcaf0;
 }
 
-/* Loading state for categories */
 .categories-loading {
   display: flex;
   align-items: center;
@@ -1027,8 +1049,6 @@ body {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-
-
 </style>
 </head>
 
@@ -1093,60 +1113,102 @@ body {
       </div>
     </div>
 
-    <!-- Staff Login Dropdown - OUTSIDE mobile menu -->
+    <!-- User/Login Dropdown -->
     <div class="login-dropdown-wrapper">
-      <button class="login-btn" id="loginToggle">
-        <i class="bi bi-person-circle"></i>
-        <span>STAFF LOGIN</span>
-      </button>
-      
-      <div class="login-dropdown" id="loginDropdown">
-        <div class="login-dropdown-header">
-          <i class="bi bi-shield-lock"></i>
-          <h3 class="login-dropdown-title">STAFF LOGIN</h3>
-        </div>
+      {% if user.is_authenticated %}
+        <!-- Authenticated User: Show Username -->
+        <button class="user-btn" id="userToggle">
+          <i class="bi bi-person-circle"></i>
+          <span>{{ user.username|upper }}</span>
+        </button>
         
-        <div class="login-error" id="loginError">
-          Invalid username or password
-        </div>
-        
-        <form method="post" action="{% url 'login' %}" id="staffLoginForm">
-          {% csrf_token %}
-          
-          <div class="login-form-group">
-            <label for="username" class="login-form-label">Username</label>
-            <input 
-              type="text" 
-              id="username" 
-              name="username" 
-              class="login-form-input" 
-              placeholder="Enter your username"
-              required
-            >
+        <!-- User Dropdown -->
+        <div class="user-dropdown" id="userDropdown">
+          <div class="user-dropdown-header">
+            <i class="bi bi-person-circle"></i>
+            <h3 class="user-dropdown-title">{{ user.username|upper }}</h3>
           </div>
           
-          <div class="login-form-group" style="position: relative;">
-            <label for="password" class="login-form-label">Password</label>
-            <input 
-              type="password" 
-              id="password" 
-              name="password" 
-              class="login-form-input" 
-              placeholder="Enter your password"
-              required
-              style="padding-right: 2.5rem;"
-            >
-            <i class="bi bi-eye-fill toggle-password" 
-               style="position: absolute; top: 75%; right: 10px; transform: translateY(-50%); cursor: pointer; font-size: 1.2rem; color: #6b7280;">
-            </i>
+          <div class="user-info">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+              <i class="bi bi-person-fill" style="color: #0dcaf0;"></i>
+              <span style="font-weight: 500;">{{ user.get_full_name|default:user.username }}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+              <i class="bi bi-envelope-fill" style="color: #0dcaf0;"></i>
+              <span style="font-size: 0.9rem; color: #6b7280;">{{ user.email|default:"No email" }}</span>
+            </div>
+            {% if user.is_superuser %}
+              <div class="user-role-badge">ADMIN</div>
+            {% elif user.is_staff %}
+              <div class="user-role-badge">STAFF</div>
+            {% endif %}
           </div>
           
-          <button type="submit" class="login-submit-btn">
-            <i class="bi bi-box-arrow-in-right"></i>
-            <span>Login</span>
-          </button>
-        </form>
-      </div>
+          <form method="post" action="{% url 'logout' %}" class="logout-form">
+            {% csrf_token %}
+            <button type="submit" class="logout-submit-btn">
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Logout</span>
+            </button>
+          </form>
+        </div>
+      {% else %}
+        <!-- Non-authenticated User: Show Login Button -->
+        <button class="login-btn" id="loginToggle">
+          <i class="bi bi-person-circle"></i>
+          <span>STAFF LOGIN</span>
+        </button>
+        
+        <!-- Login Form Dropdown -->
+        <div class="login-dropdown" id="loginDropdown">
+          <div class="login-dropdown-header">
+            <i class="bi bi-shield-lock"></i>
+            <h3 class="login-dropdown-title">STAFF LOGIN</h3>
+          </div>
+          
+          <div class="login-error" id="loginError">
+            Invalid username or password
+          </div>
+          
+          <form method="post" action="{% url 'login' %}" id="staffLoginForm">
+            {% csrf_token %}
+            
+            <div class="login-form-group">
+              <label for="username" class="login-form-label">Username</label>
+              <input 
+                type="text" 
+                id="username" 
+                name="username" 
+                class="login-form-input" 
+                placeholder="Enter your username"
+                required
+              >
+            </div>
+            
+            <div class="login-form-group" style="position: relative;">
+              <label for="password" class="login-form-label">Password</label>
+              <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                class="login-form-input" 
+                placeholder="Enter your password"
+                required
+                style="padding-right: 2.5rem;"
+              >
+              <i class="bi bi-eye-fill toggle-password" 
+                 style="position: absolute; top: 75%; right: 10px; transform: translateY(-50%); cursor: pointer; font-size: 1.2rem; color: #6b7280;">
+              </i>
+            </div>
+            
+            <button type="submit" class="login-submit-btn">
+              <i class="bi bi-box-arrow-in-right"></i>
+              <span>Login</span>
+            </button>
+          </form>
+        </div>
+      {% endif %}
     </div>
 
     <!-- Mobile Menu Toggle -->
@@ -1163,22 +1225,15 @@ body {
         <span>Home</span>
       </a>
       
-      <!-- Shop Link (Hidden for authenticated users) -->
-      {% if not user.is_authenticated %}
-        <a href="{% url 'shop' %}" class="nav-link">
-          <i class="bi bi-shop"></i>
-          <span>Shop</span>
-        </a>
-      {% endif %}
-      
-      <!-- Contact Link -->
-      <a href="#" class="nav-link">
-        <i class="bi bi-envelope"></i>
-        <span>Contact</span>
-      </a>
-      
-      <!-- Authenticated User Links (Staff) -->
+      <!-- Show different links based on authentication -->
       {% if user.is_authenticated %}
+        <!-- Authenticated User Links (Staff) -->
+        
+        <!-- Dashboard -->
+        <a href="{{ dashboard_url }}" class="nav-link">
+          <i class="bi bi-speedometer2"></i>
+          <span>Dashboard</span>
+        </a>
         
         <!-- Pending Orders -->
         <a href="{% url 'pending-orders-list' %}" class="nav-link cart-link">
@@ -1187,24 +1242,16 @@ body {
           <span class="cart-badge pending-orders-badge" id="pendingOrdersBadge">0</span>
         </a>
         
-        <!-- Dashboard -->
-        <a href="{{ dashboard_url }}" class="nav-link">
-          <i class="bi bi-speedometer2"></i>
-          <span>Dashboard</span>
+      {% else %}
+        <!-- Non-authenticated User Links (Customer) -->
+        
+        <!-- Shop Link -->
+        <a href="{% url 'shop' %}" class="nav-link">
+          <i class="bi bi-shop"></i>
+          <span>Shop</span>
         </a>
         
-        <!-- Logout -->
-        <form method="post" action="{% url 'logout' %}" class="nav-form">
-          {% csrf_token %}
-          <button type="submit" class="nav-link logout-btn">
-            <i class="bi bi-box-arrow-right"></i>
-            <span>Logout</span>
-          </button>
-        </form>
-        
-      {% else %}
-        
-        <!-- Shopping Cart (Customers Only) -->
+        <!-- Shopping Cart -->
         <a href="{% url 'shopping-cart' %}" class="nav-link cart-link">
           <i class="bi bi-cart3"></i>
           <span>Cart</span>
@@ -1213,6 +1260,22 @@ body {
         
       {% endif %}
       
+      <!-- Common Links -->
+      <a href="#" class="nav-link">
+        <i class="bi bi-envelope"></i>
+        <span>Contact</span>
+      </a>
+      
+      <!-- Logout (Only shown in mobile menu if authenticated) -->
+      {% if user.is_authenticated %}
+        <form method="post" action="{% url 'logout' %}" class="nav-form">
+          {% csrf_token %}
+          <button type="submit" class="nav-link logout-btn">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Logout</span>
+          </button>
+        </form>
+      {% endif %}
     </div>
   </div>
 </nav>
@@ -1349,10 +1412,6 @@ body {
 
 <!-- Custom JS -->
 <script>
-  // ========================================
-// REPLACE THE ENTIRE <script> SECTION IN YOUR BASE.HTML WITH THIS
-// ========================================
-
 // ========================================
 // MOBILE MENU FUNCTIONALITY
 // ========================================
@@ -1417,458 +1476,109 @@ window.addEventListener('orientationchange', function() {
 });
 
 // ========================================
-// GLOBAL CATEGORY FILTER SYSTEM
+// USER/LOGIN DROPDOWN FUNCTIONALITY
 // ========================================
-
-class CategoryManager {
-  constructor() {
-    this.cache = null;
-    this.cacheTimestamp = null;
-    this.cacheDuration = 5 * 60 * 1000; // 5 minutes
-    this.currentCategory = null;
-    this.listeners = [];
-    this.dropdownInitialized = false;
-  }
-
-  /**
-   * Load categories from API with caching
-   */
-  async loadCategories(forceRefresh = false) {
-    // Check cache first
-    if (!forceRefresh && this.cache && this.cacheTimestamp && 
-        (Date.now() - this.cacheTimestamp < this.cacheDuration)) {
-      console.log('[CATEGORY MANAGER] Using cached data');
-      return this.cache;
-    }
-    
-    try {
-      const response = await fetch('/api/categories/');
-      const data = await response.json();
-      
-      if (data.success) {
-        this.cache = data.categories;
-        this.cacheTimestamp = Date.now();
-        
-        // Store in localStorage for offline access
-        localStorage.setItem('categories_cache', JSON.stringify({
-          categories: this.cache,
-          timestamp: this.cacheTimestamp
-        }));
-        
-        console.log(`[CATEGORY MANAGER] Loaded ${data.categories.length} categories`);
-        return this.cache;
-      } else {
-        console.error('[CATEGORY MANAGER] Failed to load:', data.message);
-        return this.loadFromLocalStorage();
-      }
-    } catch (error) {
-      console.error('[CATEGORY MANAGER] Error loading categories:', error);
-      return this.loadFromLocalStorage();
-    }
-  }
-
-  /**
-   * Load categories from localStorage (offline fallback)
-   */
-  loadFromLocalStorage() {
-    try {
-      const stored = localStorage.getItem('categories_cache');
-      if (stored) {
-        const data = JSON.parse(stored);
-        this.cache = data.categories;
-        this.cacheTimestamp = data.timestamp;
-        console.log('[CATEGORY MANAGER] Loaded from localStorage');
-        return this.cache || [];
-      }
-    } catch (error) {
-      console.error('[CATEGORY MANAGER] Error loading from localStorage:', error);
-    }
-    return [];
-  }
-
-  /**
-   * Render categories in dropdown
-   */
-  renderCategories(categories, dropdownElement) {
-    if (!dropdownElement) return;
-    
-    // Keep header
-    const header = dropdownElement.querySelector('.categories-dropdown-header');
-    dropdownElement.innerHTML = '';
-    if (header) dropdownElement.appendChild(header);
-    
-    // Add "All Categories" option
-    const allItem = this.createCategoryItem({
-      id: 'all',
-      name: 'All Categories',
-      url: '/shop/',
-      icon: 'bi bi-grid-3x3-gap',
-      available_count: categories.length,
-      is_single_item: false
-    }, true);
-    dropdownElement.appendChild(allItem);
-    
-    // Add divider
-    const divider = document.createElement('div');
-    divider.style.cssText = 'border-top: 1px solid #e5e7eb; margin: 0.5rem 0;';
-    dropdownElement.appendChild(divider);
-    
-    // Add individual categories
-    if (categories.length === 0) {
-      const emptyItem = document.createElement('div');
-      emptyItem.className = 'category-item';
-      emptyItem.style.cssText = 'color: #6b7280; justify-content: center;';
-      emptyItem.innerHTML = `
-        <i class="bi bi-inbox"></i>
-        <span>No categories available</span>
-      `;
-      dropdownElement.appendChild(emptyItem);
-      return;
-    }
-    
-    categories.forEach(category => {
-      const item = this.createCategoryItem(category);
-      dropdownElement.appendChild(item);
-    });
-    
-    // Highlight selected category
-    this.highlightSelectedCategory(dropdownElement);
-  }
-
-  /**
-   * Create category item element
-   */
-  createCategoryItem(category, isAll = false) {
-    const item = document.createElement('a');
-    
-    // FIX: Ensure category.id is valid before constructing URL
-    if (category.id && category.id !== 'all') {
-      item.href = `/shop/?category=${category.id}`;
-    } else {
-      item.href = '/shop/';
-    }
-    
-    item.className = 'category-item';
-    item.setAttribute('data-category-id', category.id);
-    
-    const iconClass = isAll ? category.icon : 
-      (category.icon || `bi bi-${category.is_single_item ? 'phone' : 'box-seam'}`);
-    
-    item.innerHTML = `
-      <div class="category-icon">
-        <i class="${iconClass}"></i>
-      </div>
-      <div class="category-details">
-        <div class="category-name">${category.name}</div>
-      </div>
-      ${!isAll ? `<div class="category-badge">
-        <i class="bi bi-${category.is_single_item ? 'phone' : 'box-seam'}"></i>
-      </div>` : ''}
-    `;
-    
-    // Add click handler
-    item.addEventListener('click', (e) => {
-      e.preventDefault(); // Prevent default navigation
-      
-      this.selectCategory(category.id, category.name);
-      
-      // Navigate to the correct URL
-      if (category.id && category.id !== 'all') {
-        window.location.href = `/shop/?category=${category.id}`;
-      } else {
-        window.location.href = '/shop/';
-      }
-      
-      // Close dropdown
-      const dropdown = item.closest('.categories-dropdown');
-      const toggle = document.getElementById('categoriesToggle');
-      if (dropdown) dropdown.classList.remove('show');
-      if (toggle) toggle.classList.remove('active');
-    });
-    
-    return item;
-  }
-
-  /**
-   * Select a category
-   */
-  selectCategory(categoryId, categoryName) {
-    this.currentCategory = { id: categoryId, name: categoryName };
-    sessionStorage.setItem('selectedCategory', categoryId);
-    sessionStorage.setItem('selectedCategoryName', categoryName);
-    
-    console.log(`[CATEGORY MANAGER] Selected: ${categoryName} (${categoryId})`);
-    
-    // Notify listeners
-    this.notifyListeners({ id: categoryId, name: categoryName });
-  }
-
-  /**
-   * Get current selected category
-   */
-  getCurrentCategory() {
-    if (!this.currentCategory) {
-      const id = sessionStorage.getItem('selectedCategory');
-      const name = sessionStorage.getItem('selectedCategoryName');
-      if (id) {
-        this.currentCategory = { id, name };
-      }
-    }
-    return this.currentCategory;
-  }
-
-  /**
-   * Clear category selection
-   */
-  clearSelection() {
-    this.currentCategory = null;
-    sessionStorage.removeItem('selectedCategory');
-    sessionStorage.removeItem('selectedCategoryName');
-    this.notifyListeners(null);
-  }
-
-  /**
-   * Highlight selected category in dropdown
-   */
-  highlightSelectedCategory(dropdownElement) {
-    const selectedId = sessionStorage.getItem('selectedCategory');
-    if (!selectedId) return;
-    
-    const items = dropdownElement.querySelectorAll('.category-item[data-category-id]');
-    items.forEach(item => {
-      if (item.getAttribute('data-category-id') === selectedId) {
-        item.style.cssText = 'background: #f0f9ff; border-left: 4px solid #0dcaf0; padding-left: calc(1rem - 4px);';
-      }
-    });
-  }
-
-  /**
-   * Add listener for category changes
-   */
-  addListener(callback) {
-    this.listeners.push(callback);
-  }
-
-  /**
-   * Notify all listeners
-   */
-  notifyListeners(category) {
-    this.listeners.forEach(callback => {
-      try {
-        callback(category);
-      } catch (error) {
-        console.error('[CATEGORY MANAGER] Listener error:', error);
-      }
-    });
-  }
-
-  /**
-   * Get category by ID
-   */
-  async getCategoryById(categoryId) {
-    const categories = await this.loadCategories();
-    return categories.find(cat => cat.id == categoryId);
-  }
-
-  /**
-   * Search categories by name
-   */
-  async searchCategories(query) {
-    const categories = await this.loadCategories();
-    const lowerQuery = query.toLowerCase();
-    return categories.filter(cat => 
-      cat.name.toLowerCase().includes(lowerQuery)
-    );
-  }
-
-  /**
-   * Force refresh categories
-   */
-  async refresh() {
-    console.log('[CATEGORY MANAGER] Force refreshing categories...');
-    return await this.loadCategories(true);
-  }
-
-  /**
-   * Initialize dropdown with event listeners (ONLY ONCE)
-   */
-  initializeDropdown() {
-    if (this.dropdownInitialized) {
-      console.log('[CATEGORY MANAGER] Dropdown already initialized');
-      return;
-    }
-
-    const dropdown = document.getElementById('categoriesDropdown');
-    const toggle = document.getElementById('categoriesToggle');
-    
-    if (!dropdown || !toggle) {
-      console.warn('[CATEGORY MANAGER] Dropdown elements not found');
-      return;
-    }
-
-    // Handle dropdown toggle
-    toggle.addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      console.log('[CATEGORY MANAGER] Toggle clicked');
-      
-      // Reload if cache is stale
-      if (!this.cache || Date.now() - this.cacheTimestamp > this.cacheDuration) {
-        console.log('[CATEGORY MANAGER] Reloading categories...');
-        const categories = await this.loadCategories(true);
-        this.renderCategories(categories, dropdown);
-      }
-      
-      // Toggle dropdown
-      dropdown.classList.toggle('show');
-      toggle.classList.toggle('active');
-      
-      console.log('[CATEGORY MANAGER] Dropdown show:', dropdown.classList.contains('show'));
-    });
-    
-    // Close on outside click
-    document.addEventListener('click', (e) => {
-      if (!toggle.contains(e.target) && !dropdown.contains(e.target)) {
-        dropdown.classList.remove('show');
-        toggle.classList.remove('active');
-      }
-    });
-    
-    // Prevent dropdown from closing when clicking inside
-    dropdown.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
-    
-    this.dropdownInitialized = true;
-    console.log('[CATEGORY MANAGER] Dropdown initialized ✓');
-  }
-}
-
-// Create global instance
-window.categoryManager = new CategoryManager();
-
-// ========================================
-// INITIALIZE ON PAGE LOAD
-// ========================================
-document.addEventListener('DOMContentLoaded', async function() {
-  console.log('[CATEGORY MANAGER] Initializing...');
-  
-  const dropdown = document.getElementById('categoriesDropdown');
-  
-  if (!dropdown) {
-    console.warn('[CATEGORY MANAGER] Dropdown element not found');
-    return;
-  }
-  
-  // Load and render categories
-  const categories = await window.categoryManager.loadCategories();
-  window.categoryManager.renderCategories(categories, dropdown);
-  
-  // Initialize dropdown event listeners (ONLY ONCE)
-  window.categoryManager.initializeDropdown();
-});
-
-// ========================================
-// HELPER FUNCTIONS FOR OTHER PAGES
-// ========================================
-
-/**
- * Get all categories (use this in your shop page)
- */
-async function getAllCategories() {
-  return await window.categoryManager.loadCategories();
-}
-
-/**
- * Get current selected category
- */
-function getSelectedCategory() {
-  return window.categoryManager.getCurrentCategory();
-}
-
-/**
- * Listen for category changes
- */
-function onCategoryChange(callback) {
-  window.categoryManager.addListener(callback);
-}
-
-/**
- * Filter products by category
- */
-function filterByCategory(products, categoryId) {
-  if (!categoryId || categoryId === 'all') {
-    return products;
-  }
-  return products.filter(product => product.category_id == categoryId);
-}
-
-/**
- * Update page when category changes
- */
-onCategoryChange(function(category) {
-  console.log('[PAGE] Category changed:', category);
-  
-  // Dispatch custom event for other scripts to listen to
-  window.dispatchEvent(new CustomEvent('categoryChanged', {
-    detail: category
-  }));
-});
-
-// ========================================
-// UTILITY FUNCTIONS
-// ========================================
-
-function clearCategoryFilter() {
-  window.categoryManager.clearSelection();
-  
-  // Optionally reload page or update products
-  if (window.location.pathname.includes('/shop')) {
-    window.location.href = '/shop/';
-  }
-}
-
-function getCategoryBreadcrumb() {
-  const category = getSelectedCategory();
-  if (!category || category.id === 'all') {
-    return 'All Categories';
-  }
-  return category.name;
-}
-
-// Make utilities globally available
-window.clearCategoryFilter = clearCategoryFilter;
-window.getCategoryBreadcrumb = getCategoryBreadcrumb;
-window.getAllCategories = getAllCategories;
-window.getSelectedCategory = getSelectedCategory;
-window.onCategoryChange = onCategoryChange;
-window.filterByCategory = filterByCategory;
-
-console.log('[CATEGORY MANAGER] Global utilities loaded ✓');
-
-// ========================================
-// STAFF LOGIN DROPDOWN FUNCTIONALITY
-// ========================================
+const userToggle = document.getElementById('userToggle');
+const userDropdown = document.getElementById('userDropdown');
 const loginToggle = document.getElementById('loginToggle');
 const loginDropdown = document.getElementById('loginDropdown');
 
+// Handle user dropdown (authenticated)
+if (userToggle && userDropdown) {
+  userToggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    userDropdown.classList.toggle('show');
+    userToggle.classList.toggle('active');
+    
+    // Close login dropdown if open
+    if (loginDropdown && loginDropdown.classList.contains('show')) {
+      loginDropdown.classList.remove('show');
+      if (loginToggle) loginToggle.classList.remove('active');
+    }
+  });
+}
+
+// Handle login dropdown (not authenticated)
 if (loginToggle && loginDropdown) {
   loginToggle.addEventListener('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
     loginDropdown.classList.toggle('show');
     loginToggle.classList.toggle('active');
+    
+    // Close user dropdown if open
+    if (userDropdown && userDropdown.classList.contains('show')) {
+      userDropdown.classList.remove('show');
+      if (userToggle) userToggle.classList.remove('active');
+    }
   });
+}
 
-  document.addEventListener('click', function(e) {
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+  // User dropdown
+  if (userToggle && userDropdown) {
+    if (!userToggle.contains(e.target) && !userDropdown.contains(e.target)) {
+      userDropdown.classList.remove('show');
+      userToggle.classList.remove('active');
+    }
+  }
+  
+  // Login dropdown
+  if (loginToggle && loginDropdown) {
     if (!loginToggle.contains(e.target) && !loginDropdown.contains(e.target)) {
       loginDropdown.classList.remove('show');
       loginToggle.classList.remove('active');
     }
+  }
+});
+
+// Prevent dropdown from closing when clicking inside
+if (userDropdown) {
+  userDropdown.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+}
+
+if (loginDropdown) {
+  loginDropdown.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+}
+
+// ========================================
+// CATEGORIES DROPDOWN FUNCTIONALITY
+// ========================================
+const categoriesToggle = document.getElementById('categoriesToggle');
+const categoriesDropdown = document.getElementById('categoriesDropdown');
+
+if (categoriesToggle && categoriesDropdown) {
+  categoriesToggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    categoriesDropdown.classList.toggle('show');
+    categoriesToggle.classList.toggle('active');
+    
+    // Close other dropdowns
+    if (userDropdown && userDropdown.classList.contains('show')) {
+      userDropdown.classList.remove('show');
+      if (userToggle) userToggle.classList.remove('active');
+    }
+    if (loginDropdown && loginDropdown.classList.contains('show')) {
+      loginDropdown.classList.remove('show');
+      if (loginToggle) loginToggle.classList.remove('active');
+    }
   });
 
-  loginDropdown.addEventListener('click', function(e) {
+  document.addEventListener('click', function(e) {
+    if (!categoriesToggle.contains(e.target) && !categoriesDropdown.contains(e.target)) {
+      categoriesDropdown.classList.remove('show');
+      categoriesToggle.classList.remove('active');
+    }
+  });
+
+  categoriesDropdown.addEventListener('click', function(e) {
     e.stopPropagation();
   });
 }
@@ -1894,11 +1604,34 @@ togglePasswordIcons.forEach(icon => {
 });
 
 // ========================================
-// CART & PENDING ORDERS FUNCTIONALITY
+// AUTHENTICATION STATE
 // ========================================
 const isAuthenticated = "{{ user.is_authenticated }}" === "True";
+const username = "{{ user.username|escapejs }}";
 
 if (isAuthenticated) {
+  console.log(`[APP] User authenticated as: ${username}`);
+  
+  // Update page title with username
+  const pageTitle = document.querySelector('title');
+  if (pageTitle && username) {
+    const baseTitle = pageTitle.textContent;
+    if (!baseTitle.includes(username)) {
+      pageTitle.textContent = `${username} | ${baseTitle}`;
+    }
+  }
+  
+  // Update connection status to show username
+  const connectionStatus = document.getElementById('connection-status');
+  if (connectionStatus && username) {
+    const statusIcon = connectionStatus.querySelector('i');
+    const statusText = document.createElement('span');
+    statusText.textContent = ` ${username} - Online`;
+    connectionStatus.innerHTML = '';
+    connectionStatus.appendChild(statusIcon);
+    connectionStatus.appendChild(statusText);
+  }
+  
   // STAFF: Update pending orders count
   function updatePendingOrdersCount() {
     fetch('/api/pending-orders-count/')
@@ -1921,6 +1654,7 @@ if (isAuthenticated) {
 
   document.addEventListener('DOMContentLoaded', updatePendingOrdersCount);
   setInterval(updatePendingOrdersCount, 30000);
+  
 } else {
   // CUSTOMER: Update cart count
   function updateCartCount() {
@@ -1953,15 +1687,19 @@ if (isAuthenticated) {
 // ========================================
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
-    const categoriesDropdown = document.getElementById('categoriesDropdown');
-    const categoriesToggle = document.getElementById('categoriesToggle');
-    const loginDropdown = document.getElementById('loginDropdown');
-    const loginToggle = document.getElementById('loginToggle');
-    
+    // Close categories dropdown
     if (categoriesDropdown && categoriesDropdown.classList.contains('show')) {
       categoriesDropdown.classList.remove('show');
       categoriesToggle.classList.remove('active');
     }
+    
+    // Close user dropdown
+    if (userDropdown && userDropdown.classList.contains('show')) {
+      userDropdown.classList.remove('show');
+      userToggle.classList.remove('active');
+    }
+    
+    // Close login dropdown
     if (loginDropdown && loginDropdown.classList.contains('show')) {
       loginDropdown.classList.remove('show');
       loginToggle.classList.remove('active');
@@ -1970,7 +1708,7 @@ document.addEventListener('keydown', function(e) {
 });
 
 // ========================================
-// OFFLINE FUNCTIONALITY (Only for authenticated users)
+// OFFLINE FUNCTIONALITY
 // ========================================
 document.addEventListener('DOMContentLoaded', function() {
   if ('serviceWorker' in navigator) {
@@ -1979,14 +1717,13 @@ document.addEventListener('DOMContentLoaded', function() {
       .catch(err => console.error('Service Worker registration failed:', err));
   }
   
-  // FIX: Only cache offline data if user is authenticated
+  // Cache offline data if user is authenticated
   if (navigator.onLine && isAuthenticated) {
     cacheOfflineData();
   }
 });
 
 async function cacheOfflineData() {
-  // FIX: Only attempt to cache if user is authenticated
   if (!isAuthenticated) {
     console.log('[OFFLINE] Skipping offline data cache (not authenticated)');
     return;
@@ -1995,7 +1732,6 @@ async function cacheOfflineData() {
   try {
     const response = await fetch('/api/offline-data/');
     
-    // Check if response is OK before parsing
     if (!response.ok) {
       console.warn('[OFFLINE] Failed to cache offline data:', response.status);
       return;
@@ -2056,6 +1792,74 @@ function getCookie(name) {
   return cookieValue;
 }
 
+// ========================================
+// CATEGORY MANAGER (Simplified Version)
+// ========================================
+class CategoryManager {
+  constructor() {
+    this.cache = null;
+    this.cacheTimestamp = null;
+    this.cacheDuration = 5 * 60 * 1000;
+  }
+
+  async loadCategories(forceRefresh = false) {
+    if (!forceRefresh && this.cache && this.cacheTimestamp && 
+        (Date.now() - this.cacheTimestamp < this.cacheDuration)) {
+      return this.cache;
+    }
+    
+    try {
+      const response = await fetch('/api/categories/');
+      const data = await response.json();
+      
+      if (data.success) {
+        this.cache = data.categories;
+        this.cacheTimestamp = Date.now();
+        localStorage.setItem('categories_cache', JSON.stringify({
+          categories: this.cache,
+          timestamp: this.cacheTimestamp
+        }));
+        return this.cache;
+      }
+    } catch (error) {
+      console.error('[CATEGORY MANAGER] Error:', error);
+    }
+    
+    return this.loadFromLocalStorage();
+  }
+
+  loadFromLocalStorage() {
+    try {
+      const stored = localStorage.getItem('categories_cache');
+      if (stored) {
+        const data = JSON.parse(stored);
+        this.cache = data.categories;
+        this.cacheTimestamp = data.timestamp;
+        return this.cache || [];
+      }
+    } catch (error) {
+      console.error('[CATEGORY MANAGER] LocalStorage error:', error);
+    }
+    return [];
+  }
+}
+
+// Initialize category manager
+window.categoryManager = new CategoryManager();
+
+// ========================================
+// INITIALIZE ON PAGE LOAD
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('[APP] Fieldmax Shop initialized');
+  
+  // Initialize category manager
+  if (window.categoryManager) {
+    window.categoryManager.loadCategories().then(categories => {
+      console.log(`[CATEGORY MANAGER] Loaded ${categories.length} categories`);
+    });
+  }
+});
 </script>
 </body>
 </html>
