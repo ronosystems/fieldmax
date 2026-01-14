@@ -8,7 +8,8 @@ from django.core.exceptions import ValidationError
 from cloudinary.models import CloudinaryField
 from decimal import Decimal
 import logging
-
+import random
+import string
 
 
 logger = logging.getLogger(__name__)
@@ -225,18 +226,32 @@ class Product(models.Model):
             models.Index(fields=['sku_value']),
             models.Index(fields=['-created_at']),
         ]
-
+    
     def save(self, *args, **kwargs):
+        """
+        Override save to:
+        1. Auto-generate product_code
+        2. Auto-generate barcode for bulk items (if not provided)
+        3. Set price
+        4. Update status
+        """
+        
         # Auto-generate unique product_code
         if not self.product_code:
             self.product_code = self._generate_product_code()
 
-        # ✅ SET PRICE (THIS WAS MISSING)
+        # ✅ NEW: Auto-generate barcode for bulk items without barcode
+        if self.category.is_bulk_item and not self.barcode:
+            self.barcode = self._generate_barcode()
+        
+        # Set price (selling price is the display price)
         self.price = self.selling_price
         
         # Enforce single item quantity = 1
         if self.category.is_single_item:
             self.quantity = 1
+            # Clear barcode for single items
+            self.barcode = None
         
         # Auto-update status based on item type and quantity
         self._update_status()
@@ -259,6 +274,123 @@ class Product(models.Model):
             new_number = 1
 
         return f"{category_code}{str(new_number).zfill(3)}"
+
+    def _generate_barcode(self):
+        """
+        ✅ Auto-generate unique NUMERIC barcode for bulk items
+        
+        Format: 13 digits (compatible with standard barcode scanners)
+        - First 3 digits: Category ID (padded)
+        - Next 6 digits: Sequential product number
+        - Last 4 digits: Random variation
+        
+        Example: 0010000011234
+                 ^^^      ^^^^
+                 Cat ID   Random
+        """
+        max_attempts = 10
+        
+        # Get category ID (first 3 digits)
+        category_id = str(self.category.id).zfill(3)
+        
+        # Get sequential number within this category
+        product_count = Product.objects.filter(category=self.category).count()
+        sequence = str(product_count + 1).zfill(6)
+        
+        for attempt in range(max_attempts):
+            # Generate 4 random digits
+            random_digits = ''.join(random.choices(string.digits, k=4))
+            
+            # Combine: 001 + 000001 + 1234 = 0010000011234
+            barcode = f"{category_id}{sequence}{random_digits}"
+            
+            # Check if barcode already exists
+            if not Product.objects.filter(barcode=barcode).exists():
+                logger.info(f"✅ Auto-generated barcode: {barcode} for product {self.product_code}")
+                return barcode
+            
+            # If collision, increment sequence
+            sequence = str(int(sequence) + 1).zfill(6)
+        
+        # Fallback: timestamp-based (guaranteed unique)
+        import time
+        timestamp = str(int(time.time()))[-10:]  # Last 10 digits
+        barcode = f"{category_id}{timestamp}"
+        
+        logger.warning(f"⚠️ Used timestamp fallback barcode: {barcode}")
+        return barcode
+
+    def _generate_ean13_barcode(self):
+        """
+        Alternative: Generate EAN-13 compatible barcode
+        Format: 13 digits (standard retail barcode)
+        """
+        # Get category ID (padded to 3 digits)
+        category_id = str(self.category.id).zfill(3)
+        
+        # Get product sequence number (padded to 6 digits)
+        product_count = Product.objects.filter(category=self.category).count()
+        product_seq = str(product_count + 1).zfill(6)
+        
+        # Random 3 digits
+        random_digits = ''.join(random.choices(string.digits, k=3))
+        
+        # Combine: 2 (country) + 3 (category) + 6 (product) + 1 (check digit)
+        barcode_base = f"2{category_id}{product_seq}{random_digits}"
+        
+        # Calculate EAN-13 check digit
+        check_digit = self._calculate_ean13_checksum(barcode_base)
+        
+        barcode = f"{barcode_base}{check_digit}"
+        
+        # Ensure uniqueness
+        if Product.objects.filter(barcode=barcode).exists():
+            # If collision, add random variation
+            random_suffix = random.randint(0, 9)
+            barcode = f"{barcode_base[:-1]}{random_suffix}"
+            check_digit = self._calculate_ean13_checksum(barcode)
+            barcode = f"{barcode}{check_digit}"
+        
+        return barcode
+
+    def _calculate_ean13_checksum(self, barcode_12):
+        """
+        Calculate EAN-13 check digit
+        Algorithm: https://en.wikipedia.org/wiki/International_Article_Number
+        """
+        if len(barcode_12) != 12:
+            raise ValueError("EAN-13 barcode base must be 12 digits")
+        
+        odd_sum = sum(int(barcode_12[i]) for i in range(0, 12, 2))
+        even_sum = sum(int(barcode_12[i]) for i in range(1, 12, 2))
+        
+        total = odd_sum + (even_sum * 3)
+        check_digit = (10 - (total % 10)) % 10
+        
+        return str(check_digit)
+
+    def _generate_code128_barcode(self):
+        """
+        Alternative: Generate Code 128 compatible barcode
+        Format: Alphanumeric (supports letters and numbers)
+        """
+        category_code = self.category.category_code[:4].upper()
+        
+        # Sequential number within category
+        product_count = Product.objects.filter(category=self.category).count()
+        sequence = str(product_count + 1).zfill(6)
+        
+        # Random suffix
+        random_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=3))
+        
+        barcode = f"{category_code}{sequence}{random_suffix}"
+        
+        # Ensure uniqueness
+        while Product.objects.filter(barcode=barcode).exists():
+            random_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=3))
+            barcode = f"{category_code}{sequence}{random_suffix}"
+        
+        return barcode
 
     def _update_status(self):
         """
