@@ -37,8 +37,6 @@ class Supplier(models.Model):
 
 
 
-
-
 # ====================================
 # CATEGORY  MODELS
 # ====================================
@@ -67,16 +65,24 @@ class Category(models.Model):
         choices=SKU_TYPE_CHOICES,
         help_text="Type of identifier for this category"
     )
-    category_code = models.CharField(max_length=10, unique=True, blank=True)
+    category_code = models.CharField(max_length=50, unique=True, blank=True)
 
     class Meta:
         verbose_name_plural = 'Categories'
         ordering = ['name']
 
     def save(self, *args, **kwargs):
+        """
+        Auto-generate category code in format: FSL.NAME
+        Examples:
+        - CABLES → FSL.CABLES
+        - CHARGERS → FSL.CHARGERS
+        - POWERBANK → FSL.POWERBANK
+        """
         if not self.category_code:
-            first_letter = self.name.strip()[0].upper()
-            self.category_code = f"{first_letter}FSL"
+            # Convert name to uppercase and remove spaces
+            clean_name = self.name.strip().upper().replace(' ', '')
+            self.category_code = f"FSL.{clean_name}"
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -89,8 +95,6 @@ class Category(models.Model):
     @property
     def is_bulk_item(self):
         return self.item_type == 'bulk'
-
-
 
 
 
@@ -259,21 +263,27 @@ class Product(models.Model):
         super().save(*args, **kwargs)
 
     def _generate_product_code(self):
-        """Generate unique sequential product code"""
-        category_code = self.category.category_code
+        """
+        Generate unique sequential product code
+        Format: F0001, F0002, F0003, etc.
+        """
+        prefix = 'F'
         
-        # Get the highest existing number for this category
+        # Get the highest existing number across all products
         max_code = Product.objects.filter(
-            product_code__startswith=category_code
+            product_code__startswith=prefix
         ).aggregate(Max('product_code'))['product_code__max']
-
+        
         if max_code:
-            last_number = int(max_code.replace(category_code, ''))
+            # Extract the numeric part (remove 'F' prefix)
+            last_number = int(max_code.replace(prefix, ''))
             new_number = last_number + 1
         else:
+            # First product
             new_number = 1
-
-        return f"{category_code}{str(new_number).zfill(3)}"
+        
+        # Format: F + 4-digit zero-padded number
+        return f"{prefix}{str(new_number).zfill(4)}"
 
     def _generate_barcode(self):
         """
