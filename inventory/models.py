@@ -261,20 +261,25 @@ class Product(models.Model):
         self._update_status()
         
         super().save(*args, **kwargs)
-
     
     def _generate_product_code(self):
         """
         Generate unique sequential product code based on item type
         
-        BULK ITEMS:   BF0001, BF0002, BF0003, etc.
-        SINGLE ITEMS: SF0001, SF0002, SF0003, etc.
+        BULK ITEMS:   FSL0001, FSL0002, FSL0003, etc. (all bulk items share same sequence)
+        SINGLE ITEMS: Category-specific codes:
+            - PHONES     → PFSL0001, PFSL0002, PFSL0003
+            - TELEVISION → TFSL0001, TFSL0002, TFSL0003
+            - LAPTOPS    → LFSL0001, LFSL0002, LFSL0003
         """
         # Determine prefix based on category item type
         if self.category.is_bulk_item:
-            prefix = 'BF'
-        else:  # Single item
-            prefix = 'SF'
+            # All bulk items use FSL prefix
+            prefix = 'FSL'
+        else:
+            # Single items: Use first letter of category name + FSL
+            first_letter = self.category.name.strip()[0].upper()
+            prefix = f'{first_letter}FSL'
         
         # Get the highest existing number for this prefix
         max_code = Product.objects.filter(
@@ -286,11 +291,11 @@ class Product(models.Model):
             last_number = int(max_code.replace(prefix, ''))
             new_number = last_number + 1
         else:
-            # First product for this type
+            # First product for this prefix
             new_number = 1
         
-        # Format: Prefix + 4-digit zero-padded number
-        return f"{prefix}{str(new_number).zfill(4)}"
+        # Format: Prefix + 3-digit zero-padded number
+        return f"{prefix}{str(new_number).zfill(3)}"
 
     def _generate_barcode(self):
         """
