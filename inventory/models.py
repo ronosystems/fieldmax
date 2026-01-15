@@ -262,27 +262,34 @@ class Product(models.Model):
         
         super().save(*args, **kwargs)
 
+    
     def _generate_product_code(self):
         """
-        Generate unique sequential product code
-        Format: F0001, F0002, F0003, etc.
-        """
-        prefix = 'F'
+        Generate unique sequential product code based on item type
         
-        # Get the highest existing number across all products
+        BULK ITEMS:   BF0001, BF0002, BF0003, etc.
+        SINGLE ITEMS: SF0001, SF0002, SF0003, etc.
+        """
+        # Determine prefix based on category item type
+        if self.category.is_bulk_item:
+            prefix = 'BF'
+        else:  # Single item
+            prefix = 'SF'
+        
+        # Get the highest existing number for this prefix
         max_code = Product.objects.filter(
             product_code__startswith=prefix
         ).aggregate(Max('product_code'))['product_code__max']
         
         if max_code:
-            # Extract the numeric part (remove 'F' prefix)
+            # Extract the numeric part (remove prefix)
             last_number = int(max_code.replace(prefix, ''))
             new_number = last_number + 1
         else:
-            # First product
+            # First product for this type
             new_number = 1
         
-        # Format: F + 4-digit zero-padded number
+        # Format: Prefix + 4-digit zero-padded number
         return f"{prefix}{str(new_number).zfill(4)}"
 
     def _generate_barcode(self):
