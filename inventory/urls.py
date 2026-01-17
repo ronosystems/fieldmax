@@ -36,6 +36,7 @@ urlpatterns = [
     path('products/<int:pk>/edit/', views.ProductEditView.as_view(), name='product-edit'),
     path('products/<int:pk>/update/', views.ProductUpdateView.as_view(), name='product-update'),
     path('products/<int:pk>/delete/', views.ProductDeleteView.as_view(), name='product-delete'),
+    path('print-labels/', views.print_labels_view, name='print_labels'),
     
     # ============================================
     # PRODUCT TRANSFER URLS (FIXED)

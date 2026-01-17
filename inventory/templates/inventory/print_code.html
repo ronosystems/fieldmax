@@ -1,0 +1,548 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}Print Labels - FieldMax Inventory{% endblock %}
+
+{% block content %}
+<style>
+/* ==================== PRINT LABEL STYLES ==================== */
+
+/* Page Setup for Printing */
+@page {
+    size: A4;
+    margin: 0;
+}
+
+/* Print-specific styles */
+@media print {
+    /* Hide everything except print content */
+    .no-print,
+    .main-navbar,
+    .main-footer,
+    .print-header,
+    .print-actions,
+    .container-fluid,
+    .connection-status,
+    #connection-status,
+    .offline-queue-badge,
+    #notification-container,
+    .menu-overlay {
+        display: none !important;
+    }
+    
+    /* Reset body and html */
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        width: 210mm;
+        height: 297mm;
+    }
+    
+    /* Reset main content */
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+    }
+    
+    /* Show only print content area */
+    #printContentArea {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+    }
+    
+    /* Print page styling */
+    .print-page {
+        page-break-after: always;
+        box-shadow: none !important;
+        margin: 0 !important;
+        width: 210mm;
+        height: 297mm;
+        padding: 10mm;
+        background: white !important;
+    }
+    
+    .print-page:last-child {
+        page-break-after: auto;
+    }
+}
+
+/* Screen-only styles */
+@media screen {
+    /* Hide base template footer on this page */
+    .main-footer {
+        display: none !important;
+    }
+    
+    /* Main content area styling */
+    .main-content {
+        background: #f3f4f6;
+        min-height: 100vh;
+        padding-bottom: 120px; /* Space for fixed action bar */
+    }
+    
+    /* Print actions bar - FIXED AT BOTTOM */
+    .print-actions {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 3px solid #0dcaf0;
+        padding: 20px 0;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+        z-index: 99999; /* Above everything */
+    }
+}
+
+/* Print Header */
+.print-header {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.print-header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1f2e;
+    margin-bottom: 8px;
+}
+
+.print-header-title i {
+    color: #0dcaf0;
+    font-size: 28px;
+}
+
+.print-summary {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.printer-badge {
+    background: linear-gradient(135deg, #0dcaf0, #0ab4d6);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Print Page Container */
+.print-page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm;
+    background: white;
+    margin: 0 auto 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* Labels Grid */
+.labels-container {
+    display: grid;
+    gap: 5mm;
+    width: 100%;
+}
+
+/* Individual Label */
+.print-label {
+    border: 1px solid #000000;
+    background: rgb(255, 255, 255);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    box-sizing: border-box;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    padding: 2mm;
+    border-radius: 2mm;
+    gap: 1mm;
+}
+
+.label-code {
+    font-weight: 1000;
+    color: #000000;
+    font-size: 18px;
+    line-height: 1.2;
+    width: 100%;
+}
+
+.label-name {
+    color: #0055ff;
+    font-size: 10px;
+    line-height: 1.3;
+    width: 100%;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.label-barcode {
+    font-family: 'Courier New', monospace;
+    background: #00bbf9;
+    color: rgb(0, 0, 0);
+    padding: 3mm 4mm;
+    border-radius: 2mm;
+    letter-spacing: 1.5px;
+    font-size: 15px;
+    font-weight: 700;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.label-price {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 13px;
+    width: 100%;
+}
+
+.label-copy {
+    font-size: 8px;
+    color: #9ca3af;
+    width: 100%;
+}
+
+/* Page Footer */
+.page-footer {
+    position: absolute;
+    bottom: 5mm;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10px;
+    color: #9ca3af;
+}
+
+/* Action Buttons */
+.action-btn {
+    padding: 12px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+.action-btn i {
+    font-size: 18px;
+}
+
+.btn-cancel {
+    background: white;
+    color: #6b7280;
+    border: 2px solid #d1d5db;
+}
+
+.btn-cancel:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+    transform: translateY(-2px);
+}
+
+.btn-pdf {
+    background: white;
+    color: #0dcaf0;
+    border: 2px solid #0dcaf0;
+}
+
+.btn-pdf:hover {
+    background: #0dcaf0;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-print {
+    background: linear-gradient(135deg, #0dcaf0, #0ab4d6);
+    color: white;
+    padding: 12px 48px;
+}
+
+.btn-print:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(13, 202, 240, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .print-page {
+        width: 100%;
+        min-height: auto;
+        box-shadow: none;
+        margin-bottom: 16px;
+    }
+    
+    .print-header {
+        padding: 16px;
+    }
+    
+    .print-actions .container {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<!-- Print Header -->
+<div class="container-fluid px-4 pt-4 no-print">
+    <div class="print-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <div class="print-header-title">
+                    <i class="bi bi-printer-fill"></i>
+                    <span>Print Preview</span>
+                </div>
+                <div class="print-summary" id="printSummary">
+                    Preparing labels...
+                </div>
+            </div>
+            <div class="printer-badge" id="printerName">
+                Default Printer
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Content Area -->
+<div class="container-fluid px-4" id="printContentArea">
+    <!-- Labels will be generated here by JavaScript -->
+</div>
+
+<!-- Action Buttons (Fixed at Bottom) -->
+<div class="print-actions no-print">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <button class="action-btn btn-cancel" id="cancelBtn">
+                <i class="bi bi-arrow-left"></i>
+                <span>Back</span>
+            </button>
+            
+            <div class="d-flex gap-3 flex-wrap">
+                <button class="action-btn btn-pdf" id="downloadPDFBtn">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    <span>Save as PDF</span>
+                </button>
+                
+                <button class="action-btn btn-print" id="printBtn">
+                    <i class="bi bi-printer-fill"></i>
+                    <span>Print Now</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== PRINT LABELS SCRIPT ====================
+
+(function() {
+    'use strict';
+    
+    // Configuration
+    const CONFIG = {
+        storageKey: 'printLabelsData'
+    };
+    
+    // Get print data from session storage
+    let printData = {};
+    try {
+        const stored = sessionStorage.getItem(CONFIG.storageKey);
+        if (stored) {
+            printData = JSON.parse(stored);
+        }
+    } catch (error) {
+        console.error('Error parsing print data:', error);
+    }
+    
+    // Validate data
+    if (!printData.products || !Array.isArray(printData.products) || printData.products.length === 0) {
+        console.error('No products found in print data');
+        alert('No products to print. Going back...');
+        window.history.back();
+        return;
+    }
+    
+    // Update header with printer name
+    const printerNameEl = document.getElementById('printerName');
+    if (printerNameEl && printData.printerName) {
+        printerNameEl.textContent = printData.printerName;
+    }
+    
+    // Generate print pages
+    generatePrintPages();
+    
+    function generatePrintPages() {
+        // Extract configuration
+        const {
+            products = [],
+            perRow = 3,
+            size = 'medium',
+            showName = true,
+            showPrice = false,
+            copies = 1
+        } = printData;
+        
+        // Calculate layout
+        const rowsPerPage = size === 'small' ? 10 : size === 'medium' ? 7 : 5;
+        const labelsPerPage = perRow * rowsPerPage;
+        
+        // Create labels array with copies
+        const labels = [];
+        products.forEach(product => {
+            for (let i = 0; i < copies; i++) {
+                labels.push({
+                    product: product,
+                    copyNumber: i + 1,
+                    totalCopies: copies
+                });
+            }
+        });
+        
+        // Calculate pages
+        const totalPages = Math.ceil(labels.length / labelsPerPage);
+        
+        // Update summary
+        const summaryEl = document.getElementById('printSummary');
+        if (summaryEl) {
+            summaryEl.textContent = `${labels.length} label${labels.length !== 1 ? 's' : ''} across ${totalPages} page${totalPages !== 1 ? 's' : ''}`;
+        }
+        
+        // Generate HTML
+        let html = '';
+        
+        for (let page = 0; page < totalPages; page++) {
+            const startIdx = page * labelsPerPage;
+            const endIdx = Math.min(startIdx + labelsPerPage, labels.length);
+            const pageLabels = labels.slice(startIdx, endIdx);
+            
+            html += generatePage(pageLabels, page + 1, totalPages, perRow, size, showName, showPrice);
+        }
+        
+        // Insert into DOM
+        const contentArea = document.getElementById('printContentArea');
+        if (contentArea) {
+            contentArea.innerHTML = html;
+        }
+    }
+    
+    function generatePage(labels, pageNum, totalPages, perRow, size, showName, showPrice) {
+        // Size configurations
+        const sizeConfig = {
+            small: { width: '45mm', height: '25mm', fontSize: '7px' },
+            medium: { width: '55mm', height: '35mm', fontSize: '8px' },
+            large: { width: '65mm', height: '45mm', fontSize: '9px' }
+        };
+        
+        const config = sizeConfig[size] || sizeConfig.medium;
+        const rowHeight = size === 'small' ? '25mm' : size === 'medium' ? '35mm' : '45mm';
+        
+        let pageHtml = `
+        <div class="print-page">
+            <div class="labels-container" style="grid-template-columns: repeat(${perRow}, 1fr); grid-auto-rows: ${rowHeight};">
+        `;
+        
+        labels.forEach(labelData => {
+            pageHtml += generateLabel(labelData, config, showName, showPrice);
+        });
+        
+        pageHtml += `
+            </div>
+            <div class="page-footer">
+                Page ${pageNum} of ${totalPages}
+            </div>
+        </div>
+        `;
+        
+        return pageHtml;
+    }
+    
+    function generateLabel(labelData, config, showName, showPrice) {
+        const { product, copyNumber, totalCopies } = labelData;
+        
+        // Determine barcode
+        const barcode = product.type === 'single' 
+            ? (product.sku || 'N/A')
+            : (product.barcode || 'N/A');
+        
+        // Escape HTML
+        const escapeHtml = (str) => {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        };
+        
+        return `
+        <div class="print-label" style="width: ${config.width}; height: ${config.height};">
+            <div class="label-code">
+                ${escapeHtml(product.code || 'N/A')}
+            </div>
+            
+            ${showName ? `
+            <div class="label-name">
+                ${escapeHtml(product.name || '')}
+            </div>
+            ` : ''}
+            
+            <div class="label-barcode">
+                ${escapeHtml(barcode)}
+            </div>
+            
+            ${showPrice && product.selling_price ? `
+            <div class="label-price">
+                ${escapeHtml(product.selling_price)}
+            </div>
+            ` : ''}
+        </div>
+        `;
+    }
+    
+    // Event Handlers
+    document.getElementById('printBtn').addEventListener('click', function() {
+        window.print();
+    });
+    
+    document.getElementById('downloadPDFBtn').addEventListener('click', function() {
+        window.print();
+    });
+    
+    document.getElementById('cancelBtn').addEventListener('click', function() {
+        // Clean up session storage
+        sessionStorage.removeItem(CONFIG.storageKey);
+        // Go back to previous page
+        window.history.back();
+    });
+    
+    // Clean up session storage when leaving
+    window.addEventListener('beforeunload', function() {
+        sessionStorage.removeItem(CONFIG.storageKey);
+    });
+    
+    console.log('Print labels page initialized successfully');
+})();
+</script>
+
+{% endblock %}

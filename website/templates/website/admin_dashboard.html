@@ -2241,7 +2241,6 @@ strong[style*="background-color"] {
   color: #205067;
 }
 
-
 </style>
 
 <div class="dashboard-wrapper">
@@ -2298,6 +2297,10 @@ strong[style*="background-color"] {
         <a href="#" class="submenu-item" data-section="transfer-product">
           <i class="bi bi-plus-circle"></i>
           <span>Transfer product</span>
+        </a>
+        <a href="#" class="submenu-item" data-section="print-code">
+          <i class="bi bi-plus-circle"></i>
+          <span>Print barcode/sku</span>
         </a>
       </div>
 
@@ -3961,6 +3964,422 @@ strong[style*="background-color"] {
 </div>
 
 </div>
+
+
+
+
+
+
+
+
+<!-- ============================= -->
+<!--  PRINT BARCODE/SKU SECTION    -->
+<!-- ============================= -->
+<div id="print-code" class="content-section">
+  
+  <!-- Header -->
+  <div class="content-header">
+    <button class="mobile-sidebar-toggle" id="mobileSidebarToggle6">
+      <i class="bi bi-list"></i>
+    </button>
+    <h1 class="page-title">
+      <i class="bi bi-upc-scan"></i> Print Barcode/SKU Labels
+      <small class="text-muted" style="font-size: 0.6em; display: block; margin-top: 0.5rem;">
+        Select products to print labels
+      </small>
+    </h1>
+  </div>
+
+  <!-- Two Column Layout -->
+  <div class="row g-4">
+    
+    <!-- ==========================================
+         COLUMN A: PRODUCT SELECTION TABLE
+    ========================================== -->
+    <div class="col-lg-8">
+      <div class="data-card">
+        <div class="card-header bg-primary text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="bi bi-box-seam"></i> Select Products
+            </h5>
+            <div class="d-flex gap-2 align-items-center">
+              <button id="selectAllBtn" class="btn btn-sm btn-light">
+                <i class="bi bi-check-square"></i> Select All
+              </button>
+              <button id="deselectAllBtn" class="btn btn-sm btn-light">
+                <i class="bi bi-square"></i> Deselect All
+              </button>
+              <span class="badge bg-success" id="selectedCount">0 selected</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          
+          <!-- Search and Filter -->
+          <div class="p-3 border-bottom bg-light">
+            <div class="row g-2">
+              <div class="col-md-6">
+                <input type="text" 
+                       id="printCodeSearch" 
+                       class="form-control" 
+                       placeholder="Search by name or code...">
+              </div>
+              <div class="col-md-3">
+                <select id="printCodeCategoryFilter" class="form-select">
+                  <option value="all">All Categories</option>
+                  {% for category in categories %}
+                  <option value="{{ category.id }}">{{ category.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select id="printCodeTypeFilter" class="form-select">
+                  <option value="all">All Types</option>
+                  <option value="single">Single Items</option>
+                  <option value="bulk">Bulk Items</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Products Table -->
+          <div class="table-wrapper" style="max-height: 600px; overflow-y: auto;">
+            <table class="table table-hover mb-0" id="printCodeTable">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th style="width: 50px;">
+                    <input type="checkbox" id="selectAllCheckbox" class="form-check-input">
+                  </th>
+                  <th>Product Code</th>
+                  <th>Product Name</th>
+                  <th>Category</th>
+                  <th>Type</th>
+                  <th>SKU/Barcode</th>
+                  <th>Stock</th>
+                </tr>
+              </thead>
+              <tbody id="printCodeTableBody">
+                {% for product_info in products_with_margin_and_status %}
+                {% with product=product_info.product %}
+                <tr class="print-code-row" 
+                    data-product-id="{{ product.id }}"
+                    data-category="{{ product.category.id }}"
+                    data-type="{% if product.category.is_single_item %}single{% else %}bulk{% endif %}"
+                    data-product-code="{{ product.product_code }}"
+                    data-product-name="{{ product.name }}"
+                    data-sku="{{ product.sku_value|default:'' }}"
+                    data-barcode="{{ product.barcode|default:'' }}">
+                  
+                  <td>
+                    <input type="checkbox" 
+                           class="form-check-input product-checkbox" 
+                           value="{{ product.id }}">
+                  </td>
+                  
+                  <td>
+                    <code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-weight: 600;">
+                      {{ product.product_code }}
+                    </code>
+                  </td>
+                  
+                  <td><strong>{{ product.name }}</strong></td>
+                  
+                  <td>
+                    <span class="badge bg-secondary">{{ product.category.name }}</span>
+                  </td>
+                  
+                  <td>
+                    {% if product.category.is_single_item %}
+                      <span class="badge bg-primary">
+                        <i class="bi bi-tag"></i> Single
+                      </span>
+                    {% else %}
+                      <span class="badge bg-success">
+                        <i class="bi bi-box-seam"></i> Bulk
+                      </span>
+                    {% endif %}
+                  </td>
+                  
+                  <td>
+                    {% if product.category.is_single_item %}
+                      {% if product.sku_value %}
+                        <code style="font-size: 0.85rem;">{{ product.sku_value }}</code>
+                      {% else %}
+                        <span class="text-muted">N/A</span>
+                      {% endif %}
+                    {% else %}
+                      {% if product.barcode %}
+                        <code style="font-size: 0.85rem;">{{ product.barcode }}</code>
+                      {% else %}
+                        <span class="text-muted">N/A</span>
+                      {% endif %}
+                    {% endif %}
+                  </td>
+                  
+                  <td>
+                    {% if product.category.is_single_item %}
+                      {% if product.status == 'sold' %}
+                        <span class="badge bg-danger">Sold</span>
+                      {% else %}
+                        <span class="badge bg-success">Available</span>
+                      {% endif %}
+                    {% else %}
+                      <strong>{{ product.quantity }}</strong> units
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endwith %}
+                {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                    <p>No products found</p>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+<!-- ==========================================
+     COLUMN B: FIXED CARD WITH SCROLLABLE PRODUCTS
+========================================== -->
+<div class="col-lg-4">
+  <div class="data-card h-100 d-flex flex-column" style="max-height: 750px;">
+    <div class="card-header bg-info text-white py-2">
+      <h6 class="mb-0 d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-eye"></i> Print Settings</span>
+        <span class="badge bg-light text-dark" id="selectedCountBadge">0</span>
+      </h6>
+    </div>
+    
+    <div class="card-body p-3 d-flex flex-column" style="flex: 1; overflow: hidden;">
+      
+      <!-- Empty State -->
+      <div id="printCodeEmptyState" class="text-center py-4 flex-grow-1 d-flex flex-column justify-content-center">
+        <i class="bi bi-upc-scan" style="font-size: 2.5rem; color: #cbd5e1;"></i>
+        <h6 class="text-muted mt-2">No Products Selected</h6>
+        <p class="text-muted small">Select products to configure labels</p>
+      </div>
+
+      <!-- Preview Area (Fixed Height) -->
+      <div id="printCodePreview" style="display: none;" class="d-flex flex-column h-100">
+        
+        <!-- Fixed Content Area (Settings & Preview) -->
+        <div style="flex-shrink: 0;">
+          <!-- Row 1: Settings -->
+          <div class="mb-2">
+            <h6 class="mb-1 small fw-bold text-muted">Settings</h6>
+            <div class="row g-2 mb-1">
+              <!-- Column A: Select Printer -->
+              <div class="col-12">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text input-group-text-sm bg-light border-0" style="width: 70px; font-size: 0.75rem;">Printer</span>
+                  <select id="printerSelect" class="form-select form-select-sm border">
+                    <option value="">Default</option>
+                    <option value="thermal">Thermal</option>
+                    <option value="laser">Laser</option>
+                    <option value="label">Label</option>
+                  </select>
+                  <button class="btn btn-outline-secondary btn-sm border" type="button" id="configurePrinterBtn" title="Configure">
+                    <i class="bi bi-gear"></i>
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Column B: Labels per Row -->
+              <div class="col-6">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text input-group-text-sm bg-light border-0" style="width: 60px; font-size: 0.75rem;">Per Row</span>
+                  <select id="labelsPerRow" class="form-select form-select-sm border">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                  </select>
+                </div>
+              </div>
+              
+              <!-- Column C: Label Size -->
+              <div class="col-6">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text input-group-text-sm bg-light border-0" style="width: 60px; font-size: 0.75rem;">Size</span>
+                  <select id="labelSize" class="form-select form-select-sm border">
+                    <option value="small">Small</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="large">Large</option>
+                  </select>
+                </div>
+              </div>
+              
+              <!-- Column D: Copies per Product -->
+              <div class="col-12">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text input-group-text-sm bg-light border-0" style="width: 70px; font-size: 0.75rem;">Copies</span>
+                  <button class="btn btn-outline-secondary btn-sm border" type="button" id="decreaseLabelsBtn">
+                    <i class="bi bi-dash"></i>
+                  </button>
+                  <input type="number" 
+                         id="labelsPerProduct" 
+                         class="form-control form-control-sm text-center border" 
+                         min="1" 
+                         max="100" 
+                         value="1"
+                         style="width: 45px;">
+                  <button class="btn btn-outline-secondary btn-sm border" type="button" id="increaseLabelsBtn">
+                    <i class="bi bi-plus"></i>
+                  </button>
+                  <span class="input-group-text input-group-text-sm border" style="font-size: 0.75rem;">each</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 2: Display Options -->
+          <div class="mb-2">
+            <h6 class="mb-1 small fw-bold text-muted">Display</h6>
+            <div class="row g-2">
+              <!-- Column A: Show Name -->
+              <div class="col-6">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" 
+                         type="checkbox" 
+                         id="showProductName" 
+                         checked>
+                  <label class="form-check-label small" for="showProductName">
+                    Show Name
+                  </label>
+                </div>
+              </div>
+              
+              <!-- Column B: Show Selling Price -->
+              <div class="col-6">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" 
+                         type="checkbox" 
+                         id="showPrice">
+                  <label class="form-check-label small" for="showPrice">
+                    Show Price
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: Preview Header -->
+          <div class="mb-1">
+            <h6 class="mb-0 small fw-bold text-muted">Preview (First 3)</h6>
+          </div>
+
+          <!-- Row 4: Preview Labels -->
+          <div class="mb-2">
+            <div id="labelPreviewContainer" class="border rounded p-2 bg-light" 
+                 style="min-height: 80px; max-height: 100px; overflow: hidden;">
+              <!-- Preview labels will be inserted here -->
+            </div>
+          </div>
+
+          <!-- Row 5: Action Buttons -->
+          <div class="row g-2 mb-2">
+            <!-- Column A: Preview Labels -->
+            <div class="col-6">
+              <button id="printLabelsBtn" 
+                      class="btn btn-success w-100 btn-sm" 
+                      disabled>
+                <i class="bi bi-eye"></i> View
+              </button>
+            </div>
+            
+            <!-- Column B: Download PDF -->
+            <div class="col-6">
+              <button id="downloadPDFBtn" 
+                      class="btn btn-primary w-100 btn-sm" 
+                      disabled>
+                <i class="bi bi-file-earmark-pdf"></i> PDF
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scrollable Selected Products List -->
+        <div class="border-top pt-2 mt-2 flex-grow-1" style="min-height: 0; overflow: hidden; display: flex; flex-direction: column;">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <h6 class="mb-0 small fw-bold text-muted">Selected Products</h6>
+            <button id="clearSelectionBtn" class="btn btn-outline-secondary btn-sm py-0 px-2">
+              Clear All
+            </button>
+          </div>
+          <div id="selectedProductsList" 
+               class="border rounded p-2 bg-white flex-grow-1"
+               style="overflow-y: auto; font-size: 0.75rem;">
+            <!-- Selected products will be listed here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  </div><!-- End Row -->
+
+</div>
+
+
+<!-- ============================= -->
+<!--  PRINTER CONFIGURATION MODAL  -->
+<!-- ============================= -->
+<div class="modal fade" id="printerConfigModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white py-2">
+        <h6 class="modal-title mb-0">
+          <i class="bi bi-printer"></i> Printer Settings
+        </h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <div class="mb-2">
+          <label class="form-label small mb-1">Printer Name</label>
+          <input type="text" id="printerName" class="form-control form-control-sm" placeholder="Enter printer name">
+        </div>
+        
+        <div class="mb-2">
+          <label class="form-label small mb-1">Printer Type</label>
+          <select id="printerType" class="form-select form-select-sm">
+            <option value="thermal">Thermal Printer</option>
+            <option value="laser">Laser Printer</option>
+            <option value="label">Label Printer</option>
+          </select>
+        </div>
+        
+        <div class="mb-2">
+          <label class="form-label small mb-1">Paper Size</label>
+          <select id="paperSize" class="form-select form-select-sm">
+            <option value="A4">A4</option>
+            <option value="Letter">Letter</option>
+            <option value="80mm">80mm Thermal</option>
+            <option value="58mm">58mm Thermal</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button type="button" id="savePrinterConfigBtn" class="btn btn-sm btn-primary">
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
 
 
 
@@ -10610,6 +11029,762 @@ document.addEventListener('DOMContentLoaded', function() {
 // Make reloader globally accessible
 window.DashboardReloader = DashboardReloader;
 window.AutoRefresh = AutoRefresh;
+
+
+
+
+
+
+
+
+// ====================================
+// PRINT BARCODE/SKU FUNCTIONALITY
+// ====================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🖨️ Print Code Module Initializing...');
+    
+    // ============================================
+    // ELEMENTS
+    // ============================================
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const deselectAllBtn = document.getElementById('deselectAllBtn');
+    const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+    const printLabelsBtn = document.getElementById('printLabelsBtn');
+    const downloadPDFBtn = document.getElementById('downloadPDFBtn');
+    const printNowBtn = document.getElementById('printNowBtn');
+    const configurePrinterBtn = document.getElementById('configurePrinterBtn');
+    
+    const searchInput = document.getElementById('printCodeSearch');
+    const categoryFilter = document.getElementById('printCodeCategoryFilter');
+    const typeFilter = document.getElementById('printCodeTypeFilter');
+    
+    const emptyState = document.getElementById('printCodeEmptyState');
+    const previewSection = document.getElementById('printCodePreview');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    const selectedCountBadge = document.getElementById('selectedCountBadge');
+    const selectedProductsList = document.getElementById('selectedProductsList');
+    const labelPreviewContainer = document.getElementById('labelPreviewContainer');
+    
+    const labelsPerRow = document.getElementById('labelsPerRow');
+    const labelSize = document.getElementById('labelSize');
+    const showProductName = document.getElementById('showProductName');
+    const showPrice = document.getElementById('showPrice');
+    const printerSelect = document.getElementById('printerSelect');
+    const labelsPerProduct = document.getElementById('labelsPerProduct');
+    const decreaseLabelsBtn = document.getElementById('decreaseLabelsBtn');
+    const increaseLabelsBtn = document.getElementById('increaseLabelsBtn');
+    
+    let selectedProducts = new Set();
+    
+    // ============================================
+    // PRINTER CONFIGURATION
+    // ============================================
+    let printerConfig = {
+        name: 'Default Printer',
+        type: 'default',
+        paperSize: 'A4',
+        autoDetect: true
+    };
+    
+    // ============================================
+    // SELECT/DESELECT FUNCTIONALITY
+    // ============================================
+    
+    // Select all visible checkboxes
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const visibleCheckboxes = document.querySelectorAll('.print-code-row:not([style*="display: none"]) .product-checkbox');
+            visibleCheckboxes.forEach(cb => {
+                cb.checked = this.checked;
+                updateSelection(cb);
+            });
+        });
+    }
+    
+    // Select All button
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', function() {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.dispatchEvent(new Event('change'));
+        });
+    }
+    
+    // Deselect All button
+    if (deselectAllBtn) {
+        deselectAllBtn.addEventListener('click', function() {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.dispatchEvent(new Event('change'));
+        });
+    }
+    
+    // Clear Selection button
+    if (clearSelectionBtn) {
+        clearSelectionBtn.addEventListener('click', function() {
+            document.querySelectorAll('.product-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            selectedProducts.clear();
+            updateUI();
+        });
+    }
+    
+    // Individual checkbox change
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('product-checkbox')) {
+            updateSelection(e.target);
+        }
+    });
+    
+    function updateSelection(checkbox) {
+        const productId = checkbox.value;
+        
+        if (checkbox.checked) {
+            const row = checkbox.closest('.print-code-row');
+            selectedProducts.add({
+                id: productId,
+                code: row.dataset.productCode,
+                name: row.dataset.productName,
+                sku: row.dataset.sku,
+                barcode: row.dataset.barcode,
+                type: row.dataset.type
+            });
+        } else {
+            // Remove from selectedProducts
+            let productToRemove = null;
+            for (let product of selectedProducts) {
+                if (product.id === productId) {
+                    productToRemove = product;
+                    break;
+                }
+            }
+            if (productToRemove) {
+                selectedProducts.delete(productToRemove);
+            }
+        }
+        
+        updateUI();
+    }
+    
+    // ============================================
+    // UPDATE UI
+    // ============================================
+    function updateUI() {
+        const count = selectedProducts.size;
+        
+        selectedCountSpan.textContent = `${count} selected`;
+        selectedCountBadge.textContent = count;
+        
+        if (count > 0) {
+            emptyState.style.display = 'none';
+            previewSection.style.display = 'flex';
+            printLabelsBtn.disabled = false;
+            downloadPDFBtn.disabled = false;
+            
+            updateSelectedList();
+            updatePreview();
+        } else {
+            emptyState.style.display = 'flex';
+            previewSection.style.display = 'none';
+            printLabelsBtn.disabled = true;
+            downloadPDFBtn.disabled = true;
+        }
+    }
+    
+    // ============================================
+    // UPDATE SELECTED PRODUCTS LIST
+    // ============================================
+    function updateSelectedList() {
+        let html = '';
+        
+        selectedProducts.forEach(product => {
+            html += `
+                <div class="border-bottom py-1">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div style="flex: 1; min-width: 0;">
+                            <div class="d-flex align-items-center">
+                                <code class="text-truncate" style="font-size: 0.7rem; max-width: 70px;">${product.code}</code>
+                                <span class="badge ${product.type === 'single' ? 'bg-primary' : 'bg-success'} ms-1" 
+                                      style="font-size: 0.5rem; padding: 1px 3px;">
+                                    ${product.type === 'single' ? 'S' : 'B'}
+                                </span>
+                            </div>
+                            <div class="text-muted text-truncate mt-1" style="font-size: 0.65rem; max-width: 120px;">
+                                ${product.name}
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger ms-1 p-0 remove-product-btn" 
+                                data-product-id="${product.id}"
+                                style="width: 20px; height: 20px; font-size: 0.6rem;">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        selectedProductsList.innerHTML = html;
+        
+        // Add event listeners to remove buttons
+        document.querySelectorAll('.remove-product-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                removeProduct(productId);
+            });
+        });
+    }
+    
+    // ============================================
+    // REMOVE PRODUCT FUNCTION
+    // ============================================
+    function removeProduct(productId) {
+        const checkbox = document.querySelector(`.product-checkbox[value="${productId}"]`);
+        if (checkbox) {
+            checkbox.checked = false;
+            updateSelection(checkbox);
+        }
+    }
+    
+    // ============================================
+    // LABELS PER PRODUCT FUNCTIONALITY
+    // ============================================
+    if (decreaseLabelsBtn) {
+        decreaseLabelsBtn.addEventListener('click', function() {
+            const current = parseInt(labelsPerProduct.value);
+            if (current > 1) {
+                labelsPerProduct.value = current - 1;
+                updatePreview();
+            }
+        });
+    }
+    
+    if (increaseLabelsBtn) {
+        increaseLabelsBtn.addEventListener('click', function() {
+            const current = parseInt(labelsPerProduct.value);
+            if (current < 100) {
+                labelsPerProduct.value = current + 1;
+                updatePreview();
+            }
+        });
+    }
+    
+    if (labelsPerProduct) {
+        labelsPerProduct.addEventListener('change', function() {
+            let value = parseInt(this.value);
+            if (isNaN(value) || value < 1) value = 1;
+            if (value > 100) value = 100;
+            this.value = value;
+            updatePreview();
+        });
+        
+        labelsPerProduct.addEventListener('input', function() {
+            let value = parseInt(this.value);
+            if (isNaN(value) || value < 1) value = 1;
+            if (value > 100) value = 100;
+            this.value = value;
+        });
+    }
+    
+    // ============================================
+    // PRINTER SELECTION FUNCTIONALITY
+    // ============================================
+    if (printerSelect) {
+        printerSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            printerConfig.type = selectedType;
+            printerConfig.name = this.options[this.selectedIndex].text;
+            
+            switch(selectedType) {
+                case 'thermal':
+                    printerConfig.paperSize = '80mm';
+                    break;
+                case 'label':
+                    printerConfig.paperSize = 'label_4x6';
+                    break;
+                default:
+                    printerConfig.paperSize = 'A4';
+            }
+        });
+    }
+    
+    if (configurePrinterBtn) {
+        configurePrinterBtn.addEventListener('click', function() {
+            document.getElementById('printerName').value = printerConfig.name;
+            document.getElementById('printerType').value = printerConfig.type;
+            document.getElementById('paperSize').value = printerConfig.paperSize;
+            
+            const modal = new bootstrap.Modal(document.getElementById('printerConfigModal'));
+            modal.show();
+        });
+    }
+    
+    // ============================================
+    // PRINTER CONFIGURATION MODAL
+    // ============================================
+    document.getElementById('savePrinterConfigBtn')?.addEventListener('click', function() {
+        printerConfig.name = document.getElementById('printerName').value || 'Custom Printer';
+        printerConfig.type = document.getElementById('printerType').value;
+        printerConfig.paperSize = document.getElementById('paperSize').value;
+        
+        // Update printer select dropdown
+        updatePrinterSelect(printerConfig);
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('printerConfigModal'));
+        modal.hide();
+        
+        showNotification('Printer settings saved', 'success');
+    });
+    
+    function updatePrinterSelect(config) {
+        const hasCustomOption = Array.from(printerSelect.options).some(opt => opt.value === 'custom');
+        if (!hasCustomOption) {
+            const option = document.createElement('option');
+            option.value = 'custom';
+            option.textContent = config.name;
+            printerSelect.appendChild(option);
+        } else {
+            const customOption = Array.from(printerSelect.options).find(opt => opt.value === 'custom');
+            if (customOption) {
+                customOption.textContent = config.name;
+            }
+        }
+        
+        printerSelect.value = 'custom';
+    }
+    
+    // ============================================
+    // UPDATE PREVIEW
+    // ============================================
+    function updatePreview() {
+        const perRow = parseInt(labelsPerRow.value);
+        const size = labelSize.value;
+        const showName = showProductName.checked;
+        const showPriceValue = showPrice.checked;
+        const copies = parseInt(labelsPerProduct.value) || 1;
+        
+        let html = '<div class="row g-1">';
+        
+        // Show limited preview (max 3 products)
+        const previewCount = Math.min(3, selectedProducts.size);
+        let productCount = 0;
+        
+        selectedProducts.forEach(product => {
+            if (productCount >= previewCount) return;
+            
+            const identifier = product.type === 'single' ? product.sku : product.barcode;
+            const colClass = perRow >= 3 ? 'col-4' : (perRow === 2 ? 'col-6' : 'col-12');
+            
+            html += `
+                <div class="${colClass}">
+                    ${createLabelHTML(product, identifier, size, showName, showPriceValue)}
+                </div>
+            `;
+            
+            productCount++;
+        });
+        
+        html += '</div>';
+        
+        // Show total labels info if we have products
+        if (selectedProducts.size > 0) {
+            const totalLabels = selectedProducts.size * copies;
+            html += `
+                <div class="text-center mt-1">
+                    <small class="text-muted">
+                        Total: <strong>${totalLabels}</strong> labels
+                    </small>
+                </div>
+            `;
+        }
+        
+        labelPreviewContainer.innerHTML = html;
+    }
+    
+    // ============================================
+    // CREATE LABEL HTML FOR PREVIEW
+    // ============================================
+    function createLabelHTML(product, identifier, size, showName, showPriceValue) {
+        const sizeMap = {
+            small: { 
+                fontSize: '0.45rem',      
+                barcodeSize: '0.4rem',    
+                productCodeSize: '0.5rem', 
+                padding: '2px',
+                lineHeight: '1.0',
+                height: '40px'
+            },
+            medium: { 
+                fontSize: '0.5rem',       
+                barcodeSize: '0.45rem',   
+                productCodeSize: '0.55rem', 
+                padding: '3px',
+                lineHeight: '1.1',
+                height: '50px'
+            },
+            large: { 
+                fontSize: '0.55rem',      
+                barcodeSize: '0.5rem',    
+                productCodeSize: '0.6rem', 
+                padding: '4px',
+                lineHeight: '1.2',
+                height: '60px'
+            }
+        };
+        
+        const sizeStyle = sizeMap[size];
+        const barcodeText = identifier || 'N/A';
+        
+        return `
+            <div class="border rounded bg-white mb-1" style="
+                padding: ${sizeStyle.padding};
+                text-align: center;
+                font-size: ${sizeStyle.fontSize};
+                overflow: visible;
+                box-sizing: border-box;
+                height: ${sizeStyle.height};
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            ">
+                <div style="
+                    font-weight: 700; 
+                    margin-bottom: 1px;
+                    line-height: ${sizeStyle.lineHeight};
+                    padding: 0 2px;
+                    font-size: ${sizeStyle.productCodeSize};
+                    width: 100%;
+                    text-align: center;
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
+                    white-space: normal;
+                ">
+                    ${product.code}
+                </div>
+                ${showName ? `
+                    <div style="
+                        color: #666; 
+                        margin-bottom: 2px; 
+                        font-size: ${sizeStyle.fontSize};
+                        line-height: ${sizeStyle.lineHeight};
+                        padding: 0 2px;
+                        width: 100%;
+                        text-align: center;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                        white-space: normal;
+                    ">
+                        ${product.name}
+                    </div>
+                ` : ''}
+                <div style="
+                    font-family: 'Courier New', monospace;
+                    font-weight: 700;
+                    font-size: ${sizeStyle.barcodeSize};
+                    background: #000;
+                    color: #fff;
+                    padding: 1px 2px;
+                    margin: 1px 0;
+                    letter-spacing: 0.3px;
+                    border-radius: 1px;
+                    line-height: 1.0;
+                    width: 100%;
+                    text-align: center;
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
+                    white-space: normal;
+                    min-height: ${parseFloat(sizeStyle.barcodeSize) * 1.5}px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">
+                    ${barcodeText}
+                </div>
+                ${showPriceValue ? `
+                    <div style="
+                        font-weight: 700; 
+                        color: #10b981; 
+                        margin-top: 1px;
+                        font-size: ${sizeStyle.fontSize};
+                        line-height: ${sizeStyle.lineHeight};
+                        padding: 0 2px;
+                        width: 100%;
+                        text-align: center;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                        white-space: normal;
+                    ">
+                        KSH 0.00
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+    
+    // ============================================
+    // CREATE LABEL HTML FOR PRINT SHEET
+    // ============================================
+    function createPrintLabelHTML(product, identifier, size, showName, showPriceValue, copyNum = 1, totalCopies = 1) {
+        const sizeMap = {
+            small: { 
+                width: '45mm',
+                height: '25mm',
+                fontSize: '7px',
+                barcodeFontSize: '6px',
+                productCodeFontSize: '8px',
+                padding: '2mm',
+                innerPadding: '1mm 2mm',
+                borderRadius: '1mm',
+                lineHeight: '1.0'
+            },
+            medium: { 
+                width: '55mm',
+                height: '35mm',
+                fontSize: '8px',
+                barcodeFontSize: '7px',
+                productCodeFontSize: '9px',
+                padding: '3mm',
+                innerPadding: '2mm 3mm',
+                borderRadius: '2mm',
+                lineHeight: '1.1'
+            },
+            large: { 
+                width: '65mm',
+                height: '45mm',
+                fontSize: '9px',
+                barcodeFontSize: '8px',
+                productCodeFontSize: '10px',
+                padding: '4mm',
+                innerPadding: '3mm 4mm',
+                borderRadius: '3mm',
+                lineHeight: '1.2'
+            }
+        };
+        
+        const sizeStyle = sizeMap[size];
+        const barcodeText = identifier || 'N/A';
+        
+        return `
+            <div class="print-label" style="
+                width: ${sizeStyle.width};
+                height: ${sizeStyle.height};
+                border: 0.5mm solid #ddd;
+                padding: ${sizeStyle.padding};
+                text-align: center;
+                background: white;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                page-break-inside: avoid;
+                break-inside: avoid;
+                box-shadow: 0 0.5mm 1.5mm rgba(0,0,0,0.1);
+                overflow: hidden;
+                box-sizing: border-box;
+            ">
+                <div style="
+                    font-weight: 700; 
+                    font-size: ${sizeStyle.productCodeFontSize}; 
+                    margin-bottom: 1mm; 
+                    color: #2c3e50;
+                    width: 100%;
+                    text-align: center;
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
+                    white-space: normal;
+                    line-height: ${sizeStyle.lineHeight};
+                    padding: 0 1mm;
+                ">
+                    ${product.code}
+                </div>
+                ${showName ? `
+                    <div style="
+                        font-size: ${sizeStyle.fontSize}; 
+                        color: #7f8c8d; 
+                        margin-bottom: 2mm; 
+                        width: 100%;
+                        text-align: center;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                        white-space: normal;
+                        line-height: ${sizeStyle.lineHeight};
+                        padding: 0 1mm;
+                    ">
+                        ${product.name}
+                    </div>
+                ` : ''}
+                <div style="
+                    font-family: 'Courier New', monospace;
+                    font-weight: 800;
+                    font-size: ${sizeStyle.barcodeFontSize};
+                    background: #2c3e50;
+                    color: white;
+                    padding: ${sizeStyle.innerPadding};
+                    margin: 1mm 0;
+                    letter-spacing: 0.2mm;
+                    border-radius: ${sizeStyle.borderRadius};
+                    width: calc(100% - 2mm);
+                    text-align: center;
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
+                    white-space: normal;
+                    line-height: 1.0;
+                    min-height: ${parseFloat(sizeStyle.barcodeFontSize) * 1.5}px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-sizing: border-box;
+                ">
+                    ${barcodeText}
+                </div>
+                ${showPriceValue ? `
+                    <div style="
+                        font-weight: 700; 
+                        color: #27ae60; 
+                        font-size: ${parseFloat(sizeStyle.fontSize) * 1.1}px; 
+                        margin-top: 1mm;
+                        width: 100%;
+                        text-align: center;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                        white-space: normal;
+                        line-height: ${sizeStyle.lineHeight};
+                        padding: 0 1mm;
+                    ">
+                        KSH 0.00
+                    </div>
+                ` : ''}
+                ${totalCopies > 1 ? `
+                    <div style="
+                        font-size: ${parseFloat(sizeStyle.fontSize) * 0.7}px; 
+                        color: #95a5a6; 
+                        margin-top: 1mm; 
+                        font-style: italic;
+                        width: 100%;
+                        text-align: center;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                        white-space: normal;
+                        line-height: ${sizeStyle.lineHeight};
+                        padding: 0 1mm;
+                    ">
+                        Copy ${copyNum}/${totalCopies}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+    
+    // ============================================
+    // SETTINGS CHANGE LISTENERS
+    // ============================================
+    [labelsPerRow, labelSize, showProductName, showPrice, labelsPerProduct, printerSelect].forEach(element => {
+        if (element) {
+            element.addEventListener('change', updatePreview);
+        }
+    });
+    
+    // ============================================
+    // SEARCH AND FILTER
+    // ============================================
+    function filterPrintCodeTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const category = categoryFilter.value;
+        const type = typeFilter.value;
+        
+        const rows = document.querySelectorAll('.print-code-row');
+        
+        rows.forEach(row => {
+            const name = row.dataset.productName.toLowerCase();
+            const code = row.dataset.productCode.toLowerCase();
+            const rowCategory = row.dataset.category;
+            const rowType = row.dataset.type;
+            
+            const matchesSearch = name.includes(searchTerm) || code.includes(searchTerm);
+            const matchesCategory = category === 'all' || rowCategory === category;
+            const matchesType = type === 'all' || rowType === type;
+            
+            row.style.display = matchesSearch && matchesCategory && matchesType ? '' : 'none';
+        });
+    }
+    
+    if (searchInput) searchInput.addEventListener('input', filterPrintCodeTable);
+    if (categoryFilter) categoryFilter.addEventListener('change', filterPrintCodeTable);
+    if (typeFilter) typeFilter.addEventListener('change', filterPrintCodeTable);
+    
+    // ============================================
+    // PRINT FUNCTIONALITY - REDIRECT TO PRINT PAGE
+    // ============================================
+    if (printLabelsBtn) {
+        printLabelsBtn.addEventListener('click', function() {
+            preparePrintData();
+        });
+    }
+    
+    if (downloadPDFBtn) {
+        downloadPDFBtn.addEventListener('click', function() {
+            preparePrintData();
+        });
+    }
+    
+    function preparePrintData() {
+        const perRow = parseInt(labelsPerRow.value);
+        const size = labelSize.value;
+        const showName = showProductName.checked;
+        const showPriceValue = showPrice.checked;
+        const copies = parseInt(labelsPerProduct.value) || 1;
+        
+        // Convert Set to Array
+        const productsArray = Array.from(selectedProducts);
+        
+        // Prepare data for print page
+        const printData = {
+            products: productsArray,
+            perRow: perRow,
+            size: size,
+            showName: showName,
+            showPrice: showPriceValue,
+            copies: copies,
+            printerName: printerConfig.name
+        };
+        
+        // Store in sessionStorage
+        sessionStorage.setItem('printLabelsData', JSON.stringify(printData));
+        
+        // Redirect to print page - using the correct Django URL
+        window.location.href = '/inventory/print-labels/';
+    }
+    
+    // ============================================
+    // UTILITY FUNCTIONS
+    // ============================================
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        `;
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 3000);
+    }
+    
+    console.log('✅ Print Module Ready - Fixed Pagination');
+});
+
 
 
 </script>

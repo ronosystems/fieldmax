@@ -853,7 +853,16 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
 
 
 
-
+# ===========================================
+# PRINT CODE LABELS VIEW
+#============================================
+@login_required
+def print_labels_view(request):
+    """
+    Display the print labels preview page.
+    Data is passed via sessionStorage from the main page.
+    """
+    return render(request, 'inventory/print_code.html')
 
 
 
