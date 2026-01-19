@@ -8,6 +8,7 @@ import sys
 import secrets
 from pathlib import Path
 import os
+import urllib.parse
 
 # ============================================
 # LOAD ENVIRONMENT VARIABLES
@@ -51,23 +52,29 @@ if RENDER_EXTERNAL_HOSTNAME:
         RENDER_EXTERNAL_HOSTNAME,
         'localhost',
         '127.0.0.1',
+        'fieldmaxstore.onrender.com',
     ]
 else:
     ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
-# ✅ CRITICAL: CSRF Trusted Origins for Render
-CSRF_TRUSTED_ORIGINS = [
-    f"https://{RENDER_EXTERNAL_HOSTNAME}",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-] if RENDER_EXTERNAL_HOSTNAME else [
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-]
+# Add your Render domain explicitly
+ALLOWED_HOSTS.append('fieldmaxstore.onrender.com')
 
-# settings.py
+# ✅ CRITICAL: CSRF Trusted Origins for Render
+CSRF_TRUSTED_ORIGINS = []
+if RENDER_EXTERNAL_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
+if 'fieldmaxstore.onrender.com' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append("https://fieldmaxstore.onrender.com")
+CSRF_TRUSTED_ORIGINS.extend([
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+])
+
+# ✅ CSRF configuration for production
 CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read CSRF cookie
 CSRF_USE_SESSIONS = False     # Use cookie-based CSRF tokens
+CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
 
 # ✅ CRITICAL: Proxy SSL Header for Render
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -80,9 +87,13 @@ if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True if not DEBUG else False
+    SECURE_HSTS_PRELOAD = True if not DEBUG else False
+else:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 APPEND_SLASH = True
 
@@ -174,22 +185,80 @@ TEMPLATES = [
 WSGI_APPLICATION = 'fieldmax.wsgi.application'
 
 # ============================================
-# DATABASE CONFIGURATION - RENDER OPTIMIZED
+# DATABASE CONFIGURATION - FIXED FOR RENDER
 # ============================================
+def fix_database_url(db_url):
+    """Fix DATABASE_URL by URL-encoding special characters in password"""
+    if not db_url:
+        return None
+    
+    # Remove quotes if present
+    db_url = db_url.strip('"\'')
+    
+    try:
+        parsed = urllib.parse.urlparse(db_url)
+        if parsed.password:
+            # Check if password needs encoding
+            special_chars = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', 
+                           '=', '+', '{', '}', '[', ']', '|', '\\', ':', ';', 
+                           '"', "'", '<', '>', '?', ',', ' ']
+            
+            # If password contains special chars but they're not URL-encoded
+            needs_encoding = any(char in parsed.password for char in special_chars)
+            is_encoded = any(f'%{ord(char):02x}' in parsed.password for char in special_chars)
+            
+            if needs_encoding and not is_encoded:
+                # URL-encode the password
+                encoded_password = urllib.parse.quote(parsed.password, safe='')
+                netloc = f"{parsed.username}:{encoded_password}@{parsed.hostname}"
+                if parsed.port:
+                    netloc += f":{parsed.port}"
+                db_url = urllib.parse.urlunparse(parsed._replace(netloc=netloc))
+                print(f"⚠️  Auto-encoded special characters in DATABASE_URL password")
+    
+    except Exception as e:
+        print(f"⚠️  Error parsing DATABASE_URL: {e}")
+    
+    return db_url
+
 DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_URL = fix_database_url(DATABASE_URL)
 
 if DATABASE_URL:
-    # ✅ Render provides PostgreSQL URLs that may start with postgres://
-    # dj_database_url handles the conversion to postgresql://
-    DATABASES = {
-        'default': dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,  # Enable connection health checks
-            ssl_require=True  # Render requires SSL
-        )
-    }
-    print(f"🔗 Using PostgreSQL database from DATABASE_URL")
+    try:
+        # ✅ Use dj_database_url with proper configuration
+        DATABASES = {
+            'default': dj_database_url.parse(
+                DATABASE_URL,
+                conn_max_age=600,
+                conn_health_checks=True,
+                ssl_require=True  # Required for Supabase
+            )
+        }
+        print(f"🔗 Using PostgreSQL database from DATABASE_URL")
+        
+        # Test connection
+        import psycopg2
+        from django.db import connection
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT version();")
+                version = cursor.fetchone()
+                print(f"✅ Database connection successful: {version[0][:50]}...")
+        except Exception as e:
+            print(f"❌ Database connection failed: {e}")
+            
+    except Exception as e:
+        print(f"❌ Error configuring database: {e}")
+        # Fallback to SQLite
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+        print(f"⚠️  Falling back to SQLite database")
+        
 elif all([os.getenv('DB_NAME'), os.getenv('DB_USER'), os.getenv('DB_PASSWORD'), os.getenv('DB_HOST')]):
     # Use individual database credentials
     DATABASES = {
@@ -203,11 +272,10 @@ elif all([os.getenv('DB_NAME'), os.getenv('DB_USER'), os.getenv('DB_PASSWORD'), 
             'OPTIONS': {
                 'sslmode': 'require',
             },
-            'CONN_MAX_AGE': 600,
-            'CONN_HEALTH_CHECKS': True,
         }
     }
     print(f"🔗 Using PostgreSQL database: {os.getenv('DB_NAME')} on {os.getenv('DB_HOST')}")
+    
 else:
     # Development or fallback - SQLite
     DATABASES = {
@@ -268,26 +336,34 @@ STORAGES = {
     },
 }
 
-# Whitenoise configuration
-WHITENOISE_KEEP_ONLY_HASHED_FILES = False  # Set to False to avoid issues
-WHITENOISE_AUTOREFRESH = DEBUG
-WHITENOISE_MAX_AGE = 31536000 if not DEBUG else 0
 
 # ============================================
-# STATIC FILES (CSS, JavaScript, Images)
+# STATIC FILES CONFIGURATION - FIXED
 # ============================================
 STATIC_URL = '/static/'
-
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
+
+
+# WhiteNoise configuration
+STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
+WHITENOISE_ROOT = STATIC_ROOT
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_ALLOW_ALL_ORIGINS = True
+WHITENOISE_KEEP_ONLY_HASHED_FILES = False  # Set to False to avoid issues
+WHITENOISE_AUTOREFRESH = DEBUG
+WHITENOISE_MAX_AGE = 31536000 if not DEBUG else 0
+
+
 
 # ============================================
 # CLOUDINARY CONFIGURATION (OPTIONAL)
@@ -552,56 +628,37 @@ ADMIN_SITE_TITLE = "FIELDMAX Admin Portal"
 ADMIN_INDEX_TITLE = "Welcome to FIELDMAX Administration"
 
 # ============================================
-# SIMPLIFIED SETTINGS VALIDATION
+# SIMPLIFIED STARTUP MESSAGE
 # ============================================
 def validate_settings():
     """Validate critical settings on startup"""
-    
     warnings = []
     
-    # Check Render environment
-    if not RENDER_EXTERNAL_HOSTNAME and not DEBUG:
-        warnings.append("⚠️  RENDER_EXTERNAL_HOSTNAME not set. This should be automatically set by Render.")
+    # Check DATABASE_URL
+    if not DATABASE_URL and not DEBUG:
+        warnings.append("⚠️  DATABASE_URL not set in production!")
     
-    # Check Cloudinary credentials
-    cloudinary_vars = {
-        'CLOUDINARY_CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
-        'CLOUDINARY_API_KEY': os.getenv('CLOUDINARY_API_KEY'),
-        'CLOUDINARY_API_SECRET': os.getenv('CLOUDINARY_API_SECRET')
-    }
+    # Check if using SQLite in production
+    if not DEBUG and DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+        warnings.append("⚠️  Using SQLite in production! Set DATABASE_URL.")
     
-    missing_cloudinary = [name for name, val in cloudinary_vars.items() if not val]
-    
-    if missing_cloudinary:
-        warnings.append("⚠️  Cloudinary credentials not fully configured!")
-    
-    # Check SECRET_KEY warning (not error)
-    if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
-        warnings.append("⚠️  Generated SECRET_KEY in use. Set SECRET_KEY in Render environment variables.")
+    # Check static files
+    if not os.path.exists(STATIC_ROOT):
+        warnings.append("⚠️  STATIC_ROOT directory doesn't exist. Run collectstatic.")
     
     if warnings:
         print("\n" + "="*70)
-        print("⚠️  SETTINGS WARNINGS:")
+        print("SETTINGS VALIDATION:")
         for warning in warnings:
             print(f"   {warning}")
         print("="*70 + "\n")
-    else:
-        print("\n✅ Settings validated successfully!\n")
 
-# ============================================
-# RUN VALIDATION ONLY ONCE (Fix for duplicate output)
-# ============================================
-if os.environ.get('RUN_MAIN') == 'true' or 'runserver' not in sys.argv:
-    # Run validation on startup
-    if 'runserver' in sys.argv or 'migrate' in sys.argv or 'collectstatic' in sys.argv:
-        validate_settings()
-    
-    # ============================================
-    # FINAL STARTUP MESSAGE
-    # ============================================
+# Run validation
+if 'runserver' not in sys.argv or os.environ.get('RUN_MAIN') == 'true':
+    validate_settings()
     print(f"\n🚀 FieldMax initialized successfully!")
     print(f"   Environment: {'DEVELOPMENT' if DEBUG else 'PRODUCTION'}")
     print(f"   Platform: {'Render' if RENDER_EXTERNAL_HOSTNAME else 'Local'}")
     print(f"   Database: {DATABASES['default']['ENGINE']}")
-    print(f"   Allowed Hosts: {ALLOWED_HOSTS}")
+    print(f"   Allowed Hosts: {ALLOWED_HOSTS[:3]}...")  # Show first 3 only
     print("="*50 + "\n")
