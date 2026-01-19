@@ -238,7 +238,6 @@ if DATABASE_URL:
         print(f"🔗 Using PostgreSQL database from DATABASE_URL")
         
         # Test connection
-        import psycopg2
         from django.db import connection
         try:
             with connection.cursor() as cursor:
