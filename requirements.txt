@@ -8,11 +8,11 @@ cloudinary==1.39.1
 django-cloudinary-storage==0.3.0
 python-dotenv==1.0.1
 django-extensions==3.2.3
-django-filter==24.3  # Updated from 23.5 for Python 3.13
-Pillow==11.0.0  # Updated from 10.3.0 for Python 3.13
+django-filter==23.5  # Can keep original version
+Pillow==10.3.0  # Can keep original version
 cryptography==42.0.5
 Werkzeug==3.0.3
-pandas==2.2.2  # Updated from 2.2.0
+pandas==2.2.0  # Can keep original version
 numpy==1.26.4 
 openpyxl==3.1.5
 python-dateutil==2.9.0.post0
