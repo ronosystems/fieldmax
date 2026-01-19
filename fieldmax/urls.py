@@ -13,93 +13,11 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import get_user_model
 from django.views.decorators.csrf import csrf_exempt
 
-@csrf_exempt
-def create_superuser_once(request):
-    """Debug version with detailed error reporting"""
-    User = get_user_model()
-    
-    # Check database connection
-    try:
-        user_count = User.objects.count()
-    except Exception as e:
-        return HttpResponse(f"<h1>❌ Database Error</h1><p>{str(e)}</p>")
-    
-    # Check if superuser exists
-    superuser_exists = User.objects.filter(is_superuser=True).exists()
-    
-    if superuser_exists:
-        superusers = User.objects.filter(is_superuser=True).values_list('username', flat=True)
-        return HttpResponse(
-            f"<h1>ℹ️ Superuser Already Exists!</h1>"
-            f"<p>Existing superusers: {', '.join(superusers)}</p>"
-            f"<p>Go to <a href='/admin/'>/admin/</a> to login.</p>"
-        )
-    
-    # Try to create superuser with detailed error info
-    try:
-        user = User.objects.create_superuser(
-            username='FIELDMAX',
-            email='fieldmaxsuppliers@gmail.com',
-            password='Fsl#2026'
-        )
-        
-        # Verify it was created
-        if User.objects.filter(username='FIELDMAX', is_superuser=True).exists():
-            return HttpResponse(
-                "<h1>✅ Superuser Created Successfully!</h1>"
-                "<p><strong>Username:</strong> FIELDMAX</p>"
-                "<p><strong>Email:</strong> fieldmaxsuppliers@gmail.com</p>"
-                "<p><strong>Password:</strong> Fsl#2026</p>"
-                "<hr>"
-                "<p>Go to <a href='/admin/'>/admin/</a> to login.</p>"
-                "<hr>"
-                "<p><strong>🔴 DELETE this URL from urls.py NOW!</strong></p>"
-            )
-        else:
-            return HttpResponse(
-                "<h1>⚠️ Warning</h1>"
-                "<p>Command executed but user not found. Check database.</p>"
-            )
-            
-    except Exception as e:
-        import traceback
-        error_detail = traceback.format_exc()
-        return HttpResponse(
-            f"<h1>❌ Error Creating Superuser</h1>"
-            f"<h3>Error Type: {type(e).__name__}</h3>"
-            f"<p><strong>Message:</strong> {str(e)}</p>"
-            f"<hr>"
-            f"<h3>Full Traceback:</h3>"
-            f"<pre>{error_detail}</pre>"
-        )
-
-
-# Also add a simple test endpoint
-def test_db(request):
-    """Test database connection"""
-    try:
-        User = get_user_model()
-        user_count = User.objects.count()
-        superuser_count = User.objects.filter(is_superuser=True).count()
-        
-        return JsonResponse({
-            'status': 'success',
-            'total_users': user_count,
-            'superusers': superuser_count,
-            'database': 'connected'
-        })
-    except Exception as e:
-        return JsonResponse({
-            'status': 'error',
-            'error': str(e)
-        }, status=500)
-
 
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('setup-admin-now/', create_superuser_once),
 
     # Auth
     path('login/', RoleBasedLoginView.as_view(), name='login'),
@@ -125,3 +43,32 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Add this at the end of urlpatterns (before the static patterns)
+from django.views.generic import TemplateView
+from django.http import HttpResponse
+import json
+
+def serve_manifest(request):
+    manifest_data = {
+        "name": "FieldMax",
+        "short_name": "FieldMax",
+        "description": "Inventory & Sales Management System",
+        "start_url": "/",
+        "display": "standalone", 
+        "background_color": "#ffffff",
+        "theme_color": "#0066cc",
+        "icons": [
+            {"src": "/static/icons/icon-72x72.png", "sizes": "72x72", "type": "image/png"},
+            {"src": "/static/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png"},
+            {"src": "/static/icons/icon-128x128.png", "sizes": "128x128", "type": "image/png"},
+            {"src": "/static/icons/icon-144x144.png", "sizes": "144x144", "type": "image/png"},
+            {"src": "/static/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png"},
+            {"src": "/static/icons/icon-384x384.png", "sizes": "384x384", "type": "image/png"},
+            {"src": "/static/icons/icon-512x512.png", "sizes": "512x512", "type": "image/png"}
+        ]
+    }
+    return HttpResponse(json.dumps(manifest_data), content_type='application/json')
+
+# Add to urlpatterns
+urlpatterns.insert(0, path('manifest.json', serve_manifest, name='manifest'))

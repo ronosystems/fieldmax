@@ -3,10 +3,10 @@ from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
 from django.contrib.auth.models import User
-from sales.models import Sale
-from users.models import Profile 
+from sales.models import Sale, SaleItem
+from users.models import Profile
 from django.utils import timezone
 from django.urls import reverse
 from django.db.models import Sum, Q, F, DecimalField, Count
@@ -17,23 +17,21 @@ from datetime import timedelta
 from django.http import JsonResponse
 import json
 from django.db import transaction
-from sales.models import Sale, SaleItem
+from .models import PendingOrder, PendingOrderItem, Order, Customer
+from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from .models import PendingOrder, PendingOrderItem
-from django.views.generic import ListView
-from django.conf import settings  
-from django.views.decorators.http import require_POST
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-from .models import Order, Customer
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_POST, require_GET
 from django.views.decorators.cache import cache_page
-import logging
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+
+
+
 
 logger = logging.getLogger(__name__)
 
 # ============================================
-#  CATEGORIES  LIST PUBLIC -
+#  CATEGORIES LIST PUBLIC
 # ============================================
 @require_GET
 def categories_list_public(request):
@@ -41,13 +39,9 @@ def categories_list_public(request):
     Public endpoint for categories list
     URL: /categories/
     
-    This is different from the admin category list view.
     Returns JSON for public consumption.
     """
     try:
-        from inventory.models import Category, Product
-        from django.db.models import Q
-        
         categories = Category.objects.all().order_by('name')
         
         category_list = []
@@ -87,7 +81,7 @@ def categories_list_public(request):
         }, status=500)
 
 # ============================================
-# API GET CATEGORIES -
+# API GET CATEGORIES
 # ============================================
 @require_GET
 @cache_page(60 * 5)  # Cache for 5 minutes
@@ -95,15 +89,8 @@ def api_get_categories(request):
     """
     Enhanced API endpoint to get all categories with metadata
     URL: /api/categories/
-    
-    Returns:
-        - Category details
-        - Product counts
-        - Icons based on category type
-        - Filtering options
     """
     try:
-        # Get all categories
         categories = Category.objects.all().order_by('name')
         
         category_list = []
@@ -173,7 +160,7 @@ def api_get_categories(request):
         }, status=500)
 
 # ============================================
-# API CATEGORY DETAILS-
+# API CATEGORY DETAILS
 # ============================================
 @require_GET
 def api_category_details(request, category_id):
@@ -235,7 +222,7 @@ def api_category_details(request, category_id):
         }, status=500)
 
 # ============================================
-# HOME VIEW -
+# HOME VIEW
 # ============================================
 def home(request):
     """
@@ -246,8 +233,8 @@ def home(request):
     if request.user.is_authenticated:
         if hasattr(request.user, 'profile') and request.user.profile:
             role = request.user.profile.role
-            if role:  # Check if role is not None
-                role_name = role.name.lower()  # Access the name field
+            if role:
+                role_name = role.name.lower()
                 if role_name == 'admin':
                     dashboard_url = '/admin-dashboard/'
                 elif role_name == 'manager':
@@ -259,13 +246,15 @@ def home(request):
         elif request.user.is_superuser:
             dashboard_url = '/admin-dashboard/'
     
-    # Get top 12 best-selling items
+    # Get top 12 best-selling items - with category safety check
     best_sellers = []
     
     try:
-        # Method 1: Just count all sales (no status filter if Sale doesn't have status field)
+        # Filter out products without categories first
         best_sellers = Product.objects.filter(
-            sale_items__isnull=False  # Has at least one sale
+            sale_items__isnull=False,
+            category__isnull=False,  # Only products with categories
+            is_active=True
         ).annotate(
             times_ordered=Count('sale_items__id', distinct=True)
         ).filter(
@@ -273,9 +262,11 @@ def home(request):
         ).order_by('-times_ordered')[:12]
         
     except Exception as e:
-        # Fallback: Show newest available products
+        # Fallback: Show newest available products with categories
         best_sellers = Product.objects.filter(
-            Q(status='available') | Q(status='lowstock')
+            Q(status='available') | Q(status='lowstock'),
+            category__isnull=False,
+            is_active=True
         ).order_by('-created_at')[:12]
     
     # If less than 12 products, fill with newest
@@ -291,7 +282,9 @@ def home(request):
             remaining_count = 12 - count
             
             newest_products = Product.objects.filter(
-                Q(status='available') | Q(status='lowstock')
+                Q(status='available') | Q(status='lowstock'),
+                category__isnull=False,
+                is_active=True
             ).exclude(
                 id__in=best_seller_ids
             ).order_by('-created_at')[:remaining_count]
@@ -303,7 +296,9 @@ def home(request):
             
     except Exception as e:
         best_sellers = Product.objects.filter(
-            Q(status='available') | Q(status='lowstock')
+            Q(status='available') | Q(status='lowstock'),
+            category__isnull=False,
+            is_active=True
         ).order_by('-created_at')[:12]
     
     context = {
@@ -315,40 +310,32 @@ def home(request):
     return render(request, 'website/home.html', context)
 
 # ============================================
-# HOME STATS -
+# HOME STATS
 # ============================================
 @require_http_methods(["GET"])
 def home_stats(request):
     """
     API endpoint to fetch homepage statistics
-    Returns: JSON with total products, customers, and satisfaction rate
     """
     try:
         # Get total products (only available and low stock)
         total_products = Product.objects.filter(
-            Q(status='available') | Q(status='lowstock')
+            Q(status='available') | Q(status='lowstock'),
+            category__isnull=False,  # Only products with categories
+            is_active=True
         ).count()
         
-        # Get total customers (or use total orders as proxy)
-        # If you have a Customer model:
+        # Get total customers
         total_customers = Customer.objects.filter(is_active=True).count()
-        # OR if you're counting unique customers from orders:
-        # total_customers = Order.objects.values('customer_email').distinct().count()
         
         # Calculate satisfaction rate from completed orders
-        # Assuming you have a rating field or feedback system
         completed_orders = Order.objects.filter(status='completed')
         if completed_orders.exists():
-            # If you have a rating field:
-            # satisfaction = completed_orders.aggregate(Avg('rating'))['rating__avg']
-            # satisfaction = round(satisfaction * 20) if satisfaction else 98  # Convert to percentage
-            
-            # OR use successful delivery rate:
             total_orders = Order.objects.count()
             successful_orders = completed_orders.count()
             satisfaction = round((successful_orders / total_orders) * 100) if total_orders > 0 else 98
         else:
-            satisfaction = 98  # Default value
+            satisfaction = 98
         
         return JsonResponse({
             'success': True,
@@ -371,31 +358,20 @@ def home_stats(request):
         }, status=500)
 
 # ============================================
-# FEATURED PRODUCTS -
+# FEATURED PRODUCTS
 # ============================================
 @require_http_methods(["GET"])
 def featured_products(request):
     """
     API endpoint to fetch featured/best-selling products
-    Returns: JSON with product details including emoji representation
     """
     try:
-        # Get featured products (most sold or marked as featured)
-        # Option 1: Get products with most orders
-        # You'll need to have a way to track sales
-        
-        # Option 2: Get products marked as featured
         products = Product.objects.filter(
             Q(status='available') | Q(status='lowstock'),
-            is_featured=True  # Add this field to your model
-        ).order_by('-created_at')[:8]  # Limit to 8 products
-        
-        # OR get best sellers by counting related orders
-        # products = Product.objects.filter(
-        #     Q(status='available') | Q(status='lowstock')
-        # ).annotate(
-        #     order_count=Count('orderitem')
-        # ).order_by('-order_count')[:8]
+            category__isnull=False,  # Only products with categories
+            is_active=True,
+            is_featured=True
+        ).order_by('-created_at')[:8]
         
         product_list = []
         for product in products:
@@ -416,7 +392,7 @@ def featured_products(request):
                 'code': product.product_code,
                 'emoji': emoji,
                 'badge': badge,
-                'is_single_item': product.category.is_single_item if hasattr(product, 'category') else False,
+                'is_single_item': product.category.is_single_item if product.category else False,
                 'quantity': product.quantity,
                 'image_url': product.image.url if product.image else None
             })
@@ -435,13 +411,12 @@ def featured_products(request):
         }, status=500)
 
 # ============================================
-# PRODUCT EMOJI-
+# PRODUCT EMOJI HELPER
 # ============================================
 def get_product_emoji(product):
     """
     Helper function to return emoji based on product category or type
     """
-    # You can customize this based on your product categories
     emoji_map = {
         'phone': '📱',
         'smartphone': '📱',
@@ -466,24 +441,23 @@ def get_product_emoji(product):
         'console': '🎮',
     }
     
-    # Check product name or category for keywords
+    # Check product name first
     product_name = product.name.lower()
     for keyword, emoji in emoji_map.items():
         if keyword in product_name:
             return emoji
     
     # Check category if available
-    if hasattr(product, 'category') and product.category:
+    if product.category:
         category_name = product.category.name.lower()
         for keyword, emoji in emoji_map.items():
             if keyword in category_name:
                 return emoji
     
-    # Default emoji
     return '📦'
 
 # ============================================
-# TRENDING STATS -
+# TRENDING STATS
 # ============================================
 @require_http_methods(["GET"])
 def trending_stats(request):
@@ -497,18 +471,21 @@ def trending_stats(request):
             created_at__gte=week_ago
         ).count()
         
-        # Get trending products (most viewed/ordered in last 7 days)
-        # This assumes you have a view_count or order tracking
+        # Get trending products - only those with categories
         trending = Product.objects.filter(
-            Q(status='available') | Q(status='lowstock')
-        ).order_by('-view_count')[:5]  # Add view_count field to track views
+            Q(status='available') | Q(status='lowstock'),
+            category__isnull=False,
+            is_active=True
+        ).order_by('-view_count')[:5]
         
-        trending_list = [{
-            'id': p.id,
-            'name': p.name,
-            'price': float(p.selling_price),
-            'views': getattr(p, 'view_count', 0)
-        } for p in trending]
+        trending_list = []
+        for p in trending:
+            trending_list.append({
+                'id': p.id,
+                'name': p.name,
+                'price': float(p.selling_price),
+                'views': getattr(p, 'view_count', 0)
+            })
         
         return JsonResponse({
             'success': True,
@@ -525,9 +502,8 @@ def trending_stats(request):
         }, status=500)
 
 # ============================================
-# PRODUCT INCREAMENT -
+# PRODUCT VIEW INCREMENT
 # ============================================
-# Optional: View to increment product view count
 @require_http_methods(["POST"])
 @csrf_exempt
 def increment_product_view(request, product_id):
@@ -558,7 +534,7 @@ def increment_product_view(request, product_id):
         }, status=500)
 
 # ============================================
-# DASHBOARD URL
+# DASHBOARD URL CONTEXT PROCESSOR
 # ============================================
 def dashboard_url(request):
     """Make dashboard URL available globally in all templates"""
@@ -567,8 +543,8 @@ def dashboard_url(request):
     if request.user.is_authenticated:
         if hasattr(request.user, 'profile') and request.user.profile:
             role = request.user.profile.role
-            if role:  # Check if role is not None
-                role_name = role.name.lower()  # Access the name field
+            if role:
+                role_name = role.name.lower()
                 
                 if role_name == 'admin':
                     url = '/admin-dashboard/'
@@ -584,18 +560,17 @@ def dashboard_url(request):
     return {'dashboard_url': url}
 
 # ============================================
-# PRODUCT PAGE
+# PRODUCTS PAGE
 # ============================================
 @require_http_methods(["GET"])
 def products_page(request):
     """
     Products listing page
     """
-    from inventory.models import Product
-    
     products = Product.objects.filter(
         is_active=True,
-        status__in=['available', 'lowstock']
+        status__in=['available', 'lowstock'],
+        category__isnull=False  # Only show products with categories
     ).select_related('category').order_by('-created_at')
     
     context = {
@@ -606,21 +581,19 @@ def products_page(request):
     return render(request, 'website/products.html', context)
 
 # ============================================
-# API FEATURED PRODUCT
+# API FEATURED PRODUCTS
 # ============================================
 @require_http_methods(["GET"])
 def api_featured_products(request):
     """
     API endpoint to get featured/best-selling products for home page
     URL: /api/featured-products/
-    
-    Returns up to 8 products with highest sales or newest arrivals
     """
     try:
-        # Get products with sales count
         products = Product.objects.filter(
             is_active=True,
-            status__in=['available', 'lowstock']  # Only show available products
+            status__in=['available', 'lowstock'],
+            category__isnull=False  # Only products with categories
         ).select_related('category').annotate(
             sales_count=Count('sale_items')
         ).order_by('-sales_count', '-created_at')[:8]
@@ -628,8 +601,7 @@ def api_featured_products(request):
         product_list = []
         
         for product in products:
-            # Determine badge
-            badge = 'HOT' if product.sales_count > 5 else 'NEW'
+            badge = 'HOT' if getattr(product, 'sales_count', 0) > 5 else 'NEW'
             if product.status == 'lowstock':
                 badge = 'SALE'
             
@@ -659,7 +631,7 @@ def api_featured_products(request):
                 'is_single_item': product.category.is_single_item if product.category else False,
                 'badge': badge,
                 'emoji': emoji,
-                'image': None  # We'll handle images separately
+                'image': None
             }
             
             product_list.append(product_data)
@@ -681,7 +653,7 @@ def api_featured_products(request):
         }, status=500)
 
 # ============================================
-# API  HOME STATS
+# API HOME STATS
 # ============================================
 @require_http_methods(["GET"])
 def api_home_stats(request):
@@ -690,10 +662,11 @@ def api_home_stats(request):
     URL: /api/home-stats/
     """
     try:
-        # Total products in stock
+        # Total products in stock with categories
         total_products = Product.objects.filter(
             is_active=True,
-            quantity__gt=0
+            quantity__gt=0,
+            category__isnull=False
         ).count()
         
         # Total customers (unique buyers)
@@ -701,18 +674,18 @@ def api_home_stats(request):
             buyer_name__isnull=False
         ).values('buyer_phone').distinct().count()
         
-        # Calculate satisfaction (mock for now, can be based on returns vs sales)
+        # Calculate satisfaction
         total_sales = Sale.objects.filter(is_reversed=False).count()
         total_returns = Sale.objects.filter(is_reversed=True).count()
         
         if total_sales > 0:
             satisfaction = int(((total_sales - total_returns) / total_sales) * 100)
         else:
-            satisfaction = 98  # Default
+            satisfaction = 98
         
         stats = {
             'total_products': total_products,
-            'total_customers': min(total_customers * 1000, 100000),  # Scale for display
+            'total_customers': min(total_customers * 1000, 100000),
             'satisfaction': satisfaction,
             'support': '24/7'
         }
@@ -736,7 +709,7 @@ def api_home_stats(request):
         })
 
 # ============================================
-# API PRODUCTS  CATEGORY
+# API PRODUCTS BY CATEGORY
 # ============================================
 @require_http_methods(["GET"])
 def api_product_categories(request):
@@ -781,8 +754,6 @@ def api_quick_search(request):
     Quick product search for home page search bar
     URL: /api/quick-search/
     """
-    import json
-    
     try:
         data = json.loads(request.body)
         search_term = data.get('search', '').strip()
@@ -794,12 +765,12 @@ def api_quick_search(request):
                 'products': []
             })
         
-        # Search products
         products = Product.objects.filter(
             Q(name__icontains=search_term) |
             Q(product_code__icontains=search_term) |
             Q(sku_value__icontains=search_term),
-            is_active=True
+            is_active=True,
+            category__isnull=False  # Only products with categories
         ).select_related('category')[:10]
         
         results = []
@@ -811,7 +782,7 @@ def api_quick_search(request):
                 'price': float(product.selling_price or 0),
                 'category': product.category.name if product.category else 'Other',
                 'status': product.status,
-                'url': f'/products/{product.id}/'  # Update with your product detail URL
+                'url': f'/products/{product.id}/'
             })
         
         return JsonResponse({
@@ -835,7 +806,7 @@ def api_quick_search(request):
         }, status=500)
 
 # ============================================
-# SHOPING CART
+# SHOPPING CART
 # ============================================
 def shopping_cart(request):
     """Display shopping cart page"""
@@ -866,6 +837,11 @@ def validate_cart(request):
             
             try:
                 product = Product.objects.get(id=product_id, is_active=True)
+                
+                # Check if product has category
+                if not product.category:
+                    errors.append(f"{product.name} has no category assigned and cannot be purchased")
+                    continue
                 
                 # Check availability
                 if product.status == 'sold':
@@ -953,7 +929,6 @@ def checkout(request):
             }, status=400)
         
         # Redirect to sales system for actual checkout
-        # Store cart data in session
         request.session['checkout_cart'] = cart_items
         request.session['checkout_buyer'] = {
             'name': buyer_name,
@@ -964,7 +939,7 @@ def checkout(request):
         return JsonResponse({
             'success': True,
             'message': 'Redirecting to checkout...',
-            'redirect_url': '/sales/checkout/'  # Update with your checkout URL
+            'redirect_url': '/sales/checkout/'
         })
         
     except json.JSONDecodeError:
@@ -982,7 +957,7 @@ def checkout(request):
 # ============================================
 # CREATE PENDING ORDER
 # ============================================
-@csrf_exempt  # Remove this if you're properly handling CSRF tokens
+@csrf_exempt
 @require_http_methods(["POST"])
 def create_pending_order(request):
     """
@@ -992,7 +967,6 @@ def create_pending_order(request):
     try:
         data = json.loads(request.body)
         
-        # Validate required fields
         cart_items = data.get('cart', [])
         buyer_name = data.get('buyer_name', '').strip()
         buyer_phone = data.get('buyer_phone', '').strip()
@@ -1066,7 +1040,7 @@ def create_pending_order(request):
         }, status=500)
 
 # ============================================
-# 2. CHECKOUT PAGE
+# CHECKOUT PAGE
 # ============================================
 @require_http_methods(["GET"])
 def checkout_page(request):
@@ -1079,7 +1053,7 @@ def checkout_page(request):
     })
 
 # ============================================
-# 3. STAFF VIEW: LIST PENDING ORDERS
+# STAFF VIEW: LIST PENDING ORDERS
 # ============================================
 @login_required
 @require_http_methods(["GET"])
@@ -1088,9 +1062,8 @@ def pending_orders_list(request):
     Staff view to see all pending orders
     URL: /staff/pending-orders/
     """
-    # Get all pending orders and prefetch related items
     pending_orders = PendingOrder.objects.filter(
-        status__iexact='pending'  # case-insensitive just in case
+        status__iexact='pending'
     ).prefetch_related('items').order_by('-created_at')
 
     context = {
@@ -1102,9 +1075,11 @@ def pending_orders_list(request):
     return render(request, 'website/pending_orders.html', context)
 
 # ============================================
-# 4. API: GET PENDING ORDERS COUNT (for badge)
+# API: GET PENDING ORDERS COUNT
 # ============================================
 @login_required
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 @require_http_methods(["GET"])
 def pending_orders_count(request):
     """
@@ -1124,7 +1099,7 @@ def pending_orders_count(request):
             'count': 0,
             'error': str(e)
         })
-
+    
 
 
 
@@ -1133,14 +1108,13 @@ def pending_orders_count(request):
 
 
 # ============================================
-# UPDATED: APPROVE ORDER WITH ETR GENERATION
+# APPROVE ORDER WITH ETR GENERATION
 # ============================================
-
 @login_required
 @require_http_methods(["POST"])
 def approve_order(request, order_id):
     """
-    ✅ FIXED: Staff approves order → Creates actual Sale with ETR number
+    Staff approves order → Creates actual Sale with ETR number
     URL: /staff/approve-order/<order_id>/
     """
     try:
@@ -1159,23 +1133,19 @@ def approve_order(request, order_id):
             # Parse cart items
             cart_items = pending_order.cart_items
             
-            # ============================================
             # STEP 1: CREATE THE SALE
-            # ============================================
             sale = Sale.objects.create(
                 seller=request.user,
                 buyer_name=pending_order.buyer_name,
                 buyer_phone=pending_order.buyer_phone,
                 buyer_id_number=pending_order.buyer_id_number,
                 payment_method=pending_order.payment_method,
-                etr_status='pending'  # ✅ Add this
+                etr_status='pending'
             )
             
             logger.info(f"[ORDER APPROVAL] Created Sale {sale.sale_id} from pending order {order_id}")
             
-            # ============================================
             # STEP 2: ADD ITEMS TO SALE
-            # ============================================
             created_items = []
             errors = []
             
@@ -1186,6 +1156,11 @@ def approve_order(request, order_id):
                         id=item['id'],
                         is_active=True
                     )
+                    
+                    # Check if product has category
+                    if not product.category:
+                        errors.append(f"{product.name} has no category assigned and cannot be sold")
+                        continue
                     
                     quantity = item['quantity']
                     
@@ -1227,11 +1202,7 @@ def approve_order(request, order_id):
             # Refresh sale to get calculated totals
             sale.refresh_from_db()
             
-            # ============================================
-            # ✅ STEP 3: GENERATE ETR NUMBER FROM SALE ID
-            # ============================================
-            from sales.views import generate_etr_from_sale_id
-            
+            # STEP 3: GENERATE ETR NUMBER FROM SALE ID
             etr_number = generate_etr_from_sale_id(sale.sale_id)
             
             sale.etr_receipt_number = etr_number
@@ -1254,9 +1225,7 @@ def approve_order(request, order_id):
                 f"From pending order: {order_id}"
             )
             
-            # ============================================
             # STEP 4: UPDATE PENDING ORDER
-            # ============================================
             pending_order.status = 'completed'
             pending_order.sale_id = sale.sale_id
             pending_order.reviewed_by = request.user
@@ -1274,12 +1243,12 @@ def approve_order(request, order_id):
                 'success': True,
                 'message': f'Order approved! Sale {sale.sale_id} created with {len(created_items)} items.',
                 'sale_id': sale.sale_id,
-                'etr_receipt_number': etr_number,  # ✅ Include ETR in response
+                'etr_receipt_number': etr_number,
                 'fiscal_receipt_number': etr_number,
                 'items_processed': len(created_items),
                 'total_items': len(cart_items),
                 'total_amount': float(sale.total_amount),
-                'receipt_url': f'/sales/receipt/{sale.sale_id}/',  # ✅ Add receipt URL
+                'receipt_url': f'/sales/receipt/{sale.sale_id}/',
                 'errors': errors if errors else None
             })
             
@@ -1295,36 +1264,22 @@ def approve_order(request, order_id):
             'message': f'Failed to approve order: {str(e)}'
         }, status=500)
 
-
 # ============================================
-# ALTERNATIVE: If generate_etr_from_sale_id is not in sales.views
-# Add this helper function to website/views.py
+# ETR GENERATION HELPER
 # ============================================
-
 def generate_etr_from_sale_id(sale_id):
     """
-    ✅ Generate ETR number from Sale ID
-    Extracts numeric portion from sale_id (e.g., #SALE-0501 → 0501)
-    
-    Args:
-        sale_id: Sale ID string (e.g., "#SALE-0501")
-    
-    Returns:
-        String: Just the numeric portion (e.g., "0501")
+    Generate ETR number from Sale ID
+    Extracts numeric portion from sale_id
     """
     try:
-        # Extract numeric portion after the last hyphen
-        # Handles formats: #SALE-0501, SALE-0501, 0501
         if '-' in str(sale_id):
             numeric_part = str(sale_id).split('-')[-1]
         else:
-            # If no hyphen, use the whole thing
             numeric_part = str(sale_id).replace('#', '').replace('SALE', '')
         
-        # Clean and validate
         numeric_part = numeric_part.strip()
         
-        # Ensure it's numeric
         if not numeric_part.isdigit():
             logger.warning(f"[ETR WARNING] Non-numeric sale_id: {sale_id}, using fallback")
             return "0000"
@@ -1337,13 +1292,8 @@ def generate_etr_from_sale_id(sale_id):
         logger.error(f"[ETR ERROR] Failed to extract from {sale_id}: {e}")
         return "0000"
 
-
-
-
-
-
 # ============================================
-# 6. STAFF ACTION: REJECT ORDER
+# STAFF ACTION: REJECT ORDER
 # ============================================
 @login_required
 @require_http_methods(["POST"])
@@ -1401,15 +1351,11 @@ def reject_order(request, order_id):
 @require_http_methods(["POST"])
 def process_order(request):
     """
-    ✅ FIXED: Process order with new Sale/SaleItem structure
-    - Creates ONE Sale record per order
-    - Creates multiple SaleItem records for each product
-    - Each SaleItem processes its own stock deduction
+    Process order with new Sale/SaleItem structure
     """
     try:
         data = json.loads(request.body)
         
-        # Validate required fields
         cart_items = data.get('cart', [])
         buyer_name = data.get('buyer_name', '').strip()
         buyer_phone = data.get('buyer_phone', '').strip()
@@ -1430,12 +1376,8 @@ def process_order(request):
                 'message': 'Buyer name and phone are required'
             }, status=400)
         
-        # Use atomic transaction to ensure data consistency
         with transaction.atomic():
-            
-            # ============================================
-            # STEP 1: CREATE THE SALE (ONE PER ORDER)
-            # ============================================
+            # STEP 1: CREATE THE SALE
             seller = request.user if request.user.is_authenticated else User.objects.filter(is_superuser=True).first()
             
             sale = Sale.objects.create(
@@ -1444,24 +1386,25 @@ def process_order(request):
                 buyer_phone=buyer_phone,
                 buyer_id_number=buyer_id,
                 payment_method=payment_method,
-                # Totals will be calculated after adding items
             )
             
             logger.info(f"[WEB ORDER] Created Sale {sale.sale_id} for {buyer_name}")
             
-            # ============================================
             # STEP 2: ADD ITEMS TO THE SALE
-            # ============================================
             created_items = []
             errors = []
             
             for item in cart_items:
                 try:
-                    # Get product from database with lock
                     product = Product.objects.select_for_update().get(
                         id=item['id'],
                         is_active=True
                     )
+                    
+                    # Check if product has category
+                    if not product.category:
+                        errors.append(f"{product.name} has no category assigned and cannot be sold")
+                        continue
                     
                     quantity = item['quantity']
                     
@@ -1474,9 +1417,7 @@ def process_order(request):
                         errors.append(f"Only {product.quantity} units of {product.name} available")
                         continue
                     
-                    # ============================================
                     # CREATE SALE ITEM
-                    # ============================================
                     sale_item = SaleItem.objects.create(
                         sale=sale,
                         product=product,
@@ -1485,12 +1426,9 @@ def process_order(request):
                         sku_value=product.sku_value,
                         quantity=quantity,
                         unit_price=product.selling_price,
-                        # total_price calculated automatically in SaleItem.save()
                     )
                     
-                    # ============================================
                     # PROCESS THE SALE (DEDUCT STOCK)
-                    # ============================================
                     sale_item.process_sale()
                     
                     created_items.append(sale_item)
@@ -1510,18 +1448,13 @@ def process_order(request):
                     errors.append(f"Error processing {item.get('name', 'item')}: {str(e)}")
                     continue
             
-            # ============================================
             # STEP 3: VALIDATE RESULTS
-            # ============================================
             if not created_items:
                 raise Exception("No items could be processed. " + "; ".join(errors))
             
-            # Sale totals are automatically recalculated by SaleItem.save()
             sale.refresh_from_db()
             
-            # ============================================
             # STEP 4: PREPARE RESPONSE
-            # ============================================
             success_count = len(created_items)
             total_count = len(cart_items)
             
@@ -1588,45 +1521,40 @@ def process_order(request):
 @require_http_methods(["GET"])
 def order_success(request):
     """
-    Order success page - renders template that loads data from browser sessionStorage
-    The JavaScript in the template handles loading order details from sessionStorage
+    Order success page
     """
-    # Just render the template - let JavaScript handle the data
     return render(request, 'website/order_success.html', {
         'page_title': 'Order Successful - Fieldmax',
     })
 
 # ============================================
-# SHOP VIEW
+# API ADD TO CART
 # ============================================
 @csrf_exempt
 @require_POST
 def api_add_to_cart(request):
     try:
-        # Parse incoming JSON data
         data = json.loads(request.body)
         product_id = data.get('product_id')
         quantity = int(data.get('quantity', 1))
         
-        # Validate product
         product = Product.objects.filter(id=product_id, is_active=True).first()
         if not product:
             return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
         
-        # Initialize or retrieve cart from session
+        # Check if product has category
+        if not product.category:
+            return JsonResponse({'status': 'error', 'message': 'Product has no category assigned'}, status=400)
+        
         cart = request.session.get('cart', {})
         
-        # Check if product already in cart
         product_key = str(product_id)
         if product_key in cart:
-            # Update quantity
             cart[product_key]['quantity'] += quantity
-            # Optional: prevent exceeding stock
             max_quantity = product.quantity if not product.category.is_single_item else 1
             if cart[product_key]['quantity'] > max_quantity:
                 cart[product_key]['quantity'] = max_quantity
         else:
-            # Add new item
             max_quantity = product.quantity if not product.category.is_single_item else 1
             if quantity > max_quantity:
                 quantity = max_quantity
@@ -1638,9 +1566,8 @@ def api_add_to_cart(request):
                 'quantity': quantity,
             }
         
-        # Save updated cart into session
         request.session['cart'] = cart
-        request.session.modified = True  # Mark session as modified to save changes
+        request.session.modified = True
         
         return JsonResponse({'status': 'success', 'message': 'Product added to cart'})
     
@@ -1650,74 +1577,57 @@ def api_add_to_cart(request):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 # ============================================
-# SHOP VIEW - UPDATED WITH CATEGORY FILTERING
+# SHOP VIEW
 # ============================================
 def shop_view(request):
     """
     Display all products organized by category
-    Shows: Product image, name, price, status, and add to cart button
-    Supports filtering by category via URL parameter: ?category=<id>
     """
-    # Get category filter from URL parameter
     category_id = request.GET.get('category')
     selected_category = None
     
-    # Get all categories
     all_categories = Category.objects.all()
     
-    # Determine which categories to display
     if category_id:
         try:
-            # Filter to show only the selected category
             selected_category = Category.objects.get(id=category_id)
             categories = [selected_category]
         except Category.DoesNotExist:
-            # If invalid category ID, show all categories
             categories = all_categories
     else:
-        # No filter - show all categories
         categories = all_categories
     
-    # Prepare categories with their active products
     categories_with_products = []
     for category in categories:
-        # Filter to include only active products
-        active_products = category.products.filter(is_active=True).order_by('-created_at')
-        # Attach filtered products as an attribute
+        # Only include products that have categories
+        active_products = category.products.filter(is_active=True, category__isnull=False).order_by('-created_at')
         category.filtered_products = active_products
-        # Only include categories that have products
         if active_products.exists():
             categories_with_products.append(category)
     
     context = {
         'categories': categories_with_products,
-        'all_categories': all_categories,  # For category dropdown navigation
-        'selected_category': selected_category,  # To highlight active category
+        'all_categories': all_categories,
+        'selected_category': selected_category,
         'debug': settings.DEBUG,
     }
     
     return render(request, 'website/shop.html', context)
 
 # ============================================
-# ALTERNATIVE: CLASS-BASED VIEW WITH FILTERING
+# SHOP LIST VIEW (CLASS-BASED)
 # ============================================
-from django.views.generic import ListView
-
 class ShopListView(ListView):
     """
     Class-based view for shop page with category filtering
-    URL: /shop/ or /shop/?category=<id>
     """
     model = Category
     template_name = 'website/shop.html'
     context_object_name = 'categories'
     
     def get_queryset(self):
-        """Get categories with their active products, optionally filtered"""
-        # Get category filter from URL
         category_id = self.request.GET.get('category')
         
-        # Determine which categories to show
         if category_id:
             try:
                 selected_category = Category.objects.get(id=category_id)
@@ -1727,10 +1637,10 @@ class ShopListView(ListView):
         else:
             categories = Category.objects.all()
         
-        # Filter products for each category
         filtered_categories = []
         for category in categories:
-            active_products = category.products.filter(is_active=True).order_by('-created_at')
+            # Only include products that have categories
+            active_products = category.products.filter(is_active=True, category__isnull=False).order_by('-created_at')
             category.filtered_products = active_products
             if active_products.exists():
                 filtered_categories.append(category)
@@ -1738,10 +1648,8 @@ class ShopListView(ListView):
         return filtered_categories
     
     def get_context_data(self, **kwargs):
-        """Add additional context"""
         context = super().get_context_data(**kwargs)
         
-        # Get selected category
         category_id = self.request.GET.get('category')
         if category_id:
             try:
@@ -1751,34 +1659,28 @@ class ShopListView(ListView):
         else:
             context['selected_category'] = None
         
-        # Add all categories for dropdown
         context['all_categories'] = Category.objects.all()
         context['debug'] = settings.DEBUG
         
         return context
 
 # ============================================
-# SALES CHART DATA
+# SALES CHART DATA - FIXED VERSION
 # ============================================
 def get_sales_chart_data(request):
     """
     Generate REAL data for sales statistics charts
-    Returns properly formatted data for JavaScript charts
+    Fixed to handle products without categories
     """
-    
-    # ==========================================
-    # BAR CHART DATA - Last 7 Days Sales Trends
-    # ==========================================
     today = timezone.now().date()
     last_7_days = []
     sales_count_7days = []
     revenue_7days = []
     
-    for i in range(6, -1, -1):  # Last 7 days (6 days ago to today)
+    for i in range(6, -1, -1):
         date = today - timedelta(days=i)
-        last_7_days.append(date.strftime('%a'))  # Mon, Tue, Wed, etc.
+        last_7_days.append(date.strftime('%a'))
         
-        # Count sales for this day (only non-reversed)
         daily_sales = Sale.objects.filter(
             sale_date__date=date,
             is_reversed=False
@@ -1787,22 +1689,19 @@ def get_sales_chart_data(request):
         sales_count = daily_sales.count()
         sales_count_7days.append(sales_count)
         
-        # Sum revenue for this day
         daily_revenue = daily_sales.aggregate(
             total=Sum('total_amount')
         )['total'] or 0
         revenue_7days.append(float(daily_revenue))
     
-    # ==========================================
     # DONUT CHART DATA - Sales by Category
-    # ==========================================
-    
-    # Get sales grouped by category (last 30 days)
     thirty_days_ago = today - timedelta(days=30)
     
+    # Get sales items with products that have categories
     category_sales = SaleItem.objects.filter(
         sale__sale_date__date__gte=thirty_days_ago,
-        sale__is_reversed=False
+        sale__is_reversed=False,
+        product__category__isnull=False  # Only include products with categories
     ).values(
         'product__category__name'
     ).annotate(
@@ -1810,18 +1709,17 @@ def get_sales_chart_data(request):
         revenue=Sum('total_price')
     ).order_by('-count')
     
-    # Prepare category data
     category_labels = []
     category_counts = []
     category_colors = [
-        'rgba(59, 130, 246, 0.8)',   # Blue
-        'rgba(16, 185, 129, 0.8)',   # Green
-        'rgba(245, 158, 11, 0.8)',   # Orange
-        'rgba(139, 92, 246, 0.8)',   # Purple
-        'rgba(239, 68, 68, 0.8)',    # Red
-        'rgba(236, 72, 153, 0.8)',   # Pink
-        'rgba(20, 184, 166, 0.8)',   # Teal
-        'rgba(251, 146, 60, 0.8)',   # Amber
+        'rgba(59, 130, 246, 0.8)',
+        'rgba(16, 185, 129, 0.8)',
+        'rgba(245, 158, 11, 0.8)',
+        'rgba(139, 92, 246, 0.8)',
+        'rgba(239, 68, 68, 0.8)',
+        'rgba(236, 72, 153, 0.8)',
+        'rgba(20, 184, 166, 0.8)',
+        'rgba(251, 146, 60, 0.8)',
     ]
     
     for idx, item in enumerate(category_sales):
@@ -1829,18 +1727,26 @@ def get_sales_chart_data(request):
         category_labels.append(category_name)
         category_counts.append(item['count'])
     
-    # Limit to top 8 categories, combine rest as "Others"
+    # Count sales without categories
+    no_category_sales = SaleItem.objects.filter(
+        sale__sale_date__date__gte=thirty_days_ago,
+        sale__is_reversed=False,
+        product__category__isnull=True  # Products without categories
+    ).count()
+    
+    if no_category_sales > 0:
+        category_labels.append('No Category')
+        category_counts.append(no_category_sales)
+    
     if len(category_labels) > 8:
         others_count = sum(category_counts[8:])
         category_labels = category_labels[:8] + ['Others']
         category_counts = category_counts[:8] + [others_count]
     
-    # If no data, return sample data
     if not category_labels:
         category_labels = ['No Sales Yet']
         category_counts = [0]
     
-    # Return data dictionary - convert to JSON strings for template
     return {
         'chart_data': {
             'bar_chart': {
@@ -1865,11 +1771,9 @@ class RoleBasedLoginView(LoginView):
     def get_success_url(self):
         user = self.request.user
         
-        # Check if user has a profile
         if hasattr(user, 'profile'):
-            # Get the role name from the Role model (not a string field)
-            if user.profile.role:  # This is a Role object, not a string
-                role_name = user.profile.role.name.lower()  # Access the name field
+            if user.profile.role:
+                role_name = user.profile.role.name.lower()
                 
                 if role_name == 'admin':
                     return '/admin-dashboard/'
@@ -1880,7 +1784,6 @@ class RoleBasedLoginView(LoginView):
                 elif role_name == 'cashier':
                     return '/cashier-dashboard/'
         
-        # Default redirect if no profile or role
         return '/'
 
 def get_users_by_role_counts():
@@ -1896,102 +1799,90 @@ def get_users_by_role_counts():
     }
 
 # ============================================
-# CAHIER DASHBOARD
+# CASHIER DASHBOARD
 # ============================================
 @login_required
 def cashier_dashboard(request):
     """
     Cashier Dashboard View
-    Renders the cashier interface for processing sales
     """
     return render(request, 'website/cashier_dashboard.html')
 
 # ============================================
-# ADMIN DASHBOARD
+# ADMIN DASHBOARD - COMPLETELY FIXED VERSION
 # ============================================
 @login_required
 def admin_dashboard(request):
     """
-    Admin Dashboard:
-    - Single items: Uses product.status field directly
-    - Bulk items: Calculates status from quantity
-    - Handles recent products and recent sales
-    - Displays comprehensive statistics for cards with dropdowns
+    Admin Dashboard with comprehensive category safety checks
     """
     context = {}
 
     # ============================================
-    # ✅ ADD ROLES TO CONTEXT (ADD THIS SECTION)
+    # ✅ ADD ROLES TO CONTEXT
     # ============================================
     from users.models import Role
     
     try:
-        # Get all roles from database
         context["roles"] = Role.objects.all().order_by('name')
         logger.info(f"✅ Loaded {context['roles'].count()} roles for dashboard")
     except Exception as e:
         logger.error(f"❌ Error loading roles: {str(e)}")
-        # Fallback to empty queryset
         context["roles"] = Role.objects.none()
 
     # ============================================
     # CURRENT TIME CALCULATIONS
     # ============================================
     now = timezone.now()
-
     start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
     end_of_day = start_of_day + timezone.timedelta(days=1)
     
-    # Calculate start of week (Monday)
     start_of_week = now - timezone.timedelta(days=now.weekday())
     start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
     
-    # Calculate start of month
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    
-    # Calculate start of year
     start_of_year = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
 
     # ============================================
-    # CARD A: 📦 INVENTORY
+    # CARD A: 📦 INVENTORY - FIXED
     # ============================================
-    # Total products count (sum of quantities for bulk, count for single items)
-    all_products = Product.objects.filter(is_active=True)
+    # Filter out products without categories for calculations
+    all_products_with_categories = Product.objects.filter(
+        is_active=True,
+        category__isnull=False  # Only products with categories
+    )
     
     total_products = 0
-    for product in all_products:
+    for product in all_products_with_categories:
         if product.category.is_single_item:
             if product.status == 'available':
                 total_products += 1
         else:
             total_products += product.quantity or 0
     
-    # Total products (sum of quantities)
-    context["total_products"] = Product.objects.filter(is_active=True).aggregate(
-        total=Sum('quantity', output_field=DecimalField())
-    )['total'] or 0
+    context["total_products"] = total_products
 
-    # Total product value (quantity × selling price)
-    context["total_product_value"] = Product.objects.filter(is_active=True).aggregate(
-        total=Sum(F('quantity') * F('selling_price'), output_field=DecimalField())
-    )['total'] or Decimal('0.00')
-    
-    # Total product value for in-stock products only (quantity > 0)
+    # Total product value for in-stock products only
     context["total_product_value"] = Product.objects.filter(
         is_active=True,
-        quantity__gt=0  # Only products with quantity greater than 0
+        quantity__gt=0,
+        category__isnull=False  # Only products with categories
     ).aggregate(
         total=Sum(F('quantity') * F('selling_price'), output_field=DecimalField())
     )['total'] or Decimal('0.00')
 
-    # instock product value (quantity × selling price)
+    # Instock product count
     context["instock_products_count"] = Product.objects.filter(
         is_active=True,
-        quantity__gt=0
+        quantity__gt=0,
+        category__isnull=False  # Only products with categories
     ).count()
 
-    # Total product cost (quantity × buying price)
-    context["total_product_cost"] = Product.objects.filter(is_active=True).aggregate(
+    # Total product cost
+    context["total_product_cost"] = Product.objects.filter(
+        is_active=True,
+        category__isnull=False  # Only products with categories
+    ).aggregate(
         total=Sum(F('quantity') * F('buying_price'), output_field=DecimalField())
     )['total'] or Decimal('0.00')
 
@@ -2000,55 +1891,44 @@ def admin_dashboard(request):
     # ============================================
     all_sales = Sale.objects.filter(is_reversed=False)
     
-    # Daily sales count
     context["daily_sales_count"] = all_sales.filter(
         sale_date__gte=start_of_day,
         sale_date__lt=end_of_day
     ).count()
     
-    # Weekly sales count
     context["weekly_sales_count"] = all_sales.filter(
         sale_date__gte=start_of_week
     ).count()
     
-    # Monthly sales count
     context["monthly_sales_count"] = all_sales.filter(
         sale_date__gte=start_of_month
     ).count()
     
-    # Total sales count (for main display)
     context["total_sales_count"] = all_sales.count()
 
     # ============================================
     # CARD C: 💰 SALES VALUE
     # ============================================
-    # Daily sales value
     context["daily_sales_value"] = all_sales.filter(
         sale_date__gte=start_of_day,
         sale_date__lt=end_of_day
     ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
     
-    # Weekly sales value
     context["weekly_sales_value"] = all_sales.filter(
         sale_date__gte=start_of_week
     ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
     
-    # Monthly sales value
     context["monthly_sales_value"] = all_sales.filter(
         sale_date__gte=start_of_month
     ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
     
-    # Total sales value (for main display)
     context["total_sales_value"] = all_sales.aggregate(
         total=Sum('total_amount')
     )['total'] or Decimal('0.00')
 
     # ============================================
-    # CARD D: 💵 PROFITS
+    # CARD D: 💵 PROFITS - FIXED
     # ============================================
-    # Calculate profits by subtracting cost from revenue
-    # For each sale, profit = total_amount - (sum of buying_price * quantity for all items)
-    
     def calculate_profit_for_period(sales_queryset):
         """Helper function to calculate profit for a given sales queryset"""
         total_profit = Decimal('0.00')
@@ -2056,7 +1936,7 @@ def admin_dashboard(request):
         for sale in sales_queryset.prefetch_related('items', 'items__product'):
             sale_profit = Decimal('0.00')
             for item in sale.items.all():
-                if item.product:
+                if item.product and item.product.category:  # Check product has category
                     buying_price = item.product.buying_price or Decimal('0.00')
                     quantity = item.quantity or 1
                     unit_profit = (item.unit_price or Decimal('0.00')) - buying_price
@@ -2080,13 +1960,12 @@ def admin_dashboard(request):
     monthly_sales = all_sales.filter(sale_date__gte=start_of_month)
     context["monthly_profit"] = calculate_profit_for_period(monthly_sales)
     
-    # Total profit (for main display)
+    # Total profit
     context["total_profit"] = calculate_profit_for_period(all_sales)
 
     # ============================================
     # CARD E: 👤 USERS
     # ============================================
-    # Use the helper function to get user counts by role
     role_counts = get_users_by_role_counts()
     context.update(role_counts)
 
@@ -2097,13 +1976,31 @@ def admin_dashboard(request):
     context["total_stock_entries"] = StockEntry.objects.count()
 
     # ✅ ADD CHART DATA TO CONTEXT
-    chart_data = get_sales_chart_data(request)
-    context['chart_data'] = chart_data['chart_data']
+    try:
+        chart_data = get_sales_chart_data(request)
+        context['chart_data'] = chart_data['chart_data']
+    except Exception as e:
+        logger.error(f"Error getting chart data: {str(e)}")
+        context['chart_data'] = {
+            'bar_chart': {
+                'labels': json.dumps([]),
+                'sales_count': json.dumps([]),
+                'revenue': json.dumps([])
+            },
+            'donut_chart': {
+                'labels': json.dumps(['No Data']),
+                'counts': json.dumps([0]),
+                'colors': json.dumps(['rgba(200, 200, 200, 0.8)'])
+            }
+        }
 
     # ============================================
-    # RECENT PRODUCTS
+    # RECENT PRODUCTS - FIXED VERSION
     # ============================================
-    recent_products = Product.objects.filter(is_active=True).select_related(
+    recent_products = Product.objects.filter(
+        is_active=True,
+        category__isnull=False  # Only products with categories
+    ).select_related(
         "category", "owner"
     ).order_by("-created_at")[:5]
 
@@ -2113,9 +2010,21 @@ def admin_dashboard(request):
         selling_price = product.selling_price or Decimal('0.00')
 
         margin_pct = ((selling_price - buying_price) / buying_price * 100) if buying_price else Decimal('0.00')
-        status = product.status if product.category.is_single_item else (
-            "outofstock" if product.quantity == 0 else ("lowstock" if product.quantity <= 5 else "instock")
-        )
+        
+        # ✅ SAFE: Check if category exists (it should, but just in case)
+        if product.category:
+            if product.category.is_single_item:
+                status = product.status
+            else:
+                if product.quantity == 0:
+                    status = "outofstock"
+                elif product.quantity <= 5:
+                    status = "lowstock"
+                else:
+                    status = "instock"
+        else:
+            status = product.status if product.status else "unknown"
+            logger.warning(f"Product {product.product_code} has no category")
 
         recent_products_with_margin_and_status.append({
             "product": product,
@@ -2135,9 +2044,13 @@ def admin_dashboard(request):
     context["recent_sales"] = recent_sales
 
     # ============================================
-    # ALL PRODUCTS WITH STATUS & MARGIN
+    # ALL PRODUCTS WITH STATUS & MARGIN - FIXED VERSION
     # ============================================
-    all_products_list = Product.objects.filter(is_active=True).select_related(
+    # Only get products with categories
+    all_products_list = Product.objects.filter(
+        is_active=True,
+        category__isnull=False  # Only products with categories
+    ).select_related(
         "category", "owner"
     ).order_by("-created_at")
 
@@ -2151,22 +2064,27 @@ def admin_dashboard(request):
 
         margin_pct = ((selling_price - buying_price) / buying_price * 100) if buying_price else Decimal('0.00')
 
-        if product.category.is_single_item:
-            status = product.status
-            if status == "sold":
-                sold_count += 1
-            elif status == "available":
-                in_stock_count += 1
-        else:
-            if quantity == 0:
-                status = "outofstock"
-                out_of_stock_count += 1
-            elif quantity <= 5:
-                status = "lowstock"
-                low_stock_count += 1
+        # ✅ SAFE: Check if category exists
+        if product.category:
+            if product.category.is_single_item:
+                status = product.status
+                if status == "sold":
+                    sold_count += 1
+                elif status == "available":
+                    in_stock_count += 1
             else:
-                status = "instock"
-                in_stock_count += 1
+                if quantity == 0:
+                    status = "outofstock"
+                    out_of_stock_count += 1
+                elif quantity <= 5:
+                    status = "lowstock"
+                    low_stock_count += 1
+                else:
+                    status = "instock"
+                    in_stock_count += 1
+        else:
+            status = product.status if product.status else "unknown"
+            logger.warning(f"Product {product.product_code} has no category")
 
         products_with_margin_and_status.append({
             "product": product,
@@ -2189,7 +2107,6 @@ def admin_dashboard(request):
         'items', 'items__product', 'seller'
     ).order_by("-sale_date")
 
-    # Annual sales count
     context["annual_sales_count"] = all_sales_list.filter(
         sale_date__gte=start_of_year,
         is_reversed=False
@@ -2250,32 +2167,25 @@ def admin_dashboard(request):
 def fix_product_statuses():
     """
     Management command to fix inconsistent product statuses.
-    Run this if you have products with wrong status values.
-    
-    Usage:
-        python manage.py shell
-        >>> from website.views import fix_product_statuses
-        >>> fix_product_statuses()
+    Only fix products that have categories
     """
-    
     fixed_count = 0
     
     # Fix single items
     single_items = Product.objects.filter(
         category__item_type='single',
+        category__isnull=False,  # Only products with categories
         is_active=True
     )
     
     for product in single_items:
         old_status = product.status
         
-        # Check if product has active sales
         has_active_sale = Sale.objects.filter(
             product=product,
             is_reversed=False
         ).exists()
         
-        # Determine correct status
         if has_active_sale:
             correct_status = 'sold'
             correct_quantity = 0
@@ -2283,7 +2193,6 @@ def fix_product_statuses():
             correct_status = 'available'
             correct_quantity = 1
         
-        # Fix if incorrect
         if product.status != correct_status or product.quantity != correct_quantity:
             logger.info(
                 f"Fixing {product.product_code}: "
@@ -2299,6 +2208,7 @@ def fix_product_statuses():
     # Fix bulk items
     bulk_items = Product.objects.filter(
         category__item_type='bulk',
+        category__isnull=False,  # Only products with categories
         is_active=True
     )
     
@@ -2306,7 +2216,6 @@ def fix_product_statuses():
         old_status = product.status
         quantity = product.quantity or 0
         
-        # Determine correct status based on quantity
         if quantity > 5:
             correct_status = 'available'
         elif quantity > 0:
@@ -2314,7 +2223,6 @@ def fix_product_statuses():
         else:
             correct_status = 'outofstock'
         
-        # Fix if incorrect
         if product.status != correct_status:
             logger.info(
                 f"Fixing bulk item {product.product_code}: "
@@ -2335,9 +2243,7 @@ def fix_product_statuses():
 def debug_product_status(request, product_code):
     """
     Debug endpoint to check product status consistency.
-    Usage: /admin/debug-product/<product_code>/
     """
-    
     try:
         product = Product.objects.get(product_code=product_code)
     except Product.DoesNotExist:
@@ -2345,7 +2251,6 @@ def debug_product_status(request, product_code):
             "error": f"Product {product_code} not found"
         })
     
-    # Get related data
     active_sales = Sale.objects.filter(
         product=product,
         is_reversed=False
@@ -2355,19 +2260,22 @@ def debug_product_status(request, product_code):
         product=product
     ).order_by('-created_at')[:10]
     
-    # Determine expected status
-    if product.category.is_single_item:
-        expected_status = 'sold' if active_sales.exists() else 'available'
-        expected_quantity = 0 if active_sales.exists() else 1
-    else:
-        quantity = product.quantity or 0
-        if quantity > 5:
-            expected_status = 'available'
-        elif quantity > 0:
-            expected_status = 'lowstock'
+    if product.category:
+        if product.category.is_single_item:
+            expected_status = 'sold' if active_sales.exists() else 'available'
+            expected_quantity = 0 if active_sales.exists() else 1
         else:
-            expected_status = 'outofstock'
-        expected_quantity = quantity
+            quantity = product.quantity or 0
+            if quantity > 5:
+                expected_status = 'available'
+            elif quantity > 0:
+                expected_status = 'lowstock'
+            else:
+                expected_status = 'outofstock'
+            expected_quantity = quantity
+    else:
+        expected_status = 'unknown'
+        expected_quantity = product.quantity
     
     debug_info = {
         "product": product,
@@ -2381,40 +2289,51 @@ def debug_product_status(request, product_code):
         ),
         "active_sales": active_sales,
         "stock_entries": stock_entries,
-        "category_type": product.category.item_type,
+        "has_category": bool(product.category),
     }
     
     return render(request, "debug_product.html", debug_info)
 
 # ============================================
-# MANAGER DASHBOARD
+# MANAGER DASHBOARD - FIXED VERSION
 # ============================================
 @login_required
 def manager_dashboard(request):
+    """
+    Manager Dashboard with category safety checks
+    """
     context = {}
 
     # ============================================
     # SUMMARY CARDS
     # ============================================
-    # Use the helper function to get user counts by role
     role_counts = get_users_by_role_counts()
     context.update(role_counts)
     
     context["total_categories"] = Category.objects.count()
     context["total_stock_entries"] = StockEntry.objects.count()
 
-    # Total products (sum of quantities)
-    context["total_products"] = Product.objects.filter(is_active=True).aggregate(
+    # Total products (sum of quantities) - only with categories
+    context["total_products"] = Product.objects.filter(
+        is_active=True,
+        category__isnull=False
+    ).aggregate(
         total=Sum('quantity', output_field=DecimalField())
     )['total'] or 0
 
-    # Total product value (quantity × selling price)
-    context["total_product_value"] = Product.objects.filter(is_active=True).aggregate(
+    # Total product value - only with categories
+    context["total_product_value"] = Product.objects.filter(
+        is_active=True,
+        category__isnull=False
+    ).aggregate(
         total=Sum(F('quantity') * F('selling_price'), output_field=DecimalField())
     )['total'] or Decimal('0.00')
 
-    # Total product cost (quantity × buying price)
-    context["total_product_cost"] = Product.objects.filter(is_active=True).aggregate(
+    # Total product cost - only with categories
+    context["total_product_cost"] = Product.objects.filter(
+        is_active=True,
+        category__isnull=False
+    ).aggregate(
         total=Sum(F('quantity') * F('buying_price'), output_field=DecimalField())
     )['total'] or Decimal('0.00')
 
@@ -2424,9 +2343,12 @@ def manager_dashboard(request):
     )['total'] or Decimal('0.00')
 
     # ============================================
-    # RECENT PRODUCTS
+    # RECENT PRODUCTS - FIXED VERSION
     # ============================================
-    recent_products = Product.objects.filter(is_active=True).select_related(
+    recent_products = Product.objects.filter(
+        is_active=True,
+        category__isnull=False  # Only products with categories
+    ).select_related(
         "category", "owner"
     ).order_by("-created_at")[:5]
 
@@ -2436,9 +2358,20 @@ def manager_dashboard(request):
         selling_price = product.selling_price or Decimal('0.00')
 
         margin_pct = ((selling_price - buying_price) / buying_price * 100) if buying_price else Decimal('0.00')
-        status = product.status if product.category.is_single_item else (
-            "outofstock" if product.quantity == 0 else ("lowstock" if product.quantity <= 5 else "instock")
-        )
+        
+        # ✅ SAFE: Check if category exists
+        if product.category:
+            if product.category.is_single_item:
+                status = product.status
+            else:
+                if product.quantity == 0:
+                    status = "outofstock"
+                elif product.quantity <= 5:
+                    status = "lowstock"
+                else:
+                    status = "instock"
+        else:
+            status = product.status if product.status else "unknown"
 
         recent_products_with_margin_and_status.append({
             "product": product,
@@ -2458,9 +2391,13 @@ def manager_dashboard(request):
     context["recent_sales"] = recent_sales
 
     # ============================================
-    # ALL PRODUCTS WITH STATUS & MARGIN
+    # ALL PRODUCTS WITH STATUS & MARGIN - FIXED VERSION
     # ============================================
-    all_products = Product.objects.filter(is_active=True).select_related(
+    # Only get products with categories
+    all_products = Product.objects.filter(
+        is_active=True,
+        category__isnull=False  # Only products with categories
+    ).select_related(
         "category", "owner"
     ).order_by("-created_at")
 
@@ -2474,22 +2411,26 @@ def manager_dashboard(request):
 
         margin_pct = ((selling_price - buying_price) / buying_price * 100) if buying_price else Decimal('0.00')
 
-        if product.category.is_single_item:
-            status = product.status
-            if status == "sold":
-                sold_count += 1
-            elif status == "available":
-                in_stock_count += 1
-        else:
-            if quantity == 0:
-                status = "outofstock"
-                out_of_stock_count += 1
-            elif quantity <= 5:
-                status = "lowstock"
-                low_stock_count += 1
+        # ✅ SAFE: Check if category exists
+        if product.category:
+            if product.category.is_single_item:
+                status = product.status
+                if status == "sold":
+                    sold_count += 1
+                elif status == "available":
+                    in_stock_count += 1
             else:
-                status = "instock"
-                in_stock_count += 1
+                if quantity == 0:
+                    status = "outofstock"
+                    out_of_stock_count += 1
+                elif quantity <= 5:
+                    status = "lowstock"
+                    low_stock_count += 1
+                else:
+                    status = "instock"
+                    in_stock_count += 1
+        else:
+            status = product.status if product.status else "unknown"
 
         products_with_margin_and_status.append({
             "product": product,
@@ -2508,32 +2449,20 @@ def manager_dashboard(request):
     # ============================================
     # ALL SALES
     # ============================================
-    # Fetch all sales with related data
     all_sales = Sale.objects.prefetch_related('items', 'items__product', 'seller').order_by("-sale_date")
 
-    # Current time
     now = timezone.now()
-
-    # Calculate start of today
     start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
     end_of_day = start_of_day + timezone.timedelta(days=1)
-
-    # Calculate start of week (Monday)
     start_of_week = now - timezone.timedelta(days=now.weekday())
-
-    # Calculate start of month
     start_of_month = now.replace(day=1)
-
-    # Calculate start of year
     start_of_year = now.replace(month=1, day=1)
 
-    # Filter sales within each period
     daily_sales = all_sales.filter(sale_date__gte=start_of_day, sale_date__lt=end_of_day)
     weekly_sales = all_sales.filter(sale_date__gte=start_of_week)
     monthly_sales = all_sales.filter(sale_date__gte=start_of_month)
     annual_sales = all_sales.filter(sale_date__gte=start_of_year)
 
-    # Update context with all statistics
     context.update({
         "all_sales": all_sales,
         "daily_sales_count": daily_sales.filter(is_reversed=False).count(),
@@ -2569,23 +2498,21 @@ def manager_dashboard(request):
             logger.warning(f"URL '{url_name}' not found: {e}")
             context[f"url_{key}"] = "#"
 
-    # ============================================
-    # RENDER TEMPLATE
-    # ============================================
     return render(request, 'website/manager_dashboard.html', context)
 
 # ============================================
-# AGENT DASHBOARD
+# AGENT DASHBOARD - FIXED VERSION
 # ============================================
 @login_required(login_url='/accounts/login/')
 def agent_dashboard(request):
     user = request.user
     today = timezone.now().date()
 
-    # Products
+    # Products - only those with categories
     my_products = Product.objects.filter(
         is_active=True,
-        owner=user
+        owner=user,
+        category__isnull=False  # Only products with categories
     ).select_related('category').order_by('name')
 
     my_products_count = my_products.count()
@@ -2593,24 +2520,24 @@ def agent_dashboard(request):
     # Sales for this user
     user_sales = Sale.objects.filter(seller=user)
 
-    # Today's Sales Total (use total_amount field)
+    # Today's Sales Total
     todays_sales_total = user_sales.filter(
         sale_date__date=today
     ).aggregate(total=Sum('total_amount'))['total'] or 0
 
     todays_sales = f"{float(todays_sales_total):.2f}"
 
-    # Total Sales Count (all time)
+    # Total Sales Count
     total_sales_count = user_sales.count()
 
-    # Total Sales Revenue (all time)
+    # Total Sales Revenue
     total_sales_revenue = user_sales.aggregate(
         total=Sum('total_amount')
     )['total'] or 0
     
     total_sales = f"{float(total_sales_revenue):.2f}"
 
-    # Monthly Sales Revenue (current month)
+    # Monthly Sales Revenue
     monthly_sales_total = user_sales.filter(
         sale_date__year=today.year,
         sale_date__month=today.month
@@ -2618,56 +2545,50 @@ def agent_dashboard(request):
     
     monthly_sales = f"{float(monthly_sales_total):.2f}"
 
-    # Monthly Sales Count (number of transactions this month)
+    # Monthly Sales Count
     monthly_sales_count = user_sales.filter(
         sale_date__year=today.year,
         sale_date__month=today.month
     ).count()
 
-    # Recent Sales (prefetch items)
+    # Recent Sales
     recent_sales = user_sales.prefetch_related(
         'items', 'items__product'
     ).order_by('-sale_date')[:5]
 
-    # All Sales (prefetch items)
+    # All Sales
     all_sales = user_sales.prefetch_related(
         'items', 'items__product'
     ).order_by('-sale_date')
 
     # Additional Metrics
-    total_revenue = total_sales_revenue  # Already calculated above
+    total_revenue = total_sales_revenue
 
     week_start = today - timezone.timedelta(days=today.weekday())
     week_sales = user_sales.filter(
         sale_date__date__gte=week_start
     ).aggregate(total=Sum('total_amount'))['total'] or 0
 
-    month_sales = monthly_sales_total  # Already calculated above
+    month_sales = monthly_sales_total
 
-    # Stock
+    # Stock - only for products with categories
     low_stock_count = my_products.filter(quantity__lte=5, quantity__gt=0).count()
     out_of_stock_count = my_products.filter(quantity=0).count()
 
     return render(request, "website/agent_dashboard.html", {
         'todays_sales': todays_sales,
         'total_sales_count': total_sales_count,
-        'total_sales': total_sales,  # Total revenue (KSH)
+        'total_sales': total_sales,
         'my_products_count': my_products_count,
-
-        # Monthly metrics
-        'monthly_sales': monthly_sales,  # Revenue amount (KSH)
-        'monthly_sales_count': monthly_sales_count,  # Number of transactions
-
+        'monthly_sales': monthly_sales,
+        'monthly_sales_count': monthly_sales_count,
         'recent_sales': recent_sales,
         'all_sales': all_sales,
-
         'my_products': my_products,
-
         'total_revenue': total_revenue,
         'week_sales': week_sales,
         'month_sales': month_sales,
         'low_stock_count': low_stock_count,
         'out_of_stock_count': out_of_stock_count,
-
         'user': user,
     })

@@ -1,5 +1,5 @@
 // static/js/service-worker.js
-const CACHE_NAME = 'fieldmax-shop-v2';
+const CACHE_NAME = 'fieldmax-shop-v4';
 const OFFLINE_URL = '/offline/';
 const SYNC_TAG = 'sync-offline-data';
 
