@@ -12,8 +12,6 @@ django-filter==24.3
 Pillow==11.0.0
 cryptography==42.0.5
 Werkzeug==3.0.3
-pandas==2.0.3  # Older stable version that works
-numpy==1.26.4 
 openpyxl==3.1.5
 python-dateutil==2.9.0.post0
 requests==2.31.0
