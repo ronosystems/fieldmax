@@ -284,8 +284,6 @@ DECIMAL_SEPARATOR = '.'
 # ============================================
 # STORAGE CONFIGURATION - RENDER OPTIMIZED
 # ============================================
-# ✅ Use simple StaticFilesStorage to avoid CSS map errors
-STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
 
 # Modern Django storage configuration
 STORAGES = {
@@ -293,10 +291,9 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.StaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
-
 
 # ============================================
 # STATIC FILES CONFIGURATION - FIXED
@@ -307,24 +304,15 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
-
-# WhiteNoise configuration
-STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
-WHITENOISE_ROOT = STATIC_ROOT
+# WhiteNoise configuration - SIMPLIFIED
 WHITENOISE_USE_FINDERS = True
-WHITENOISE_MANIFEST_STRICT = False
-WHITENOISE_ALLOW_ALL_ORIGINS = True
-WHITENOISE_KEEP_ONLY_HASHED_FILES = False  # Set to False to avoid issues
 WHITENOISE_AUTOREFRESH = DEBUG
-WHITENOISE_MAX_AGE = 31536000 if not DEBUG else 0
-
-
+WHITENOISE_MANIFEST_STRICT = False
 
 # ============================================
 # CLOUDINARY CONFIGURATION - SIMPLE
