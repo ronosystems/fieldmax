@@ -279,15 +279,12 @@ DECIMAL_SEPARATOR = '.'
 
 
 # ============================================
-# STORAGE CONFIGURATION - RENDER OPTIMIZED
+# STORAGE CONFIGURATION
 # ============================================
-
-# Check if Cloudinary is configured
 CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', '')
 CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY', '')
 CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
 
-# Configure Cloudinary if credentials exist
 if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
     import cloudinary
     cloudinary.config(
@@ -297,30 +294,28 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
         secure=True
     )
     
-    # Use Cloudinary for media files only
     STORAGES = {
         "default": {
             "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
         },
         "staticfiles": {
-            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",  # Non-strict!
         },
     }
     print(f"☁️  Cloudinary configured for MEDIA files: {CLOUDINARY_CLOUD_NAME}")
 else:
-    # Use local storage for media files
     STORAGES = {
         "default": {
             "BACKEND": "django.core.files.storage.FileSystemStorage",
         },
         "staticfiles": {
-            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",  # Non-strict!
         },
     }
     print("⚠️  Cloudinary credentials missing. Using local file storage for media.")
 
 # ============================================
-# STATIC FILES CONFIGURATION - FIXED
+# STATIC FILES CONFIGURATION
 # ============================================
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -343,6 +338,8 @@ WHITENOISE_MANIFEST_STRICT = False
 # ============================================
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
 
 # Maximum upload size (100MB)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
