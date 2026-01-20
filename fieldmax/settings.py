@@ -1,14 +1,16 @@
+
+
 """
 Django settings for fieldmax project - PRODUCTION READY
 Optimized for Render deployment with PostgreSQL database
-FIXED STATIC FILES CONFIGURATION
 """
 
+import dj_database_url
 import sys
 import secrets
-from pathlib import Path
+from pathlib import Path  # <-- Make sure this import is here
 import os
-from urllib.parse import urlparse
+import urllib.parse
 
 # ============================================
 # LOAD ENVIRONMENT VARIABLES
@@ -20,12 +22,13 @@ except ImportError:
     pass  # python-dotenv not installed
 
 # ============================================
-# BASE DIRECTORY
+# BASE DIRECTORY - FIXED
 # ============================================
+# Use Path() to create a Path object, not string
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ============================================
-# DEBUG SETTING
+# DEBUG SETTING (MUST BE DEFINED EARLY)
 # ============================================
 DEBUG = os.getenv("DEBUG", "False").lower() in ('true', '1', 't')
 
@@ -40,7 +43,7 @@ if not SECRET_KEY:
         SECRET_KEY = 'django-insecure-dev-key-for-local-testing-only'
         print("⚠️  WARNING: Using development SECRET_KEY. Set SECRET_KEY in Render environment variables for production.")
     else:
-        # In production, generate a secure key if not set
+        # In production, generate a secure key if not set (won't raise error)
         SECRET_KEY = 'django-insecure-' + secrets.token_urlsafe(32)
         print("⚠️  WARNING: Generated SECRET_KEY for this session. Set SECRET_KEY in Render environment variables.")
 
@@ -71,7 +74,7 @@ CSRF_TRUSTED_ORIGINS.extend([
     "http://127.0.0.1:8000",
 ])
 
-# ✅ CSRF configuration
+# ✅ CSRF configuration for production
 CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read CSRF cookie
 CSRF_USE_SESSIONS = False     # Use cookie-based CSRF tokens
 CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
@@ -184,9 +187,14 @@ TEMPLATES = [
 # ============================================
 WSGI_APPLICATION = 'fieldmax.wsgi.application'
 
+
+
+
 # ============================================
 # DATABASE CONFIGURATION - NEON.TECH
 # ============================================
+from urllib.parse import urlparse, parse_qs
+
 # Your Neon connection string
 NEON_DATABASE_URL = "postgresql://neondb_owner:npg_xcWRmZTe9f8b@ep-cold-sunset-abx64cr3-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
@@ -224,14 +232,20 @@ except Exception as e:
     import traceback
     traceback.print_exc()
     
-    # Fallback to SQLite
+    # Fallback to SQLite - Use Path object
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',  # Fixed: Use Path object
         }
     }
     print("⚠️  Using SQLite database (temporary)")
+
+
+
+
+
+
 
 # ============================================
 # PASSWORD VALIDATION
@@ -268,7 +282,24 @@ THOUSAND_SEPARATOR = ','
 DECIMAL_SEPARATOR = '.'
 
 # ============================================
-# STATIC FILES CONFIGURATION - FIXED FOR RENDER
+# STORAGE CONFIGURATION - RENDER OPTIMIZED
+# ============================================
+# ✅ Use simple StaticFilesStorage to avoid CSS map errors
+STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
+
+# Modern Django storage configuration
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.StaticFilesStorage",
+    },
+}
+
+
+# ============================================
+# STATIC FILES CONFIGURATION - FIXED
 # ============================================
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -276,50 +307,45 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-# ✅ WhiteNoise configuration that works
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
-# ✅ Django 4.2+ storage configuration
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",  # Local storage for now
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
-    },
-}
-
-# ✅ Simple static files finders
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
+
+# WhiteNoise configuration
+STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
+WHITENOISE_ROOT = STATIC_ROOT
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_ALLOW_ALL_ORIGINS = True
+WHITENOISE_KEEP_ONLY_HASHED_FILES = False  # Set to False to avoid issues
+WHITENOISE_AUTOREFRESH = DEBUG
+WHITENOISE_MAX_AGE = 31536000 if not DEBUG else 0
+
+
+
 # ============================================
-# CLOUDINARY CONFIGURATION
+# CLOUDINARY CONFIGURATION - SIMPLE
 # ============================================
+
+# Check if Cloudinary is configured
 CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', '')
 CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY', '')
 CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
 
 if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
-    try:
-        import cloudinary
-        import cloudinary.uploader
-        import cloudinary.api
-        
-        cloudinary.config(
-            cloud_name=CLOUDINARY_CLOUD_NAME,
-            api_key=CLOUDINARY_API_KEY,
-            api_secret=CLOUDINARY_API_SECRET,
-            secure=True
-        )
-        # Use Cloudinary for media storage
-        STORAGES["default"]["BACKEND"] = "cloudinary_storage.storage.MediaCloudinaryStorage"
-        print(f"☁️  Cloudinary configured: {CLOUDINARY_CLOUD_NAME}")
-    except ImportError:
-        print("⚠️  Cloudinary packages not installed. Media uploads disabled.")
+    # Cloudinary is configured
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+        'API_KEY': CLOUDINARY_API_KEY,
+        'API_SECRET': CLOUDINARY_API_SECRET,
+    }
+    print(f"☁️  Cloudinary configured: {CLOUDINARY_CLOUD_NAME}")
 else:
+    # Use local storage
+    STORAGES["default"]["BACKEND"] = "django.core.files.storage.FileSystemStorage"
     print("⚠️  Cloudinary credentials missing. Using local file storage.")
 
 # ============================================
@@ -481,7 +507,7 @@ LOGGING = {
         'verbose': {
             'format': '[{levelname}] {asctime} {module} {process:d} {thread:d} - {message}',
             'style': '{',
-            'datefmt': '%Y-%m-d %H:%M:%S',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
         'simple': {
             'format': '[{levelname}] {asctime} - {message}',
