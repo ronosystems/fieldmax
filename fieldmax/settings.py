@@ -119,8 +119,12 @@ INSTALLED_APPS = [
     # REST framework
     'rest_framework',
     'rest_framework.authtoken',
+
+    # Cloudinary for media storage
+    'cloudinary_storage',
+    'cloudinary',
     
-    # Your apps
+    # Local apps
     'users.apps.UsersConfig',
     'website.apps.WebsiteConfig',
     'inventory.apps.InventoryConfig',
