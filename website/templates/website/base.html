@@ -1265,17 +1265,6 @@ body {
         <i class="bi bi-envelope"></i>
         <span>Contact</span>
       </a>
-      
-      <!-- Logout (Only shown in mobile menu if authenticated) -->
-      {% if user.is_authenticated %}
-        <form method="post" action="{% url 'logout' %}" class="nav-form">
-          {% csrf_token %}
-          <button type="submit" class="nav-link logout-btn">
-            <i class="bi bi-box-arrow-right"></i>
-            <span>Logout</span>
-          </button>
-        </form>
-      {% endif %}
     </div>
   </div>
 </nav>
