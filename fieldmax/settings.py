@@ -279,10 +279,11 @@ USE_THOUSAND_SEPARATOR = True
 THOUSAND_SEPARATOR = ','
 DECIMAL_SEPARATOR = '.'
 
+
 # ============================================
 # STORAGE CONFIGURATION - RENDER OPTIMIZED
 # ============================================
-# ✅ Use simple StaticFilesStorage to avoid CSS map errors
+
 STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
 
 # Modern Django storage configuration
@@ -297,64 +298,65 @@ STORAGES = {
 
 
 # ============================================
-# STATIC FILES CONFIGURATION - FIXED
+# STATIC & MEDIA FILES - WORKING VERSION
 # ============================================
+
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
+# Storage backends
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",  # Local storage
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",  # Optimized for Render
+    },
+}
+
+# Static files finders
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
+# File upload limits
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100MB
 
-# WhiteNoise configuration
-STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
-WHITENOISE_ROOT = STATIC_ROOT
-WHITENOISE_USE_FINDERS = True
-WHITENOISE_MANIFEST_STRICT = False
-WHITENOISE_ALLOW_ALL_ORIGINS = True
-WHITENOISE_KEEP_ONLY_HASHED_FILES = False  # Set to False to avoid issues
-WHITENOISE_AUTOREFRESH = DEBUG
-WHITENOISE_MAX_AGE = 31536000 if not DEBUG else 0
 
 
 
 # ============================================
-# CLOUDINARY CONFIGURATION - SIMPLE
+# CLOUDINARY CONFIGURATION - FIXED
 # ============================================
 
-# Check if Cloudinary is configured
 CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', '')
 CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY', '')
 CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
 
-if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
-    # Cloudinary is configured
+# If Cloudinary is not configured, remove it from STORAGES
+if not all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET]):
+    # Remove Cloudinary from STORAGES
+    STORAGES["default"]["BACKEND"] = "django.core.files.storage.FileSystemStorage"
+    print("⚠️  Cloudinary not configured. Using local file storage.")
+else:
+    # Configure Cloudinary properly
     CLOUDINARY_STORAGE = {
         'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
         'API_KEY': CLOUDINARY_API_KEY,
         'API_SECRET': CLOUDINARY_API_SECRET,
     }
     print(f"☁️  Cloudinary configured: {CLOUDINARY_CLOUD_NAME}")
-else:
-    # Use local storage
-    STORAGES["default"]["BACKEND"] = "django.core.files.storage.FileSystemStorage"
-    print("⚠️  Cloudinary credentials missing. Using local file storage.")
 
-# ============================================
-# MEDIA FILES
-# ============================================
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
 
-# Maximum upload size (100MB)
-DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
-FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
+
+
 
 # ============================================
 # AUTHENTICATION & AUTHORIZATION
