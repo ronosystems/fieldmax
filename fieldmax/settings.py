@@ -110,10 +110,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     
-    # Cloudinary storage (conditional)
-    'cloudinary_storage',
-    'cloudinary',
-    
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     
@@ -281,19 +277,47 @@ USE_THOUSAND_SEPARATOR = True
 THOUSAND_SEPARATOR = ','
 DECIMAL_SEPARATOR = '.'
 
+
 # ============================================
 # STORAGE CONFIGURATION - RENDER OPTIMIZED
 # ============================================
 
-# Modern Django storage configuration
-STORAGES = {
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+# Check if Cloudinary is configured
+CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', '')
+CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY', '')
+CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
+
+# Configure Cloudinary if credentials exist
+if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
+    import cloudinary
+    cloudinary.config(
+        cloud_name=CLOUDINARY_CLOUD_NAME,
+        api_key=CLOUDINARY_API_KEY,
+        api_secret=CLOUDINARY_API_SECRET,
+        secure=True
+    )
+    
+    # Use Cloudinary for media files only
+    STORAGES = {
+        "default": {
+            "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+    print(f"☁️  Cloudinary configured for MEDIA files: {CLOUDINARY_CLOUD_NAME}")
+else:
+    # Use local storage for media files
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+    print("⚠️  Cloudinary credentials missing. Using local file storage for media.")
 
 # ============================================
 # STATIC FILES CONFIGURATION - FIXED
@@ -309,32 +333,10 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
-# WhiteNoise configuration - SIMPLIFIED
+# WhiteNoise configuration
 WHITENOISE_USE_FINDERS = True
 WHITENOISE_AUTOREFRESH = DEBUG
 WHITENOISE_MANIFEST_STRICT = False
-
-# ============================================
-# CLOUDINARY CONFIGURATION - SIMPLE
-# ============================================
-
-# Check if Cloudinary is configured
-CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', '')
-CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY', '')
-CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
-
-if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
-    # Cloudinary is configured
-    CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
-        'API_KEY': CLOUDINARY_API_KEY,
-        'API_SECRET': CLOUDINARY_API_SECRET,
-    }
-    print(f"☁️  Cloudinary configured: {CLOUDINARY_CLOUD_NAME}")
-else:
-    # Use local storage
-    STORAGES["default"]["BACKEND"] = "django.core.files.storage.FileSystemStorage"
-    print("⚠️  Cloudinary credentials missing. Using local file storage.")
 
 # ============================================
 # MEDIA FILES
