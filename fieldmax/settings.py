@@ -1,14 +1,14 @@
 """
 Django settings for fieldmax project - PRODUCTION READY
 Optimized for Render deployment with PostgreSQL database
+FIXED STATIC FILES CONFIGURATION
 """
 
-import dj_database_url
 import sys
 import secrets
-from pathlib import Path  # <-- Make sure this import is here
+from pathlib import Path
 import os
-import urllib.parse
+from urllib.parse import urlparse
 
 # ============================================
 # LOAD ENVIRONMENT VARIABLES
@@ -20,13 +20,12 @@ except ImportError:
     pass  # python-dotenv not installed
 
 # ============================================
-# BASE DIRECTORY - FIXED
+# BASE DIRECTORY
 # ============================================
-# Use Path() to create a Path object, not string
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ============================================
-# DEBUG SETTING (MUST BE DEFINED EARLY)
+# DEBUG SETTING
 # ============================================
 DEBUG = os.getenv("DEBUG", "False").lower() in ('true', '1', 't')
 
@@ -41,7 +40,7 @@ if not SECRET_KEY:
         SECRET_KEY = 'django-insecure-dev-key-for-local-testing-only'
         print("⚠️  WARNING: Using development SECRET_KEY. Set SECRET_KEY in Render environment variables for production.")
     else:
-        # In production, generate a secure key if not set (won't raise error)
+        # In production, generate a secure key if not set
         SECRET_KEY = 'django-insecure-' + secrets.token_urlsafe(32)
         print("⚠️  WARNING: Generated SECRET_KEY for this session. Set SECRET_KEY in Render environment variables.")
 
@@ -72,7 +71,7 @@ CSRF_TRUSTED_ORIGINS.extend([
     "http://127.0.0.1:8000",
 ])
 
-# ✅ CSRF configuration for production
+# ✅ CSRF configuration
 CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read CSRF cookie
 CSRF_USE_SESSIONS = False     # Use cookie-based CSRF tokens
 CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
@@ -185,14 +184,9 @@ TEMPLATES = [
 # ============================================
 WSGI_APPLICATION = 'fieldmax.wsgi.application'
 
-
-
-
 # ============================================
 # DATABASE CONFIGURATION - NEON.TECH
 # ============================================
-from urllib.parse import urlparse, parse_qs
-
 # Your Neon connection string
 NEON_DATABASE_URL = "postgresql://neondb_owner:npg_xcWRmZTe9f8b@ep-cold-sunset-abx64cr3-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
@@ -230,20 +224,14 @@ except Exception as e:
     import traceback
     traceback.print_exc()
     
-    # Fallback to SQLite - Use Path object
+    # Fallback to SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',  # Fixed: Use Path object
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
     print("⚠️  Using SQLite database (temporary)")
-
-
-
-
-
-
 
 # ============================================
 # PASSWORD VALIDATION
@@ -279,84 +267,70 @@ USE_THOUSAND_SEPARATOR = True
 THOUSAND_SEPARATOR = ','
 DECIMAL_SEPARATOR = '.'
 
-
 # ============================================
-# STORAGE CONFIGURATION - RENDER OPTIMIZED
+# STATIC FILES CONFIGURATION - FIXED FOR RENDER
 # ============================================
-
-STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
-
-# Modern Django storage configuration
-STORAGES = {
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.StaticFilesStorage",
-    },
-}
-
-
-# ============================================
-# STATIC & MEDIA FILES - WORKING VERSION
-# ============================================
-
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# ✅ WhiteNoise configuration that works
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
-# Storage backends
+# ✅ Django 4.2+ storage configuration
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",  # Local storage
+        "BACKEND": "django.core.files.storage.FileSystemStorage",  # Local storage for now
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",  # Optimized for Render
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
-# Static files finders
+# ✅ Simple static files finders
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
-# File upload limits
-DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100MB
-FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100MB
-
-
-
-
 # ============================================
-# CLOUDINARY CONFIGURATION - FIXED
+# CLOUDINARY CONFIGURATION
 # ============================================
-
 CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', '')
 CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY', '')
 CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
 
-# If Cloudinary is not configured, remove it from STORAGES
-if not all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET]):
-    # Remove Cloudinary from STORAGES
-    STORAGES["default"]["BACKEND"] = "django.core.files.storage.FileSystemStorage"
-    print("⚠️  Cloudinary not configured. Using local file storage.")
+if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
+    try:
+        import cloudinary
+        import cloudinary.uploader
+        import cloudinary.api
+        
+        cloudinary.config(
+            cloud_name=CLOUDINARY_CLOUD_NAME,
+            api_key=CLOUDINARY_API_KEY,
+            api_secret=CLOUDINARY_API_SECRET,
+            secure=True
+        )
+        # Use Cloudinary for media storage
+        STORAGES["default"]["BACKEND"] = "cloudinary_storage.storage.MediaCloudinaryStorage"
+        print(f"☁️  Cloudinary configured: {CLOUDINARY_CLOUD_NAME}")
+    except ImportError:
+        print("⚠️  Cloudinary packages not installed. Media uploads disabled.")
 else:
-    # Configure Cloudinary properly
-    CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
-        'API_KEY': CLOUDINARY_API_KEY,
-        'API_SECRET': CLOUDINARY_API_SECRET,
-    }
-    print(f"☁️  Cloudinary configured: {CLOUDINARY_CLOUD_NAME}")
+    print("⚠️  Cloudinary credentials missing. Using local file storage.")
 
+# ============================================
+# MEDIA FILES
+# ============================================
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
-
-
+# Maximum upload size (100MB)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
+FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
 
 # ============================================
 # AUTHENTICATION & AUTHORIZATION
@@ -507,7 +481,7 @@ LOGGING = {
         'verbose': {
             'format': '[{levelname}] {asctime} {module} {process:d} {thread:d} - {message}',
             'style': '{',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
+            'datefmt': '%Y-%m-d %H:%M:%S',
         },
         'simple': {
             'format': '[{levelname}] {asctime} - {message}',
