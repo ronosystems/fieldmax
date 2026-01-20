@@ -6,7 +6,7 @@ Optimized for Render deployment with PostgreSQL database
 import dj_database_url
 import sys
 import secrets
-from pathlib import Path
+from pathlib import Path  # <-- Make sure this import is here
 import os
 import urllib.parse
 
@@ -20,8 +20,9 @@ except ImportError:
     pass  # python-dotenv not installed
 
 # ============================================
-# BASE DIRECTORY
+# BASE DIRECTORY - FIXED
 # ============================================
+# Use Path() to create a Path object, not string
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ============================================
@@ -184,106 +185,65 @@ TEMPLATES = [
 # ============================================
 WSGI_APPLICATION = 'fieldmax.wsgi.application'
 
-# ============================================
-# DATABASE CONFIGURATION - FIXED FOR RENDER
-# ============================================
-def fix_database_url(db_url):
-    """Fix DATABASE_URL by URL-encoding special characters in password"""
-    if not db_url:
-        return None
-    
-    # Remove quotes if present
-    db_url = db_url.strip('"\'')
-    
-    try:
-        parsed = urllib.parse.urlparse(db_url)
-        if parsed.password:
-            # Check if password needs encoding
-            special_chars = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', 
-                           '=', '+', '{', '}', '[', ']', '|', '\\', ':', ';', 
-                           '"', "'", '<', '>', '?', ',', ' ']
-            
-            # If password contains special chars but they're not URL-encoded
-            needs_encoding = any(char in parsed.password for char in special_chars)
-            is_encoded = any(f'%{ord(char):02x}' in parsed.password for char in special_chars)
-            
-            if needs_encoding and not is_encoded:
-                # URL-encode the password
-                encoded_password = urllib.parse.quote(parsed.password, safe='')
-                netloc = f"{parsed.username}:{encoded_password}@{parsed.hostname}"
-                if parsed.port:
-                    netloc += f":{parsed.port}"
-                db_url = urllib.parse.urlunparse(parsed._replace(netloc=netloc))
-                print(f"⚠️  Auto-encoded special characters in DATABASE_URL password")
-    
-    except Exception as e:
-        print(f"⚠️  Error parsing DATABASE_URL: {e}")
-    
-    return db_url
 
-DATABASE_URL = os.getenv('DATABASE_URL')
-DATABASE_URL = fix_database_url(DATABASE_URL)
 
-if DATABASE_URL:
-    try:
-        # ✅ Use dj_database_url with proper configuration
-        DATABASES = {
-            'default': dj_database_url.parse(
-                DATABASE_URL,
-                conn_max_age=600,
-                conn_health_checks=True,
-                ssl_require=True  # Required for Supabase
-            )
-        }
-        print(f"🔗 Using PostgreSQL database from DATABASE_URL")
-        
-        # Test connection
-        from django.db import connection
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT version();")
-                version = cursor.fetchone()
-                print(f"✅ Database connection successful: {version[0][:50]}...")
-        except Exception as e:
-            print(f"❌ Database connection failed: {e}")
-            
-    except Exception as e:
-        print(f"❌ Error configuring database: {e}")
-        # Fallback to SQLite
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': BASE_DIR / 'db.sqlite3',
-            }
-        }
-        print(f"⚠️  Falling back to SQLite database")
-        
-elif all([os.getenv('DB_NAME'), os.getenv('DB_USER'), os.getenv('DB_PASSWORD'), os.getenv('DB_HOST')]):
-    # Use individual database credentials
+
+# ============================================
+# DATABASE CONFIGURATION - NEON.TECH
+# ============================================
+from urllib.parse import urlparse, parse_qs
+
+# Your Neon connection string
+NEON_DATABASE_URL = "postgresql://neondb_owner:npg_xcWRmZTe9f8b@ep-cold-sunset-abx64cr3-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+
+# Use environment variable or Neon URL
+DATABASE_URL = os.getenv('DATABASE_URL', NEON_DATABASE_URL)
+
+print(f"🔧 Database URL: {DATABASE_URL[:50]}...")
+
+try:
+    # Parse the URL
+    parsed = urlparse(DATABASE_URL)
+    
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('DB_NAME'),
-            'USER': os.getenv('DB_USER'),
-            'PASSWORD': os.getenv('DB_PASSWORD'),
-            'HOST': os.getenv('DB_HOST'),
-            'PORT': os.getenv('DB_PORT', '5432'),
+            'NAME': parsed.path[1:] or 'neondb',  # Remove leading '/'
+            'USER': parsed.username or 'neondb_owner',
+            'PASSWORD': parsed.password or 'npg_xcWRmZTe9f8b',
+            'HOST': parsed.hostname or 'ep-cold-sunset-abx64cr3-pooler.eu-west-2.aws.neon.tech',
+            'PORT': parsed.port or 5432,
+            'CONN_MAX_AGE': 600,
             'OPTIONS': {
                 'sslmode': 'require',
+                'connect_timeout': 10,
             },
         }
     }
-    print(f"🔗 Using PostgreSQL database: {os.getenv('DB_NAME')} on {os.getenv('DB_HOST')}")
     
-else:
-    # Development or fallback - SQLite
+    print(f"✅ Neon database configured successfully!")
+    print(f"   Host: {DATABASES['default']['HOST']}")
+    print(f"   Database: {DATABASES['default']['NAME']}")
+    
+except Exception as e:
+    print(f"❌ Error configuring Neon database: {e}")
+    import traceback
+    traceback.print_exc()
+    
+    # Fallback to SQLite - Use Path object
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',  # Fixed: Use Path object
         }
     }
-    print(f"🔧 {'Development' if DEBUG else 'Production'} mode - using SQLite database")
+    print("⚠️  Using SQLite database (temporary)")
+
+
+
+
+
+
 
 # ============================================
 # PASSWORD VALIDATION
@@ -365,30 +325,25 @@ WHITENOISE_MAX_AGE = 31536000 if not DEBUG else 0
 
 
 # ============================================
-# CLOUDINARY CONFIGURATION (OPTIONAL)
+# CLOUDINARY CONFIGURATION - SIMPLE
 # ============================================
-CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME')
-CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY')
-CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET')
 
-if all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET]):
-    try:
-        import cloudinary
-        import cloudinary.uploader
-        import cloudinary.api
-        
-        cloudinary.config(
-            cloud_name=CLOUDINARY_CLOUD_NAME,
-            api_key=CLOUDINARY_API_KEY,
-            api_secret=CLOUDINARY_API_SECRET,
-            secure=True
-        )
-        print(f"☁️  Cloudinary configured: {CLOUDINARY_CLOUD_NAME}")
-    except ImportError:
-        print("⚠️  Cloudinary packages not installed. Media uploads disabled.")
+# Check if Cloudinary is configured
+CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', '')
+CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY', '')
+CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
+
+if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
+    # Cloudinary is configured
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+        'API_KEY': CLOUDINARY_API_KEY,
+        'API_SECRET': CLOUDINARY_API_SECRET,
+    }
+    print(f"☁️  Cloudinary configured: {CLOUDINARY_CLOUD_NAME}")
 else:
-    # Fallback to local file storage
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    # Use local storage
+    STORAGES["default"]["BACKEND"] = "django.core.files.storage.FileSystemStorage"
     print("⚠️  Cloudinary credentials missing. Using local file storage.")
 
 # ============================================
