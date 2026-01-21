@@ -1112,104 +1112,104 @@ body {
         {% endfor %}
       </div>
     </div>
-
-    <!-- User/Login Dropdown -->
-    <div class="login-dropdown-wrapper">
-      {% if user.is_authenticated %}
-        <!-- Authenticated User: Show Username -->
-        <button class="user-btn" id="userToggle">
-          <i class="bi bi-person-circle"></i>
-          <span>{{ user.username|upper }}</span>
-        </button>
-        
-        <!-- User Dropdown -->
-        <div class="user-dropdown" id="userDropdown">
-          <div class="user-dropdown-header">
-            <i class="bi bi-person-circle"></i>
-            <h3 class="user-dropdown-title">{{ user.username|upper }}</h3>
-          </div>
-          
-          <div class="user-info">
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-              <i class="bi bi-person-fill" style="color: #0dcaf0;"></i>
-              <span style="font-weight: 500;">{{ user.get_full_name|default:user.username }}</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-              <i class="bi bi-envelope-fill" style="color: #0dcaf0;"></i>
-              <span style="font-size: 0.9rem; color: #6b7280;">{{ user.email|default:"No email" }}</span>
-            </div>
-            {% if user.is_superuser %}
-              <div class="user-role-badge">ADMIN</div>
-            {% elif user.is_staff %}
-              <div class="user-role-badge">STAFF</div>
-            {% endif %}
-          </div>
-          
-          <form method="post" action="{% url 'logout' %}" class="logout-form">
-            {% csrf_token %}
-            <button type="submit" class="logout-submit-btn">
-              <i class="bi bi-box-arrow-right"></i>
-              <span>Logout</span>
-            </button>
-          </form>
+    
+<!-- Login/User Dropdown -->
+<div class="login-dropdown-wrapper">
+  {% if user.is_authenticated %}
+    <!-- Authenticated User -->
+    <button class="user-btn" id="userToggle">
+      <i class="bi bi-person-circle"></i>
+      <span>{{ user.username|upper }}</span>
+    </button>
+    
+    <div class="user-dropdown" id="userDropdown">
+      <div class="user-dropdown-header">
+        <i class="bi bi-person-circle"></i>
+        <h3 class="user-dropdown-title">{{ user.username|upper }}</h3>
+      </div>
+      
+      <div class="user-info">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <i class="bi bi-person-fill" style="color: #0dcaf0;"></i>
+          <span style="font-weight: 500;">{{ user.get_full_name|default:user.username }}</span>
         </div>
-      {% else %}
-        <!-- Non-authenticated User: Show Login Button -->
-        <button class="login-btn" id="loginToggle">
-          <i class="bi bi-person-circle"></i>
-          <span>STAFF LOGIN</span>
-        </button>
-        
-        <!-- Login Form Dropdown -->
-        <div class="login-dropdown" id="loginDropdown">
-          <div class="login-dropdown-header">
-            <i class="bi bi-shield-lock"></i>
-            <h3 class="login-dropdown-title">STAFF LOGIN</h3>
-          </div>
-          
-          <div class="login-error" id="loginError">
-            Invalid username or password
-          </div>
-          
-          <form method="post" action="{% url 'login' %}" id="staffLoginForm">
-            {% csrf_token %}
-            
-            <div class="login-form-group">
-              <label for="username" class="login-form-label">Username</label>
-              <input 
-                type="text" 
-                id="username" 
-                name="username" 
-                class="login-form-input" 
-                placeholder="Enter your username"
-                required
-              >
-            </div>
-            
-            <div class="login-form-group" style="position: relative;">
-              <label for="password" class="login-form-label">Password</label>
-              <input 
-                type="password" 
-                id="password" 
-                name="password" 
-                class="login-form-input" 
-                placeholder="Enter your password"
-                required
-                style="padding-right: 2.5rem;"
-              >
-              <i class="bi bi-eye-fill toggle-password" 
-                 style="position: absolute; top: 75%; right: 10px; transform: translateY(-50%); cursor: pointer; font-size: 1.2rem; color: #6b7280;">
-              </i>
-            </div>
-            
-            <button type="submit" class="login-submit-btn">
-              <i class="bi bi-box-arrow-in-right"></i>
-              <span>Login</span>
-            </button>
-          </form>
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <i class="bi bi-envelope-fill" style="color: #0dcaf0;"></i>
+          <span style="font-size: 0.9rem; color: #6b7280;">{{ user.email|default:"No email" }}</span>
         </div>
-      {% endif %}
+        {% if user.is_superuser %}
+          <div class="user-role-badge">ADMIN</div>
+        {% elif user.is_staff %}
+          <div class="user-role-badge">STAFF</div>
+        {% endif %}
+      </div>
+      
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="logout-submit-btn">
+          <i class="bi bi-box-arrow-right"></i>
+          <span>Logout</span>
+        </button>
+      </form>
     </div>
+    
+  {% else %}
+    <!-- STAFF LOGIN - CLEAN VERSION -->
+    <button class="login-btn" id="loginToggleBtn" type="button">
+      <i class="bi bi-person-circle"></i>
+      <span>STAFF LOGIN</span>
+    </button>
+    
+    <div class="login-dropdown" id="loginDropdown">
+      <div class="login-dropdown-header">
+        <i class="bi bi-shield-lock"></i>
+        <h3 class="login-dropdown-title">STAFF LOGIN</h3>
+      </div>
+      
+      <!-- CRITICAL: Standard Django login form -->
+      <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        
+        
+        <div class="login-form-group">
+          <label for="username" class="login-form-label">Username</label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            class="login-form-input" 
+            placeholder="Enter your username"
+            required
+            autofocus
+          >
+        </div>
+        
+        <div class="login-form-group">
+          <label for="password" class="login-form-label">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            class="login-form-input" 
+            placeholder="Enter your password"
+            required
+          >
+        </div>
+        
+        {% if form.errors %}
+        <div class="login-error show">
+          Invalid username or password
+        </div>
+        {% endif %}
+        
+        <button type="submit" class="login-submit-btn">
+          <i class="bi bi-box-arrow-in-right"></i>
+          <span>Login</span>
+        </button>
+      </form>
+    </div>
+  {% endif %}
+</div>
 
     <!-- Mobile Menu Toggle -->
     <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
@@ -1399,18 +1399,24 @@ body {
 <!-- Offline Support Scripts -->
 <script src="{% static 'js/offline-manager.js' %}"></script>
 
-<!-- Just before </body> -->
-<script src="{% static 'js/auto-refresh.js' %}"></script>
-
 <!-- Custom JS -->
 <script>
 // ========================================
-// MOBILE MENU FUNCTIONALITY
+// DECLARE ALL DROPDOWN ELEMENTS FIRST
 // ========================================
 const mobileMenuToggle = document.getElementById('mobileMenuToggle');
 const navbarMenu = document.getElementById('navbarMenu');
 const menuOverlay = document.getElementById('menuOverlay');
+const categoriesToggle = document.getElementById('categoriesToggle');
+const categoriesDropdown = document.getElementById('categoriesDropdown');
+const loginToggleBtn = document.getElementById('loginToggleBtn');
+const loginDropdown = document.getElementById('loginDropdown');
+const userToggle = document.getElementById('userToggle');
+const userDropdown = document.getElementById('userDropdown');
 
+// ========================================
+// MOBILE MENU FUNCTIONALITY
+// ========================================
 function toggleMenu() {
   navbarMenu.classList.toggle('active');
   menuOverlay.classList.toggle('active');
@@ -1442,14 +1448,16 @@ if (menuOverlay) {
   menuOverlay.addEventListener('click', closeMenu);
 }
 
-const navLinks = navbarMenu.querySelectorAll('.nav-link, .nav-form button');
-navLinks.forEach(link => {
-  link.addEventListener('click', function() {
-    if (window.innerWidth <= 992) {
-      closeMenu();
-    }
+if (navbarMenu) {
+  const navLinks = navbarMenu.querySelectorAll('.nav-link, .nav-form button');
+  navLinks.forEach(link => {
+    link.addEventListener('click', function() {
+      if (window.innerWidth <= 992) {
+        closeMenu();
+      }
+    });
   });
-});
+}
 
 let resizeTimer;
 window.addEventListener('resize', function() {
@@ -1462,89 +1470,14 @@ window.addEventListener('resize', function() {
 });
 
 window.addEventListener('orientationchange', function() {
-  if (window.innerWidth <= 992 && navbarMenu.classList.contains('active')) {
+  if (window.innerWidth <= 992 && navbarMenu && navbarMenu.classList.contains('active')) {
     closeMenu();
   }
 });
 
 // ========================================
-// USER/LOGIN DROPDOWN FUNCTIONALITY
-// ========================================
-const userToggle = document.getElementById('userToggle');
-const userDropdown = document.getElementById('userDropdown');
-const loginToggle = document.getElementById('loginToggle');
-const loginDropdown = document.getElementById('loginDropdown');
-
-// Handle user dropdown (authenticated)
-if (userToggle && userDropdown) {
-  userToggle.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    userDropdown.classList.toggle('show');
-    userToggle.classList.toggle('active');
-    
-    // Close login dropdown if open
-    if (loginDropdown && loginDropdown.classList.contains('show')) {
-      loginDropdown.classList.remove('show');
-      if (loginToggle) loginToggle.classList.remove('active');
-    }
-  });
-}
-
-// Handle login dropdown (not authenticated)
-if (loginToggle && loginDropdown) {
-  loginToggle.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    loginDropdown.classList.toggle('show');
-    loginToggle.classList.toggle('active');
-    
-    // Close user dropdown if open
-    if (userDropdown && userDropdown.classList.contains('show')) {
-      userDropdown.classList.remove('show');
-      if (userToggle) userToggle.classList.remove('active');
-    }
-  });
-}
-
-// Close dropdowns when clicking outside
-document.addEventListener('click', function(e) {
-  // User dropdown
-  if (userToggle && userDropdown) {
-    if (!userToggle.contains(e.target) && !userDropdown.contains(e.target)) {
-      userDropdown.classList.remove('show');
-      userToggle.classList.remove('active');
-    }
-  }
-  
-  // Login dropdown
-  if (loginToggle && loginDropdown) {
-    if (!loginToggle.contains(e.target) && !loginDropdown.contains(e.target)) {
-      loginDropdown.classList.remove('show');
-      loginToggle.classList.remove('active');
-    }
-  }
-});
-
-// Prevent dropdown from closing when clicking inside
-if (userDropdown) {
-  userDropdown.addEventListener('click', function(e) {
-    e.stopPropagation();
-  });
-}
-
-if (loginDropdown) {
-  loginDropdown.addEventListener('click', function(e) {
-    e.stopPropagation();
-  });
-}
-
-// ========================================
 // CATEGORIES DROPDOWN FUNCTIONALITY
 // ========================================
-const categoriesToggle = document.getElementById('categoriesToggle');
-const categoriesDropdown = document.getElementById('categoriesDropdown');
-
 if (categoriesToggle && categoriesDropdown) {
   categoriesToggle.addEventListener('click', function(e) {
     e.preventDefault();
@@ -1557,9 +1490,8 @@ if (categoriesToggle && categoriesDropdown) {
       userDropdown.classList.remove('show');
       if (userToggle) userToggle.classList.remove('active');
     }
-    if (loginDropdown && loginDropdown.classList.contains('show')) {
-      loginDropdown.classList.remove('show');
-      if (loginToggle) loginToggle.classList.remove('active');
+    if (loginDropdown && loginDropdown.style.display === 'block') {
+      loginDropdown.style.display = 'none';
     }
   });
 
@@ -1579,7 +1511,6 @@ if (categoriesToggle && categoriesDropdown) {
 // PASSWORD VISIBILITY TOGGLE
 // ========================================
 const togglePasswordIcons = document.querySelectorAll('.toggle-password');
-
 togglePasswordIcons.forEach(icon => {
   icon.addEventListener('click', () => {
     const passwordInput = icon.previousElementSibling;
@@ -1604,7 +1535,6 @@ const username = "{{ user.username|escapejs }}";
 if (isAuthenticated) {
   console.log(`[APP] User authenticated as: ${username}`);
   
-  // Update page title with username
   const pageTitle = document.querySelector('title');
   if (pageTitle && username) {
     const baseTitle = pageTitle.textContent;
@@ -1613,7 +1543,6 @@ if (isAuthenticated) {
     }
   }
   
-  // Update connection status to show username
   const connectionStatus = document.getElementById('connection-status');
   if (connectionStatus && username) {
     const statusIcon = connectionStatus.querySelector('i');
@@ -1624,7 +1553,6 @@ if (isAuthenticated) {
     connectionStatus.appendChild(statusText);
   }
   
-  // STAFF: Update pending orders count
   function updatePendingOrdersCount() {
     fetch('/api/pending-orders-count/')
       .then(response => response.json())
@@ -1648,7 +1576,6 @@ if (isAuthenticated) {
   setInterval(updatePendingOrdersCount, 30000);
   
 } else {
-  // CUSTOMER: Update cart count
   function updateCartCount() {
     const cart = JSON.parse(localStorage.getItem('fieldmax_cart') || '[]');
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -1679,22 +1606,19 @@ if (isAuthenticated) {
 // ========================================
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
-    // Close categories dropdown
     if (categoriesDropdown && categoriesDropdown.classList.contains('show')) {
       categoriesDropdown.classList.remove('show');
-      categoriesToggle.classList.remove('active');
+      if (categoriesToggle) categoriesToggle.classList.remove('active');
     }
     
-    // Close user dropdown
     if (userDropdown && userDropdown.classList.contains('show')) {
       userDropdown.classList.remove('show');
-      userToggle.classList.remove('active');
+      if (userToggle) userToggle.classList.remove('active');
     }
     
-    // Close login dropdown
     if (loginDropdown && loginDropdown.classList.contains('show')) {
       loginDropdown.classList.remove('show');
-      loginToggle.classList.remove('active');
+      if (loginToggleBtn) loginToggleBtn.classList.remove('active');
     }
   }
 });
@@ -1709,7 +1633,6 @@ document.addEventListener('DOMContentLoaded', function() {
       .catch(err => console.error('Service Worker registration failed:', err));
   }
   
-  // Cache offline data if user is authenticated
   if (navigator.onLine && isAuthenticated) {
     cacheOfflineData();
   }
@@ -1740,7 +1663,6 @@ async function cacheOfflineData() {
   }
 }
 
-// Helper for offline-aware requests
 async function offlineAwareRequest(method, url, data = null) {
   if (!navigator.onLine) {
     if (window.offlineManager) {
@@ -1785,7 +1707,7 @@ function getCookie(name) {
 }
 
 // ========================================
-// CATEGORY MANAGER (Simplified Version)
+// CATEGORY MANAGER
 // ========================================
 class CategoryManager {
   constructor() {
@@ -1836,21 +1758,84 @@ class CategoryManager {
   }
 }
 
-// Initialize category manager
 window.categoryManager = new CategoryManager();
 
 // ========================================
-// INITIALIZE ON PAGE LOAD
+// LOGIN DROPDOWN - UNIFIED CLEAN VERSION
 // ========================================
 document.addEventListener('DOMContentLoaded', function() {
   console.log('[APP] Fieldmax Shop initialized');
   
-  // Initialize category manager
   if (window.categoryManager) {
     window.categoryManager.loadCategories().then(categories => {
       console.log(`[CATEGORY MANAGER] Loaded ${categories.length} categories`);
     });
   }
+  
+  // Handle STAFF LOGIN dropdown
+  if (loginToggleBtn && loginDropdown) {
+    console.log('[LOGIN] Staff login dropdown initialized');
+    
+    loginToggleBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Toggle the 'show' class instead of display property
+      loginDropdown.classList.toggle('show');
+      loginToggleBtn.classList.toggle('active');
+      
+      console.log('[LOGIN] Dropdown toggled, show class:', loginDropdown.classList.contains('show'));
+      
+      // Close user dropdown if open
+      if (userDropdown && userDropdown.classList.contains('show')) {
+        userDropdown.classList.remove('show');
+        if (userToggle) userToggle.classList.remove('active');
+      }
+    });
+    
+    loginDropdown.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+  }
+  
+  // Handle USER dropdown (for authenticated users)
+  if (userToggle && userDropdown) {
+    console.log('[USER] User dropdown initialized');
+    
+    userToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      userDropdown.classList.toggle('show');
+      userToggle.classList.toggle('active');
+      
+      // Close login dropdown if open
+      if (loginDropdown && loginDropdown.classList.contains('show')) {
+        loginDropdown.classList.remove('show');
+        if (loginToggleBtn) loginToggleBtn.classList.remove('active');
+      }
+    });
+    
+    userDropdown.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+  }
+  
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', function(e) {
+    if (loginDropdown && loginToggleBtn &&
+        !loginToggleBtn.contains(e.target) && 
+        !loginDropdown.contains(e.target)) {
+      loginDropdown.classList.remove('show');
+      loginToggleBtn.classList.remove('active');
+    }
+    
+    if (userDropdown && userToggle &&
+        !userToggle.contains(e.target) && 
+        !userDropdown.contains(e.target)) {
+      userDropdown.classList.remove('show');
+      userToggle.classList.remove('active');
+    }
+  });
 });
 </script>
 </body>

@@ -1767,25 +1767,49 @@ def get_sales_chart_data(request):
 # ============================================
 class RoleBasedLoginView(LoginView):
     template_name = 'registration/login.html'
-        
+    redirect_authenticated_user = True  # Add this
+    
     def get_success_url(self):
+        """Determine redirect URL based on user role"""
         user = self.request.user
         
-        if hasattr(user, 'profile'):
-            if user.profile.role:
-                role_name = user.profile.role.name.lower()
-                
-                if role_name == 'admin':
-                    return '/admin-dashboard/'
-                elif role_name == 'manager':
-                    return '/manager-dashboard/'
-                elif role_name == 'agent':
-                    return '/agent-dashboard/'
-                elif role_name == 'cashier':
-                    return '/cashier-dashboard/'
+        # Role-based redirect
+        if hasattr(user, 'profile') and user.profile and user.profile.role:
+            role_name = user.profile.role.name.lower()
+            
+            role_urls = {
+                'admin': '/admin-dashboard/',
+                'manager': '/manager-dashboard/',
+                'agent': '/agent-dashboard/',
+                'cashier': '/cashier-dashboard/',
+            }
+            
+            url = role_urls.get(role_name, '/')
+            logger.info(f"LOGIN REDIRECT - {user.username} ({role_name}) → {url}")
+            return url
         
+        # Fallback for superuser
+        if user.is_superuser:
+            logger.info(f"LOGIN REDIRECT - {user.username} (superuser) → /admin-dashboard/")
+            return '/admin-dashboard/'
+        
+        logger.info(f"LOGIN REDIRECT - {user.username} (no role) → /")
         return '/'
+    
+    def form_valid(self, form):
+        """Complete the login and redirect"""
+        from django.contrib.auth import login
+        
+        login(self.request, form.get_user())
+        
+        redirect_url = self.get_success_url()
+        logger.info(f"✅ LOGIN SUCCESS - {form.get_user().username} → {redirect_url}")
+        
+        from django.shortcuts import redirect
+        return redirect(redirect_url)
+    
 
+    
 def get_users_by_role_counts():
     """Helper function to get counts of users by role"""
     all_users = User.objects.select_related('profile')
