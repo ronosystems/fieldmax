@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from . import views
+from . import views, api
 
 # REST API Router
 router = DefaultRouter()
@@ -15,7 +15,10 @@ urlpatterns = [
     # REST API ENDPOINTS
     # ============================================
     path('api/', include(router.urls)),
-    
+    path('api/dashboard-stats/', api.dashboard_stats, name='api-dashboard-stats'),
+    path('api/products-list/', api.products_list, name='api-products-list'),
+    path('api/recent-products/', api.recent_products, name='api-recent-products'),
+
     # ====================================
     # CATEGORY URLS
     # ====================================
@@ -26,7 +29,7 @@ urlpatterns = [
     path('category/create/', views.CategoryCreateView.as_view(), name='category-create'),
     path('category/<int:pk>/edit/', views.CategoryUpdateView.as_view(), name='category-edit'),
     path('category/<int:pk>/delete/', views.CategoryDeleteView.as_view(), name='category-delete'),
-    
+
     # ============================================
     # PRODUCT URLS
     # ============================================

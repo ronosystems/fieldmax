@@ -1,7 +1,7 @@
 # sales/urls.py - FIXED VERSION
 
 from django.urls import path
-from . import views
+from . import views, api
 from .views import (
     SaleListView,
     SaleDetailView,
@@ -22,8 +22,8 @@ urlpatterns = [
     # ============================================
     # LIVE SEARCH ENDPOINTS (MOVE TO TOP)
     # ============================================
-    path('product-search/', views.product_search, name='product_search'),  # ✅ FIXED: No 'sales/' prefix
-    path('record-sale/', views.record_sale, name='record_sale'),          # ✅ FIXED: No 'sales/' prefix
+    path('product-search/', views.product_search, name='product_search'),  
+    path('record-sale/', views.record_sale, name='record_sale'),     
     
     # Product Lookup (existing)
     path('product-lookup/', views.ProductLookupView.as_view(), name='product-lookup'),
@@ -68,4 +68,5 @@ urlpatterns = [
     path('api/reports/', views.sales_report_api, name='sales-report-api'),
     path('api/get-sellers/', views.get_sellers_api, name='get-sellers-api'),
     path('api/get-all-sellers/', views.get_all_sellers_api, name='get-all-sellers-api'),
+    path('api/recent-sales/', api.recent_sales, name='api-recent-sales'),
 ]
