@@ -4155,16 +4155,6 @@ strong[style*="background-color"] {
         <span class="badge bg-light text-dark" id="selectedCountBadge">0</span>
       </h6>
     </div>
-    
-    <div class="card-body p-3 d-flex flex-column" style="flex: 1; overflow: hidden;">
-      
-      <!-- Empty State -->
-      <div id="printCodeEmptyState" class="text-center py-4 flex-grow-1 d-flex flex-column justify-content-center">
-        <i class="bi bi-upc-scan" style="font-size: 2.5rem; color: #cbd5e1;"></i>
-        <h6 class="text-muted mt-2">No Products Selected</h6>
-        <p class="text-muted small">Select products to configure labels</p>
-      </div>
-
       <!-- Preview Area (Fixed Height) -->
       <div id="printCodePreview" style="display: none;" class="d-flex flex-column h-100">
         
@@ -11036,9 +11026,8 @@ window.AutoRefresh = AutoRefresh;
 
 
 
-
 // ====================================
-// PRINT BARCODE/SKU FUNCTIONALITY
+// PRINT BARCODE/SKU FUNCTIONALITY - FIXED
 // ====================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🖨️ Print Code Module Initializing...');
@@ -11052,7 +11041,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearSelectionBtn = document.getElementById('clearSelectionBtn');
     const printLabelsBtn = document.getElementById('printLabelsBtn');
     const downloadPDFBtn = document.getElementById('downloadPDFBtn');
-    const printNowBtn = document.getElementById('printNowBtn');
     const configurePrinterBtn = document.getElementById('configurePrinterBtn');
     
     const searchInput = document.getElementById('printCodeSearch');
@@ -11074,6 +11062,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const labelsPerProduct = document.getElementById('labelsPerProduct');
     const decreaseLabelsBtn = document.getElementById('decreaseLabelsBtn');
     const increaseLabelsBtn = document.getElementById('increaseLabelsBtn');
+    
+    // Debug: Check if buttons exist
+    console.log('Print Button:', printLabelsBtn);
+    console.log('Download Button:', downloadPDFBtn);
     
     let selectedProducts = new Set();
     
@@ -11176,18 +11168,28 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedCountBadge.textContent = count;
         
         if (count > 0) {
-            emptyState.style.display = 'none';
-            previewSection.style.display = 'flex';
-            printLabelsBtn.disabled = false;
-            downloadPDFBtn.disabled = false;
+            if (emptyState) emptyState.style.display = 'none';
+            if (previewSection) previewSection.style.display = 'flex';
+            
+            // Enable buttons
+            if (printLabelsBtn) {
+                printLabelsBtn.disabled = false;
+                console.log('✅ Print button enabled');
+            }
+            if (downloadPDFBtn) {
+                downloadPDFBtn.disabled = false;
+                console.log('✅ Download button enabled');
+            }
             
             updateSelectedList();
             updatePreview();
         } else {
-            emptyState.style.display = 'flex';
-            previewSection.style.display = 'none';
-            printLabelsBtn.disabled = true;
-            downloadPDFBtn.disabled = true;
+            if (emptyState) emptyState.style.display = 'flex';
+            if (previewSection) previewSection.style.display = 'none';
+            
+            // Disable buttons
+            if (printLabelsBtn) printLabelsBtn.disabled = true;
+            if (downloadPDFBtn) downloadPDFBtn.disabled = true;
         }
     }
     
@@ -11195,6 +11197,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // UPDATE SELECTED PRODUCTS LIST
     // ============================================
     function updateSelectedList() {
+        if (!selectedProductsList) return;
+        
         let html = '';
         
         selectedProducts.forEach(product => {
@@ -11321,21 +11325,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================
     // PRINTER CONFIGURATION MODAL
     // ============================================
-    document.getElementById('savePrinterConfigBtn')?.addEventListener('click', function() {
-        printerConfig.name = document.getElementById('printerName').value || 'Custom Printer';
-        printerConfig.type = document.getElementById('printerType').value;
-        printerConfig.paperSize = document.getElementById('paperSize').value;
-        
-        // Update printer select dropdown
-        updatePrinterSelect(printerConfig);
-        
-        const modal = bootstrap.Modal.getInstance(document.getElementById('printerConfigModal'));
-        modal.hide();
-        
-        showNotification('Printer settings saved', 'success');
-    });
+    const savePrinterBtn = document.getElementById('savePrinterConfigBtn');
+    if (savePrinterBtn) {
+        savePrinterBtn.addEventListener('click', function() {
+            printerConfig.name = document.getElementById('printerName').value || 'Custom Printer';
+            printerConfig.type = document.getElementById('printerType').value;
+            printerConfig.paperSize = document.getElementById('paperSize').value;
+            
+            // Update printer select dropdown
+            updatePrinterSelect(printerConfig);
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('printerConfigModal'));
+            modal.hide();
+            
+            showNotification('Printer settings saved', 'success');
+        });
+    }
     
     function updatePrinterSelect(config) {
+        if (!printerSelect) return;
+        
         const hasCustomOption = Array.from(printerSelect.options).some(opt => opt.value === 'custom');
         if (!hasCustomOption) {
             const option = document.createElement('option');
@@ -11356,6 +11365,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // UPDATE PREVIEW
     // ============================================
     function updatePreview() {
+        if (!labelPreviewContainer) return;
+        
         const perRow = parseInt(labelsPerRow.value);
         const size = labelSize.value;
         const showName = showProductName.checked;
@@ -11522,160 +11533,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ============================================
-    // CREATE LABEL HTML FOR PRINT SHEET
-    // ============================================
-    function createPrintLabelHTML(product, identifier, size, showName, showPriceValue, copyNum = 1, totalCopies = 1) {
-        const sizeMap = {
-            small: { 
-                width: '45mm',
-                height: '25mm',
-                fontSize: '7px',
-                barcodeFontSize: '6px',
-                productCodeFontSize: '8px',
-                padding: '2mm',
-                innerPadding: '1mm 2mm',
-                borderRadius: '1mm',
-                lineHeight: '1.0'
-            },
-            medium: { 
-                width: '55mm',
-                height: '35mm',
-                fontSize: '8px',
-                barcodeFontSize: '7px',
-                productCodeFontSize: '9px',
-                padding: '3mm',
-                innerPadding: '2mm 3mm',
-                borderRadius: '2mm',
-                lineHeight: '1.1'
-            },
-            large: { 
-                width: '65mm',
-                height: '45mm',
-                fontSize: '9px',
-                barcodeFontSize: '8px',
-                productCodeFontSize: '10px',
-                padding: '4mm',
-                innerPadding: '3mm 4mm',
-                borderRadius: '3mm',
-                lineHeight: '1.2'
-            }
-        };
-        
-        const sizeStyle = sizeMap[size];
-        const barcodeText = identifier || 'N/A';
-        
-        return `
-            <div class="print-label" style="
-                width: ${sizeStyle.width};
-                height: ${sizeStyle.height};
-                border: 0.5mm solid #ddd;
-                padding: ${sizeStyle.padding};
-                text-align: center;
-                background: white;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                page-break-inside: avoid;
-                break-inside: avoid;
-                box-shadow: 0 0.5mm 1.5mm rgba(0,0,0,0.1);
-                overflow: hidden;
-                box-sizing: border-box;
-            ">
-                <div style="
-                    font-weight: 700; 
-                    font-size: ${sizeStyle.productCodeFontSize}; 
-                    margin-bottom: 1mm; 
-                    color: #2c3e50;
-                    width: 100%;
-                    text-align: center;
-                    word-wrap: break-word;
-                    overflow-wrap: break-word;
-                    white-space: normal;
-                    line-height: ${sizeStyle.lineHeight};
-                    padding: 0 1mm;
-                ">
-                    ${product.code}
-                </div>
-                ${showName ? `
-                    <div style="
-                        font-size: ${sizeStyle.fontSize}; 
-                        color: #7f8c8d; 
-                        margin-bottom: 2mm; 
-                        width: 100%;
-                        text-align: center;
-                        word-wrap: break-word;
-                        overflow-wrap: break-word;
-                        white-space: normal;
-                        line-height: ${sizeStyle.lineHeight};
-                        padding: 0 1mm;
-                    ">
-                        ${product.name}
-                    </div>
-                ` : ''}
-                <div style="
-                    font-family: 'Courier New', monospace;
-                    font-weight: 800;
-                    font-size: ${sizeStyle.barcodeFontSize};
-                    background: #2c3e50;
-                    color: white;
-                    padding: ${sizeStyle.innerPadding};
-                    margin: 1mm 0;
-                    letter-spacing: 0.2mm;
-                    border-radius: ${sizeStyle.borderRadius};
-                    width: calc(100% - 2mm);
-                    text-align: center;
-                    word-wrap: break-word;
-                    overflow-wrap: break-word;
-                    white-space: normal;
-                    line-height: 1.0;
-                    min-height: ${parseFloat(sizeStyle.barcodeFontSize) * 1.5}px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-sizing: border-box;
-                ">
-                    ${barcodeText}
-                </div>
-                ${showPriceValue ? `
-                    <div style="
-                        font-weight: 700; 
-                        color: #27ae60; 
-                        font-size: ${parseFloat(sizeStyle.fontSize) * 1.1}px; 
-                        margin-top: 1mm;
-                        width: 100%;
-                        text-align: center;
-                        word-wrap: break-word;
-                        overflow-wrap: break-word;
-                        white-space: normal;
-                        line-height: ${sizeStyle.lineHeight};
-                        padding: 0 1mm;
-                    ">
-                        KSH 0.00
-                    </div>
-                ` : ''}
-                ${totalCopies > 1 ? `
-                    <div style="
-                        font-size: ${parseFloat(sizeStyle.fontSize) * 0.7}px; 
-                        color: #95a5a6; 
-                        margin-top: 1mm; 
-                        font-style: italic;
-                        width: 100%;
-                        text-align: center;
-                        word-wrap: break-word;
-                        overflow-wrap: break-word;
-                        white-space: normal;
-                        line-height: ${sizeStyle.lineHeight};
-                        padding: 0 1mm;
-                    ">
-                        Copy ${copyNum}/${totalCopies}
-                    </div>
-                ` : ''}
-            </div>
-        `;
-    }
-    
-    // ============================================
     // SETTINGS CHANGE LISTENERS
     // ============================================
     [labelsPerRow, labelSize, showProductName, showPrice, labelsPerProduct, printerSelect].forEach(element => {
@@ -11713,21 +11570,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeFilter) typeFilter.addEventListener('change', filterPrintCodeTable);
     
     // ============================================
-    // PRINT FUNCTIONALITY - REDIRECT TO PRINT PAGE
+    // PREPARE PRINT DATA FUNCTION
     // ============================================
-    if (printLabelsBtn) {
-        printLabelsBtn.addEventListener('click', function() {
-            preparePrintData();
-        });
-    }
-    
-    if (downloadPDFBtn) {
-        downloadPDFBtn.addEventListener('click', function() {
-            preparePrintData();
-        });
-    }
-    
     function preparePrintData() {
+        console.log('🔥 preparePrintData() called');
+        console.log('Selected products:', selectedProducts.size);
+        
         const perRow = parseInt(labelsPerRow.value);
         const size = labelSize.value;
         const showName = showProductName.checked;
@@ -11736,6 +11584,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Convert Set to Array
         const productsArray = Array.from(selectedProducts);
+        
+        console.log('Products array:', productsArray);
         
         // Prepare data for print page
         const printData = {
@@ -11748,11 +11598,57 @@ document.addEventListener('DOMContentLoaded', function() {
             printerName: printerConfig.name
         };
         
-        // Store in sessionStorage
-        sessionStorage.setItem('printLabelsData', JSON.stringify(printData));
+        console.log('Print data prepared:', printData);
         
-        // Redirect to print page - using the correct Django URL
-        window.location.href = '/inventory/print-labels/';
+        // Store in sessionStorage
+        try {
+            sessionStorage.setItem('printLabelsData', JSON.stringify(printData));
+            console.log('✅ Data saved to sessionStorage');
+        } catch (e) {
+            console.error('❌ Error saving to sessionStorage:', e);
+            showNotification('Error preparing print data', 'danger');
+            return;
+        }
+        
+        // Redirect to print page
+        const printUrl = '/inventory/print-labels/';
+        console.log('Redirecting to:', printUrl);
+        
+        try {
+            window.location.href = printUrl;
+        } catch (e) {
+            console.error('❌ Error redirecting:', e);
+            showNotification('Error opening print page', 'danger');
+        }
+    }
+    
+    // ============================================
+    // PRINT FUNCTIONALITY - BUTTON CLICK HANDLERS
+    // ============================================
+    if (printLabelsBtn) {
+        console.log('Setting up Print Labels button listener');
+        
+        printLabelsBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🖨️ Print Labels button clicked!');
+            preparePrintData();
+        });
+    } else {
+        console.error('❌ printLabelsBtn not found!');
+    }
+    
+    if (downloadPDFBtn) {
+        console.log('Setting up Download PDF button listener');
+        
+        downloadPDFBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📄 Download PDF button clicked!');
+            preparePrintData();
+        });
+    } else {
+        console.error('❌ downloadPDFBtn not found!');
     }
     
     // ============================================
@@ -11782,9 +11678,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 3000);
     }
     
-    console.log('✅ Print Module Ready - Fixed Pagination');
+    console.log('✅ Print Module Ready - Buttons Fixed');
 });
-
 
 
 </script>
