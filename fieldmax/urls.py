@@ -6,48 +6,9 @@ from website.views import RoleBasedLoginView
 from django.contrib.auth.views import LogoutView
 from django.views.generic import TemplateView
 from website.api_views.offline_sync import sync_offline_queue, get_offline_data
-
-
-
-from django.http import HttpResponse, JsonResponse
-from django.contrib.auth import get_user_model
-from django.views.decorators.csrf import csrf_exempt
-
-
-
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-
-    # Auth
-    path('login/', RoleBasedLoginView.as_view(), name='login'),
-    path('accounts/login/', RoleBasedLoginView.as_view()),  
-    path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
-
-    # HTML ROUTES (Django Template Views)
-    path('inventory/', include('inventory.urls')),
-    path('sales/', include('sales.urls')),
-    path('users/', include('users.urls')),
-
-    # Main site
-    path('', include('website.urls')),
-    path('accounts/', include('django.contrib.auth.urls')),
-
-    #offline
-    path('offline/', TemplateView.as_view(template_name='offline.html'), name='offline'),
-    path('api/sync-offline-queue/', sync_offline_queue, name='sync_offline_queue'),
-    path('api/offline-data/', get_offline_data, name='get_offline_data'),
-]
-
-# Serve media files in development
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-
-# Add this at the end of urlpatterns (before the static patterns)
-from django.views.generic import TemplateView
 from django.http import HttpResponse
 import json
+
 
 def serve_manifest(request):
     manifest_data = {
@@ -70,5 +31,46 @@ def serve_manifest(request):
     }
     return HttpResponse(json.dumps(manifest_data), content_type='application/json')
 
-# Add to urlpatterns
-urlpatterns.insert(0, path('manifest.json', serve_manifest, name='manifest'))
+
+urlpatterns = [
+    # Manifest
+    path('manifest.json', serve_manifest, name='manifest'),
+    
+    # Admin
+    path('admin/', admin.site.urls),
+
+    # ============================================
+    # AUTHENTICATION - CUSTOM OVERRIDES
+    # ============================================
+    # Your custom login view (MUST come before django.contrib.auth.urls)
+    path('login/', RoleBasedLoginView.as_view(), name='login'),
+    path('accounts/login/', RoleBasedLoginView.as_view()),
+    path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
+
+    # ============================================
+    # AUTHENTICATION - DJANGO DEFAULTS
+    # ============================================
+    # path('accounts/password_change/', auth_views.PasswordChangeView.as_view(), name='password_change'),
+    # path('accounts/password_change/done/', auth_views.PasswordChangeDoneView.as_view(), name='password_change_done'),
+    # path('accounts/password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
+
+    # ============================================
+    # APP ROUTES
+    # ============================================
+    path('inventory/', include('inventory.urls')),
+    path('sales/', include('sales.urls')),
+    path('users/', include('users.urls')),
+    path('', include('website.urls')),
+
+    # ============================================
+    # OFFLINE SUPPORT
+    # ============================================
+    path('offline/', TemplateView.as_view(template_name='offline.html'), name='offline'),
+    path('api/sync-offline-queue/', sync_offline_queue, name='sync_offline_queue'),
+    path('api/offline-data/', get_offline_data, name='get_offline_data'),
+]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

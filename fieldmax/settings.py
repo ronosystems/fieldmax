@@ -21,6 +21,16 @@ try:
 except ImportError:
     pass  # python-dotenv not installed
 
+
+# ============================================
+# PROCESS CHECK (Prevents duplicate messages)
+# ============================================
+# Check if we're in the main Django process (not the reloader)
+# This prevents duplicate messages when using runserver
+IS_MAIN_PROCESS = True
+if 'runserver' in sys.argv:
+    IS_MAIN_PROCESS = os.environ.get('RUN_MAIN') == 'true'
+
 # ============================================
 # BASE DIRECTORY - FIXED
 # ============================================
@@ -41,11 +51,13 @@ if not SECRET_KEY:
     if DEBUG:
         # Development fallback
         SECRET_KEY = 'django-insecure-dev-key-for-local-testing-only'
-        print("⚠️  WARNING: Using development SECRET_KEY. Set SECRET_KEY in Render environment variables for production.")
+        if IS_MAIN_PROCESS:
+            print("⚠️  WARNING: Using development SECRET_KEY. Set SECRET_KEY in Render environment variables for production.")
     else:
         # In production, generate a secure key if not set (won't raise error)
         SECRET_KEY = 'django-insecure-' + secrets.token_urlsafe(32)
-        print("⚠️  WARNING: Generated SECRET_KEY for this session. Set SECRET_KEY in Render environment variables.")
+        if IS_MAIN_PROCESS:
+            print("⚠️  WARNING: Generated SECRET_KEY for this session. Set SECRET_KEY in Render environment variables.")
 
 # Render specific configuration
 RENDER_EXTERNAL_HOSTNAME = os.getenv('RENDER_EXTERNAL_HOSTNAME')
@@ -193,54 +205,63 @@ WSGI_APPLICATION = 'fieldmax.wsgi.application'
 # ============================================
 # DATABASE CONFIGURATION - NEON.TECH
 # ============================================
-from urllib.parse import urlparse, parse_qs
+# ============================================
+# DATABASE CONFIGURATION - SIMPLE TOGGLE
+# ============================================
 
-# Your Neon connection string
-NEON_DATABASE_URL = "postgresql://neondb_owner:npg_xcWRmZTe9f8b@ep-cold-sunset-abx64cr3-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+# Get DATABASE_URL from environment
+DATABASE_URL = os.getenv('DATABASE_URL', '')
 
-# Use environment variable or Neon URL
-DATABASE_URL = os.getenv('DATABASE_URL', NEON_DATABASE_URL)
+# Check if we're in the main Django process (not the reloader)
+# This prevents duplicate messages when using runserver
+IS_MAIN_PROCESS = True
+if 'runserver' in sys.argv:
+    IS_MAIN_PROCESS = os.environ.get('RUN_MAIN') == 'true'
 
-print(f"🔧 Database URL: {DATABASE_URL[:50]}...")
-
-try:
-    # Parse the URL
-    parsed = urlparse(DATABASE_URL)
-    
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': parsed.path[1:] or 'neondb',  # Remove leading '/'
-            'USER': parsed.username or 'neondb_owner',
-            'PASSWORD': parsed.password or 'npg_xcWRmZTe9f8b',
-            'HOST': parsed.hostname or 'ep-cold-sunset-abx64cr3-pooler.eu-west-2.aws.neon.tech',
-            'PORT': parsed.port or 5432,
-            'CONN_MAX_AGE': 600,
-            'OPTIONS': {
-                'sslmode': 'require',
-                'connect_timeout': 10,
-            },
+if DATABASE_URL and DATABASE_URL.startswith('postgresql'):
+    # ✅ OPTION 1: Use Neon.tech PostgreSQL
+    try:
+        from urllib.parse import urlparse
+        
+        parsed = urlparse(DATABASE_URL)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': parsed.path[1:] or 'neondb',
+                'USER': parsed.username or 'neondb_owner',
+                'PASSWORD': parsed.password or 'npg_xcWRmZTe9f8b',
+                'HOST': parsed.hostname or 'ep-cold-sunset-abx64cr3-pooler.eu-west-2.aws.neon.tech',
+                'PORT': parsed.port or 5432,
+                'CONN_MAX_AGE': 600,
+                'OPTIONS': {
+                    'sslmode': 'require',
+                    'connect_timeout': 10,
+                },
+            }
         }
-    }
-    
-    print(f"✅ Neon database configured successfully!")
-    print(f"   Host: {DATABASES['default']['HOST']}")
-    print(f"   Database: {DATABASES['default']['NAME']}")
-    
-except Exception as e:
-    print(f"❌ Error configuring Neon database: {e}")
-    import traceback
-    traceback.print_exc()
-    
-    # Fallback to SQLite - Use Path object
+        if IS_MAIN_PROCESS:
+            print(f"🔧 Database URL: {DATABASE_URL[:50]}...")
+            print(f"✅ Neon.tech PostgreSQL configured successfully!")
+            print(f"   Host: {DATABASES['default']['HOST']}")
+            print(f"   Database: {DATABASES['default']['NAME']}")
+        
+    except Exception as e:
+        if IS_MAIN_PROCESS:
+            print(f"❌ Error configuring Neon.tech PostgreSQL: {e}")
+            print("⚠️  Falling back to SQLite...")
+        # Fall through to SQLite
+        DATABASE_URL = ''
+else:
+    # ✅ OPTION 2: Use SQLite (Default)
+    SQLITE_DB_NAME = os.getenv('SQLITE_DB_NAME', 'db.sqlite3')
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',  # Fixed: Use Path object
+            'NAME': BASE_DIR / SQLITE_DB_NAME,
         }
     }
-    print("⚠️  Using SQLite database (temporary)")
-
+    if IS_MAIN_PROCESS:
+        print(f"✅ SQLite configured: {SQLITE_DB_NAME}")
 
 
 
@@ -306,7 +327,8 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
             "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",  # Non-strict!
         },
     }
-    print(f"☁️  Cloudinary configured for MEDIA files: {CLOUDINARY_CLOUD_NAME}")
+    if IS_MAIN_PROCESS:
+        print(f"☁️  Cloudinary configured for MEDIA files: {CLOUDINARY_CLOUD_NAME}")
 else:
     STORAGES = {
         "default": {
@@ -316,7 +338,13 @@ else:
             "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",  # Non-strict!
         },
     }
-    print("⚠️  Cloudinary credentials missing. Using local file storage for media.")
+    if IS_MAIN_PROCESS:
+        print("⚠️  Cloudinary credentials missing. Using local file storage for media.")
+
+
+
+
+
 
 # ============================================
 # STATIC FILES CONFIGURATION
@@ -467,7 +495,8 @@ FIELDMAX_BUSINESS_HOURS = {
 # ============================================
 if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    print("📧 Development mode - using console email backend")
+    if IS_MAIN_PROCESS:
+        print("📧 Development mode - using console email backend")
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
@@ -479,9 +508,11 @@ else:
     SERVER_EMAIL = DEFAULT_FROM_EMAIL
     
     if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
-        print(f"📧 Email configured: {EMAIL_HOST_USER}")
+        if IS_MAIN_PROCESS:
+            print(f"📧 Email configured: {EMAIL_HOST_USER}")
     else:
-        print("⚠️  Email credentials missing. Email functionality disabled.")
+        if IS_MAIN_PROCESS:
+            print("⚠️  Email credentials missing. Email functionality disabled.")
 
 # ============================================
 # LOGGING CONFIGURATION
@@ -599,12 +630,17 @@ def validate_settings():
             print(f"   {warning}")
         print("="*70 + "\n")
 
-# Run validation
-if 'runserver' not in sys.argv or os.environ.get('RUN_MAIN') == 'true':
+# Run validation - ONLY in main process
+if 'runserver' in sys.argv:
+    # Only show in main server process (not reloader)
+    if os.environ.get('RUN_MAIN') == 'true':
+        validate_settings()
+        print(f"\n🚀 FieldMax initialized successfully!")
+        print(f"   Environment: {'DEVELOPMENT' if DEBUG else 'PRODUCTION'}")
+        print(f"   Platform: {'Render' if RENDER_EXTERNAL_HOSTNAME else 'Local'}")
+        print(f"   Database: {DATABASES['default']['ENGINE']}")
+        print(f"   Allowed Hosts: {ALLOWED_HOSTS[:3]}...")
+        print("="*50 + "\n")
+else:
+    # Not using runserver (production, shell, etc.)
     validate_settings()
-    print(f"\n🚀 FieldMax initialized successfully!")
-    print(f"   Environment: {'DEVELOPMENT' if DEBUG else 'PRODUCTION'}")
-    print(f"   Platform: {'Render' if RENDER_EXTERNAL_HOSTNAME else 'Local'}")
-    print(f"   Database: {DATABASES['default']['ENGINE']}")
-    print(f"   Allowed Hosts: {ALLOWED_HOSTS[:3]}...")  # Show first 3 only
-    print("="*50 + "\n")
