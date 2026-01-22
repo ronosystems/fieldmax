@@ -3970,8 +3970,6 @@ strong[style*="background-color"] {
 
 
 
-
-
 <!-- ============================= -->
 <!--  PRINT BARCODE/SKU SECTION    -->
 <!-- ============================= -->
@@ -4057,6 +4055,7 @@ strong[style*="background-color"] {
                   <th>Type</th>
                   <th>SKU/Barcode</th>
                   <th>Stock</th>
+                  <th style="width: 120px;">Quantity to Print</th>
                 </tr>
               </thead>
               <tbody id="printCodeTableBody">
@@ -4128,11 +4127,34 @@ strong[style*="background-color"] {
                       <strong>{{ product.quantity }}</strong> units
                     {% endif %}
                   </td>
+                  
+                  <!-- NEW COLUMN: Quantity to Print -->
+                  <td>
+                    <div class="d-flex align-items-center gap-1">
+                      <button class="btn btn-outline-secondary btn-sm p-0 decrease-qty-btn" 
+                              data-product-id="{{ product.id }}"
+                              style="width: 24px; height: 24px; font-size: 0.8rem;">
+                        <i class="bi bi-dash"></i>
+                      </button>
+                      <input type="number" 
+                             class="form-control form-control-sm product-qty-input text-center" 
+                             data-product-id="{{ product.id }}"
+                             value="1" 
+                             min="1" 
+                             max="999"
+                             style="width: 60px; height: 24px; font-size: 0.8rem;">
+                      <button class="btn btn-outline-secondary btn-sm p-0 increase-qty-btn" 
+                              data-product-id="{{ product.id }}"
+                              style="width: 24px; height: 24px; font-size: 0.8rem;">
+                        <i class="bi bi-plus"></i>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
                 {% endwith %}
                 {% empty %}
                 <tr>
-                  <td colspan="7" class="text-center py-5 text-muted">
+                  <td colspan="8" class="text-center py-5 text-muted">
                     <i class="bi bi-inbox" style="font-size: 3rem;"></i>
                     <p>No products found</p>
                   </td>
@@ -4205,27 +4227,6 @@ strong[style*="background-color"] {
                     <option value="medium" selected>Medium</option>
                     <option value="large">Large</option>
                   </select>
-                </div>
-              </div>
-              
-              <!-- Column D: Copies per Product -->
-              <div class="col-12">
-                <div class="input-group input-group-sm">
-                  <span class="input-group-text input-group-text-sm bg-light border-0" style="width: 70px; font-size: 0.75rem;">Copies</span>
-                  <button class="btn btn-outline-secondary btn-sm border" type="button" id="decreaseLabelsBtn">
-                    <i class="bi bi-dash"></i>
-                  </button>
-                  <input type="number" 
-                         id="labelsPerProduct" 
-                         class="form-control form-control-sm text-center border" 
-                         min="1" 
-                         max="100" 
-                         value="1"
-                         style="width: 45px;">
-                  <button class="btn btn-outline-secondary btn-sm border" type="button" id="increaseLabelsBtn">
-                    <i class="bi bi-plus"></i>
-                  </button>
-                  <span class="input-group-text input-group-text-sm border" style="font-size: 0.75rem;">each</span>
                 </div>
               </div>
             </div>
@@ -4368,8 +4369,6 @@ strong[style*="background-color"] {
     </div>
   </div>
 </div>
-
-
 
 
 
@@ -11027,9 +11026,9 @@ window.AutoRefresh = AutoRefresh;
 
 
 
-
 // ====================================
-// PRINT BARCODE/SKU FUNCTIONALITY - WITH INDIVIDUAL QUANTITIES
+// ====================================
+// PRINT BARCODE/SKU FUNCTIONALITY 
 // ====================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🖨️ Print Code Module Initializing...');
@@ -11049,7 +11048,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const categoryFilter = document.getElementById('printCodeCategoryFilter');
     const typeFilter = document.getElementById('printCodeTypeFilter');
     
-    const emptyState = document.getElementById('printCodeEmptyState');
     const previewSection = document.getElementById('printCodePreview');
     const selectedCountSpan = document.getElementById('selectedCount');
     const selectedCountBadge = document.getElementById('selectedCountBadge');
@@ -11060,23 +11058,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const labelSize = document.getElementById('labelSize');
     const showProductName = document.getElementById('showProductName');
     const showPrice = document.getElementById('showPrice');
-    const printerSelect = document.getElementById('printerSelect');
     
-    // Debug: Check if buttons exist
-    console.log('Print Button:', printLabelsBtn);
-    console.log('Download Button:', downloadPDFBtn);
-    
-    let selectedProducts = new Set();
-    
-    // ============================================
-    // PRINTER CONFIGURATION
-    // ============================================
-    let printerConfig = {
-        name: 'Default Printer',
-        type: 'default',
-        paperSize: 'A4',
-        autoDetect: true
-    };
+    let selectedProducts = new Map();
     
     // ============================================
     // SELECT/DESELECT FUNCTIONALITY
@@ -11129,34 +11112,96 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateSelection(checkbox) {
         const productId = checkbox.value;
+        const row = checkbox.closest('.print-code-row');
         
         if (checkbox.checked) {
-            const row = checkbox.closest('.print-code-row');
-            selectedProducts.add({
+            // Get quantity from table input field
+            const qtyInput = row.querySelector('.product-qty-input');
+            const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
+            
+            selectedProducts.set(productId, {
                 id: productId,
                 code: row.dataset.productCode,
                 name: row.dataset.productName,
                 sku: row.dataset.sku,
                 barcode: row.dataset.barcode,
                 type: row.dataset.type,
-                quantity: 1  // Default quantity
+                quantity: quantity
             });
         } else {
             // Remove from selectedProducts
-            let productToRemove = null;
-            for (let product of selectedProducts) {
-                if (product.id === productId) {
-                    productToRemove = product;
-                    break;
-                }
-            }
-            if (productToRemove) {
-                selectedProducts.delete(productToRemove);
-            }
+            selectedProducts.delete(productId);
         }
         
         updateUI();
     }
+    
+    // ============================================
+    // QUANTITY CONTROLS IN TABLE
+    // ============================================
+    
+    // Handle quantity increase/decrease buttons in table
+    document.addEventListener('click', function(e) {
+        // Decrease quantity in table
+        if (e.target.closest('.decrease-qty-btn')) {
+            const btn = e.target.closest('.decrease-qty-btn');
+            const productId = btn.getAttribute('data-product-id');
+            const input = document.querySelector(`.product-qty-input[data-product-id="${productId}"]`);
+            if (input) {
+                let value = parseInt(input.value) || 1;
+                if (value > 1) {
+                    input.value = value - 1;
+                    // Update selection if product is checked
+                    const checkbox = document.querySelector(`.product-checkbox[value="${productId}"]`);
+                    if (checkbox && checkbox.checked) {
+                        updateSelection(checkbox);
+                    }
+                }
+            }
+        }
+        
+        // Increase quantity in table
+        if (e.target.closest('.increase-qty-btn')) {
+            const btn = e.target.closest('.increase-qty-btn');
+            const productId = btn.getAttribute('data-product-id');
+            const input = document.querySelector(`.product-qty-input[data-product-id="${productId}"]`);
+            if (input) {
+                let value = parseInt(input.value) || 1;
+                const max = parseInt(input.getAttribute('max')) || 999;
+                if (value < max) {
+                    input.value = value + 1;
+                    // Update selection if product is checked
+                    const checkbox = document.querySelector(`.product-checkbox[value="${productId}"]`);
+                    if (checkbox && checkbox.checked) {
+                        updateSelection(checkbox);
+                    }
+                }
+            }
+        }
+    });
+    
+    // Handle quantity input changes in table
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('product-qty-input')) {
+            const input = e.target;
+            let value = parseInt(input.value) || 1;
+            const min = parseInt(input.getAttribute('min')) || 1;
+            const max = parseInt(input.getAttribute('max')) || 999;
+            
+            // Validate value
+            if (value < min) value = min;
+            if (value > max) value = max;
+            
+            input.value = value;
+            
+            // If product is selected, update the selection
+            const productId = input.getAttribute('data-product-id');
+            const checkbox = document.querySelector(`.product-checkbox[value="${productId}"]`);
+            if (checkbox && checkbox.checked) {
+                updateSelection(checkbox);
+            }
+        }
+    });
     
     // ============================================
     // UPDATE UI
@@ -11168,23 +11213,15 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedCountBadge.textContent = count;
         
         if (count > 0) {
-            if (emptyState) emptyState.style.display = 'none';
             if (previewSection) previewSection.style.display = 'flex';
             
             // Enable buttons
-            if (printLabelsBtn) {
-                printLabelsBtn.disabled = false;
-                console.log('✅ Print button enabled');
-            }
-            if (downloadPDFBtn) {
-                downloadPDFBtn.disabled = false;
-                console.log('✅ Download button enabled');
-            }
+            if (printLabelsBtn) printLabelsBtn.disabled = false;
+            if (downloadPDFBtn) downloadPDFBtn.disabled = false;
             
             updateSelectedList();
             updatePreview();
         } else {
-            if (emptyState) emptyState.style.display = 'flex';
             if (previewSection) previewSection.style.display = 'none';
             
             // Disable buttons
@@ -11194,54 +11231,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ============================================
-    // UPDATE SELECTED PRODUCTS LIST
+    // UPDATE SELECTED PRODUCTS LIST - SIMPLIFIED VERSION
     // ============================================
     function updateSelectedList() {
         if (!selectedProductsList) return;
         
         let html = '';
+        let totalLabels = 0;
         
-        selectedProducts.forEach(product => {
+        selectedProducts.forEach((product, productId) => {
+            totalLabels += product.quantity;
+            
             html += `
-                <div class="border-bottom py-1">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
+                <div class="border-bottom py-2">
+                    <div class="d-flex justify-content-between align-items-center">
                         <div style="flex: 1; min-width: 0;">
-                            <div class="d-flex align-items-center">
-                                <code class="text-truncate" style="font-size: 0.7rem; max-width: 70px;">${product.code}</code>
+                            <div class="d-flex align-items-center mb-1">
+                                <code class="text-truncate fw-bold" style="font-size: 0.7rem; max-width: 80px; background: #f3f4f6; padding: 2px 4px; border-radius: 3px;">
+                                    ${product.code}
+                                </code>
                                 <span class="badge ${product.type === 'single' ? 'bg-primary' : 'bg-success'} ms-1" 
-                                      style="font-size: 0.5rem; padding: 1px 3px;">
+                                      style="font-size: 0.5rem; padding: 1px 4px;">
                                     ${product.type === 'single' ? 'S' : 'B'}
                                 </span>
                             </div>
-                            <div class="text-muted text-truncate mt-1" style="font-size: 0.65rem; max-width: 120px;">
+                            <div class="text-muted text-truncate" style="font-size: 0.65rem; max-width: 150px;">
                                 ${product.name}
                             </div>
                         </div>
-                        <button class="btn btn-sm btn-outline-danger ms-1 p-0 remove-product-btn" 
-                                data-product-id="${product.id}"
+                        <button class="btn btn-sm btn-outline-danger ms-2 p-0 remove-product-btn" 
+                                data-product-id="${productId}"
                                 style="width: 20px; height: 20px; font-size: 0.6rem;">
                             <i class="bi bi-x"></i>
                         </button>
                     </div>
-                    <div class="d-flex align-items-center gap-1">
-                        <button class="btn btn-outline-secondary p-0 qty-decrease-btn" 
-                                data-product-id="${product.id}"
-                                style="width: 18px; height: 18px; font-size: 0.6rem; line-height: 1;">
-                            <i class="bi bi-dash"></i>
-                        </button>
-                        <input type="number" 
-                               class="form-control form-control-sm text-center product-qty-input" 
-                               data-product-id="${product.id}"
-                               value="${product.quantity || 1}"
-                               min="1" 
-                               max="999"
-                               style="width: 50px; height: 20px; font-size: 0.65rem; padding: 2px;">
-                        <button class="btn btn-outline-secondary p-0 qty-increase-btn" 
-                                data-product-id="${product.id}"
-                                style="width: 18px; height: 18px; font-size: 0.6rem; line-height: 1;">
-                            <i class="bi bi-plus"></i>
-                        </button>
-                        <span class="text-muted" style="font-size: 0.6rem;">labels</span>
+                    <div class="mt-1">
+                        <span class="text-muted small" style="font-size: 0.6rem;">
+                            Quantity: <strong>${product.quantity}</strong> labels
+                        </span>
                     </div>
                 </div>
             `;
@@ -11249,150 +11276,25 @@ document.addEventListener('DOMContentLoaded', function() {
         
         selectedProductsList.innerHTML = html;
         
-        // Add event listeners to remove buttons
+        // Add event listeners to remove buttons only
         document.querySelectorAll('.remove-product-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const productId = this.getAttribute('data-product-id');
                 removeProduct(productId);
             });
         });
-        
-        // Add event listeners to quantity buttons
-        document.querySelectorAll('.qty-decrease-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const productId = this.getAttribute('data-product-id');
-                updateProductQuantity(productId, -1);
-            });
-        });
-        
-        document.querySelectorAll('.qty-increase-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const productId = this.getAttribute('data-product-id');
-                updateProductQuantity(productId, 1);
-            });
-        });
-        
-        // Add event listeners to quantity inputs
-        document.querySelectorAll('.product-qty-input').forEach(input => {
-            input.addEventListener('change', function() {
-                const productId = this.getAttribute('data-product-id');
-                let value = parseInt(this.value);
-                if (isNaN(value) || value < 1) value = 1;
-                if (value > 999) value = 999;
-                this.value = value;
-                updateProductQuantityDirect(productId, value);
-            });
-        });
     }
     
     // ============================================
-    // REMOVE PRODUCT FUNCTION
+    // PRODUCT QUANTITY MANAGEMENT
     // ============================================
     function removeProduct(productId) {
         const checkbox = document.querySelector(`.product-checkbox[value="${productId}"]`);
         if (checkbox) {
             checkbox.checked = false;
-            updateSelection(checkbox);
+            selectedProducts.delete(productId);
+            updateUI();
         }
-    }
-    
-    // ============================================
-    // UPDATE PRODUCT QUANTITY FUNCTIONS
-    // ============================================
-    function updateProductQuantity(productId, delta) {
-        for (let product of selectedProducts) {
-            if (product.id === productId) {
-                const newQty = (product.quantity || 1) + delta;
-                if (newQty >= 1 && newQty <= 999) {
-                    product.quantity = newQty;
-                    updateSelectedList();
-                    updatePreview();
-                }
-                break;
-            }
-        }
-    }
-    
-    function updateProductQuantityDirect(productId, value) {
-        for (let product of selectedProducts) {
-            if (product.id === productId) {
-                product.quantity = value;
-                updatePreview();
-                break;
-            }
-        }
-    }
-    
-    // ============================================
-    // PRINTER SELECTION FUNCTIONALITY
-    // ============================================
-    if (printerSelect) {
-        printerSelect.addEventListener('change', function() {
-            const selectedType = this.value;
-            printerConfig.type = selectedType;
-            printerConfig.name = this.options[this.selectedIndex].text;
-            
-            switch(selectedType) {
-                case 'thermal':
-                    printerConfig.paperSize = '80mm';
-                    break;
-                case 'label':
-                    printerConfig.paperSize = 'label_4x6';
-                    break;
-                default:
-                    printerConfig.paperSize = 'A4';
-            }
-        });
-    }
-    
-    if (configurePrinterBtn) {
-        configurePrinterBtn.addEventListener('click', function() {
-            document.getElementById('printerName').value = printerConfig.name;
-            document.getElementById('printerType').value = printerConfig.type;
-            document.getElementById('paperSize').value = printerConfig.paperSize;
-            
-            const modal = new bootstrap.Modal(document.getElementById('printerConfigModal'));
-            modal.show();
-        });
-    }
-    
-    // ============================================
-    // PRINTER CONFIGURATION MODAL
-    // ============================================
-    const savePrinterBtn = document.getElementById('savePrinterConfigBtn');
-    if (savePrinterBtn) {
-        savePrinterBtn.addEventListener('click', function() {
-            printerConfig.name = document.getElementById('printerName').value || 'Custom Printer';
-            printerConfig.type = document.getElementById('printerType').value;
-            printerConfig.paperSize = document.getElementById('paperSize').value;
-            
-            // Update printer select dropdown
-            updatePrinterSelect(printerConfig);
-            
-            const modal = bootstrap.Modal.getInstance(document.getElementById('printerConfigModal'));
-            modal.hide();
-            
-            showNotification('Printer settings saved', 'success');
-        });
-    }
-    
-    function updatePrinterSelect(config) {
-        if (!printerSelect) return;
-        
-        const hasCustomOption = Array.from(printerSelect.options).some(opt => opt.value === 'custom');
-        if (!hasCustomOption) {
-            const option = document.createElement('option');
-            option.value = 'custom';
-            option.textContent = config.name;
-            printerSelect.appendChild(option);
-        } else {
-            const customOption = Array.from(printerSelect.options).find(opt => opt.value === 'custom');
-            if (customOption) {
-                customOption.textContent = config.name;
-            }
-        }
-        
-        printerSelect.value = 'custom';
     }
     
     // ============================================
@@ -11401,46 +11303,48 @@ document.addEventListener('DOMContentLoaded', function() {
     function updatePreview() {
         if (!labelPreviewContainer) return;
         
-        const perRow = parseInt(labelsPerRow.value);
-        const size = labelSize.value;
-        const showName = showProductName.checked;
-        const showPriceValue = showPrice.checked;
+        const perRow = labelsPerRow ? parseInt(labelsPerRow.value) : 3;
+        const size = labelSize ? labelSize.value : 'medium';
+        const showName = showProductName ? showProductName.checked : true;
+        const showPriceValue = showPrice ? showPrice.checked : false;
         
         let html = '<div class="row g-1">';
         
-        // Show limited preview (max 3 products)
-        const previewCount = Math.min(3, selectedProducts.size);
-        let productCount = 0;
+        // Calculate total labels for preview
+        let previewLabels = 0;
+        const maxPreviewLabels = 3;
         
-        selectedProducts.forEach(product => {
-            if (productCount >= previewCount) return;
-            
-            const identifier = product.type === 'single' ? product.sku : product.barcode;
-            const colClass = perRow >= 3 ? 'col-4' : (perRow === 2 ? 'col-6' : 'col-12');
-            
-            html += `
-                <div class="${colClass}">
-                    ${createLabelHTML(product, identifier, size, showName, showPriceValue)}
-                </div>
-            `;
-            
-            productCount++;
+        selectedProducts.forEach((product, productId) => {
+            for (let i = 0; i < product.quantity; i++) {
+                if (previewLabels >= maxPreviewLabels) break;
+                
+                const identifier = product.type === 'single' ? product.sku : product.barcode;
+                const colClass = perRow >= 3 ? 'col-4' : (perRow === 2 ? 'col-6' : 'col-12');
+                
+                html += `
+                    <div class="${colClass}">
+                        ${createLabelHTML(product, identifier, size, showName, showPriceValue)}
+                    </div>
+                `;
+                
+                previewLabels++;
+                if (previewLabels >= maxPreviewLabels) break;
+            }
         });
         
         html += '</div>';
         
-        // Show total labels info if we have products
-        if (selectedProducts.size > 0) {
-            // Calculate total labels based on individual product quantities
-            let totalLabels = 0;
-            selectedProducts.forEach(product => {
-                totalLabels += (product.quantity || 1);
-            });
-            
+        // Show total labels info
+        let totalLabels = 0;
+        selectedProducts.forEach(product => {
+            totalLabels += product.quantity;
+        });
+        
+        if (totalLabels > 0) {
             html += `
                 <div class="text-center mt-1">
                     <small class="text-muted">
-                        Total: <strong>${totalLabels}</strong> labels
+                        <strong>${previewLabels}</strong> of <strong>${totalLabels}</strong> total labels
                     </small>
                 </div>
             `;
@@ -11450,7 +11354,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ============================================
-    // CREATE LABEL HTML FOR PREVIEW
+    // CREATE LABEL HTML
     // ============================================
     function createLabelHTML(product, identifier, size, showName, showPriceValue) {
         const sizeMap = {
@@ -11571,15 +11475,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ============================================
-    // SETTINGS CHANGE LISTENERS
-    // ============================================
-    [labelsPerRow, labelSize, showProductName, showPrice, printerSelect].forEach(element => {
-        if (element) {
-            element.addEventListener('change', updatePreview);
-        }
-    });
-    
-    // ============================================
     // SEARCH AND FILTER
     // ============================================
     function filterPrintCodeTable() {
@@ -11607,85 +11502,144 @@ document.addEventListener('DOMContentLoaded', function() {
     if (categoryFilter) categoryFilter.addEventListener('change', filterPrintCodeTable);
     if (typeFilter) typeFilter.addEventListener('change', filterPrintCodeTable);
     
-    // ============================================
-    // PREPARE PRINT DATA FUNCTION
-    // ============================================
-    function preparePrintData() {
-        console.log('🔥 preparePrintData() called');
-        console.log('Selected products:', selectedProducts.size);
-        
-        const perRow = parseInt(labelsPerRow.value);
-        const size = labelSize.value;
-        const showName = showProductName.checked;
-        const showPriceValue = showPrice.checked;
-        
-        // Convert Set to Array
-        const productsArray = Array.from(selectedProducts);
-        
-        console.log('Products array:', productsArray);
-        
-        // Prepare data for print page
-        const printData = {
-            products: productsArray,
-            perRow: perRow,
-            size: size,
-            showName: showName,
-            showPrice: showPriceValue,
-            printerName: printerConfig.name
-        };
-        
-        console.log('Print data prepared:', printData);
-        
-        // Store in sessionStorage
-        try {
-            sessionStorage.setItem('printLabelsData', JSON.stringify(printData));
-            console.log('✅ Data saved to sessionStorage');
-        } catch (e) {
-            console.error('❌ Error saving to sessionStorage:', e);
-            showNotification('Error preparing print data', 'danger');
-            return;
-        }
-        
-        // Redirect to print page
-        const printUrl = '/inventory/print-labels/';
-        console.log('Redirecting to:', printUrl);
-        
-        try {
-            window.location.href = printUrl;
-        } catch (e) {
-            console.error('❌ Error redirecting:', e);
-            showNotification('Error opening print page', 'danger');
-        }
+
+
+    
+// ============================================
+// PREPARE PRINT DATA FUNCTION - USING POST METHOD
+// ============================================
+function preparePrintData() {
+    console.log('🔥 preparePrintData() called');
+    
+    const perRow = labelsPerRow ? parseInt(labelsPerRow.value) : 3;
+    const size = labelSize ? labelSize.value : 'medium';
+    const showName = showProductName ? showProductName.checked : true;
+    const showPriceValue = showPrice ? showPrice.checked : false;
+    
+    // Convert Map to Array
+    const productsArray = Array.from(selectedProducts.values());
+    
+    if (productsArray.length === 0) {
+        showNotification('Please select at least one product', 'warning');
+        return;
     }
     
+    // Log the data being prepared
+    console.log('Products to print:', productsArray);
+    console.log('Products count:', productsArray.length);
+    console.log('Total labels:', productsArray.reduce((sum, p) => sum + (p.quantity || 1), 0));
+    
+    try {
+        // Create a hidden form and submit it via POST
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/inventory/print-labels-sheet/';
+        form.style.display = 'none';
+        
+        // Get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        const csrfToken = getCookie('csrftoken');
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+        }
+        
+        // Add data as hidden inputs - IMPORTANT: Stringify the products array
+        const productsInput = document.createElement('input');
+        productsInput.type = 'hidden';
+        productsInput.name = 'products';
+        productsInput.value = JSON.stringify(productsArray);
+        form.appendChild(productsInput);
+        
+        const perRowInput = document.createElement('input');
+        perRowInput.type = 'hidden';
+        perRowInput.name = 'per_row';
+        perRowInput.value = perRow;
+        form.appendChild(perRowInput);
+        
+        const sizeInput = document.createElement('input');
+        sizeInput.type = 'hidden';
+        sizeInput.name = 'size';
+        sizeInput.value = size;
+        form.appendChild(sizeInput);
+        
+        const showNameInput = document.createElement('input');
+        showNameInput.type = 'hidden';
+        showNameInput.name = 'show_name';
+        showNameInput.value = showName.toString(); // Ensure it's string
+        form.appendChild(showNameInput);
+        
+        const showPriceInput = document.createElement('input');
+        showPriceInput.type = 'hidden';
+        showPriceInput.name = 'show_price';
+        showPriceInput.value = showPriceValue.toString(); // Ensure it's string
+        form.appendChild(showPriceInput);
+        
+        console.log('Submitting form with data:', {
+            products: productsArray,
+            per_row: perRow,
+            size: size,
+            show_name: showName,
+            show_price: showPriceValue
+        });
+        
+        console.log('JSON string:', JSON.stringify(productsArray));
+        
+        document.body.appendChild(form);
+        form.submit();
+        
+    } catch (error) {
+        console.error('❌ Error preparing data:', error);
+        showNotification('Error preparing print data', 'danger');
+    }
+}
+    
     // ============================================
-    // PRINT FUNCTIONALITY - BUTTON CLICK HANDLERS
+    // BUTTON CLICK HANDLERS
     // ============================================
     if (printLabelsBtn) {
-        console.log('Setting up Print Labels button listener');
-        
         printLabelsBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             console.log('🖨️ Print Labels button clicked!');
             preparePrintData();
         });
-    } else {
-        console.error('❌ printLabelsBtn not found!');
     }
     
     if (downloadPDFBtn) {
-        console.log('Setting up Download PDF button listener');
-        
         downloadPDFBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             console.log('📄 Download PDF button clicked!');
             preparePrintData();
         });
-    } else {
-        console.error('❌ downloadPDFBtn not found!');
     }
+    
+    // ============================================
+    // SETTINGS CHANGE LISTENERS
+    // ============================================
+    [labelsPerRow, labelSize, showProductName, showPrice].forEach(element => {
+        if (element) {
+            element.addEventListener('change', updatePreview);
+        }
+    });
     
     // ============================================
     // UTILITY FUNCTIONS
@@ -11714,7 +11668,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 3000);
     }
     
-    console.log('✅ Print Module Ready - With Individual Quantities');
+    console.log('✅ Print Module Ready - Individual quantities in table only');
 });
 
 </script>

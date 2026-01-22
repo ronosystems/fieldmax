@@ -853,18 +853,84 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
 
 
 
-# ===========================================
-# PRINT CODE LABELS VIEW
-#============================================
+
+
+# ===================================================
+# PRINT LABELS SHEET VIEW - HANDLES BOTH GET AND POST
+# ===================================================
 @login_required
-def print_labels_view(request):
+def print_labels_sheet_view(request):
     """
-    Display the print labels preview page.
-    Data is passed via sessionStorage from the main page.
+    Display printable labels sheet
     """
-    return render(request, 'inventory/print_code.html')
-
-
+    context = {}
+    products_json = ''
+    
+    print(f"📋 print_labels_sheet_view called with method: {request.method}")
+    
+    # Get data from either POST or GET
+    if request.method == 'POST':
+        print(f"📦 POST data keys: {list(request.POST.keys())}")
+        products_json = request.POST.get('products', '')
+        per_row = request.POST.get('per_row', '3')
+        size = request.POST.get('size', 'medium')
+        show_name = request.POST.get('show_name', 'true')
+        show_price = request.POST.get('show_price', 'false')
+    else:
+        print(f"🔍 GET data keys: {list(request.GET.keys())}")
+        products_json = request.GET.get('products', '')
+        per_row = request.GET.get('per_row', '3')
+        size = request.GET.get('size', 'medium')
+        show_name = request.GET.get('show_name', 'true')
+        show_price = request.GET.get('show_price', 'false')
+    
+    print(f"📄 Raw products_json length: {len(products_json)}")
+    print(f"📄 First 200 chars: {products_json[:200]}")
+    
+    if products_json:
+        try:
+            import json
+            products = json.loads(products_json)
+            
+            print(f"✅ Successfully parsed JSON, got {len(products)} products")
+            
+            # Calculate total labels
+            total_labels = 0
+            for idx, product in enumerate(products):
+                qty = product.get('quantity', 1)
+                total_labels += qty
+                print(f"  Product {idx+1}: {product.get('code', 'N/A')} - Quantity: {qty}")
+            
+            context = {
+                'products': json.dumps(products),  # Serialize back to JSON for template
+                'products_list': products,  # Keep as Python list for debugging
+                'per_row': int(per_row),
+                'size': size,
+                'show_name': show_name.lower() == 'true',
+                'show_price': show_price.lower() == 'true',
+                'total_labels': total_labels,
+            }
+            
+            print(f"✅ Loaded {len(products)} products, {total_labels} total labels")
+            print(f"✅ Print settings: {per_row} per row, size: {size}")
+            print(f"✅ Show name: {show_name}, Show price: {show_price}")
+            
+        except json.JSONDecodeError as e:
+            print(f"❌ Error decoding JSON: {e}")
+            print(f"❌ Raw JSON string: {products_json[:500]}...")
+            context['error'] = 'Invalid print data format'
+            # For debugging, show the error in template
+            context['debug_json'] = products_json
+        except Exception as e:
+            import traceback
+            print(f"❌ Unexpected error: {e}")
+            print(f"❌ Traceback: {traceback.format_exc()}")
+            context['error'] = f'Error processing data: {str(e)}'
+    else:
+        print("❌ No products_json found")
+        context['error'] = 'No print data found'
+    
+    return render(request, 'inventory/print_labels_sheet.html', context)
 
 
 

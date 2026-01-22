@@ -1,0 +1,943 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}Print Labels Sheet - FieldMax Inventory{% endblock %}
+
+{% block content %}
+<style>
+/* ==================== PRINT SHEET STYLES ==================== */
+
+/* Page Setup for Printing */
+@page {
+    size: A4;
+    margin: 0.5in;
+}
+
+/* Print-specific styles - CRITICAL: Force everything to print properly */
+@media print {
+    /* Hide EVERYTHING except the print content */
+    body * {
+        visibility: hidden !important;
+    }
+    
+    #printSheetsContainer,
+    #printSheetsContainer * {
+        visibility: visible !important;
+    }
+    
+    #printSheetsContainer {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+    
+    .print-sheet {
+        width: 210mm !important;
+        min-height: 297mm !important;
+        padding: 15mm !important;
+        background: white !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
+        page-break-after: always !important;
+        display: block !important;
+    }
+    
+    .labels-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 5mm !important;
+        width: 100% !important;
+        height: auto !important;
+    }
+    
+    .print-label {
+        width: 55mm !important;
+        height: 35mm !important;
+        border: 1px solid #000 !important;
+        background: white !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
+        padding: 2mm !important;
+        border-radius: 2mm !important;
+        gap: 1mm !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .label-code {
+        font-weight: 1000 !important;
+        color: #000000 !important;
+        font-size: 18px !important;
+        line-height: 1.2 !important;
+        width: 100% !important;
+        word-break: break-all !important;
+    }
+    
+    .label-name {
+        color: #0055ff !important;
+        font-size: 10px !important;
+        line-height: 1.3 !important;
+        width: 100% !important;
+        flex-grow: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        word-break: break-word !important;
+    }
+    
+    .label-barcode {
+        font-family: 'Courier New', monospace !important;
+        background: #000000 !important;
+        color: white !important;
+        padding: 3mm 4mm !important;
+        border-radius: 2mm !important;
+        letter-spacing: 1.5px !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        word-break: break-all !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .label-price {
+        color: #10b981 !important;
+        font-weight: 700 !important;
+        font-size: 13px !important;
+        width: 100% !important;
+    }
+    
+    .label-copy {
+        font-size: 8px !important;
+        color: #9ca3af !important;
+        width: 100% !important;
+    }
+    
+    .page-footer {
+        position: absolute !important;
+        bottom: 5mm !important;
+        left: 0 !important;
+        right: 0 !important;
+        text-align: center !important;
+        font-size: 10px !important;
+        color: #9ca3af !important;
+    }
+}
+
+/* Screen-only styles */
+@media screen {
+    body {
+        background: #f3f4f6 !important;
+    }
+    
+    .main-footer {
+        display: none !important;
+    }
+    
+    .main-content {
+        background: #f3f4f6;
+        min-height: 100vh;
+        padding-bottom: 120px;
+    }
+    
+    .print-actions {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 3px solid #0dcaf0;
+        padding: 20px 0;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+        z-index: 99999;
+    }
+    
+    /* Hide print sheets in screen view */
+    #printSheetsContainer {
+        display: none !important;
+    }
+}
+
+/* Shared styles for both screen and print */
+.print-header {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.print-header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1f2e;
+    margin-bottom: 8px;
+}
+
+.print-header-title i {
+    color: #0dcaf0;
+    font-size: 28px;
+}
+
+.print-summary {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.printer-badge {
+    background: linear-gradient(135deg, #0dcaf0, #0ab4d6);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Preview container styles */
+.preview-container {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 15mm;
+    background: white;
+    margin: 0 auto 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    box-sizing: border-box;
+}
+
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5mm;
+    width: 100%;
+    height: 100%;
+}
+
+.preview-label {
+    width: 55mm;
+    height: 35mm;
+    border: 1px solid #e5e7eb;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    box-sizing: border-box;
+    padding: 2mm;
+    border-radius: 2mm;
+    gap: 1mm;
+}
+
+.preview-code {
+    font-weight: 1000;
+    color: #000000;
+    font-size: 18px;
+    line-height: 1.2;
+    width: 100%;
+    word-break: break-all;
+}
+
+.preview-name {
+    color: #0055ff;
+    font-size: 10px;
+    line-height: 1.3;
+    width: 100%;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    word-break: break-word;
+}
+
+.preview-barcode {
+    font-family: 'Courier New', monospace;
+    background: #000000;
+    color: white;
+    padding: 3mm 4mm;
+    border-radius: 2mm;
+    letter-spacing: 1.5px;
+    font-size: 15px;
+    font-weight: 700;
+    width: 100%;
+    box-sizing: border-box;
+    word-break: break-all;
+}
+
+.preview-price {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 13px;
+    width: 100%;
+}
+
+.preview-copy {
+    font-size: 8px;
+    color: #9ca3af;
+    width: 100%;
+}
+
+.preview-footer {
+    position: absolute;
+    bottom: 5mm;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10px;
+    color: #9ca3af;
+}
+
+.action-btn {
+    padding: 12px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+.action-btn i {
+    font-size: 18px;
+}
+
+.btn-cancel {
+    background: white;
+    color: #6b7280;
+    border: 2px solid #d1d5db;
+}
+
+.btn-cancel:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+    transform: translateY(-2px);
+}
+
+.btn-pdf {
+    background: white;
+    color: #0dcaf0;
+    border: 2px solid #0dcaf0;
+}
+
+.btn-pdf:hover {
+    background: #0dcaf0;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-print {
+    background: linear-gradient(135deg, #0dcaf0, #0ab4d6);
+    color: white;
+    padding: 12px 48px;
+}
+
+.btn-print:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(13, 202, 240, 0.4);
+}
+
+@media (max-width: 768px) {
+    .preview-container {
+        width: 100%;
+        min-height: auto;
+        box-shadow: none;
+        margin-bottom: 16px;
+    }
+    
+    .preview-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .preview-label {
+        width: 100%;
+        height: 40mm;
+    }
+    
+    .print-header {
+        padding: 16px;
+    }
+    
+    .print-actions .container {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<!-- Print Header -->
+<div class="container-fluid px-4 pt-4">
+    <div class="print-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <div class="print-header-title">
+                    <i class="bi bi-printer-fill"></i>
+                    <span>Labels Sheet</span>
+                </div>
+                <div class="print-summary" id="printSummary">
+                    Loading labels...
+                </div>
+            </div>
+            <div class="printer-badge" id="printerName">
+                Default Printer
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Container (Visible on screen) -->
+<div class="container-fluid px-4">
+    <div id="previewContainer">
+        <!-- Preview will be generated by JavaScript -->
+    </div>
+</div>
+
+<!-- Print Sheets Container (Hidden by default, shown when printing) -->
+<div id="printSheetsContainer" style="display: none;">
+    <!-- Print sheets will be generated by JavaScript -->
+</div>
+
+<!-- Action Buttons (Fixed at Bottom) -->
+<div class="print-actions">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <button class="action-btn btn-cancel" id="cancelBtn">
+                <i class="bi bi-arrow-left"></i>
+                <span>Back</span>
+            </button>
+            
+            <div class="d-flex gap-3 flex-wrap">
+                <button class="action-btn btn-pdf" id="downloadPDFBtn">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    <span>Save as PDF</span>
+                </button>
+                
+                <button class="action-btn btn-print" id="printBtn">
+                    <i class="bi bi-printer-fill"></i>
+                    <span>Print Now</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Django Data Element (Hidden) -->
+<div id="django-data" style="display: none;">
+    <!-- These will be processed by Django and used by JavaScript -->
+    <span id="products-data">{{ products|safe|default:'[]' }}</span>
+    <span id="per-row-data">{{ per_row|default:3 }}</span>
+    <span id="size-data">{{ size|default:'medium' }}</span>
+    <span id="show-name-data">{{ show_name|yesno:'true,false' }}</span>
+    <span id="show-price-data">{{ show_price|yesno:'true,false' }}</span>
+    <span id="error-data">{{ error|default:'' }}</span>
+</div>
+
+<script>
+// ==================== PRINT LABELS SHEET SCRIPT ====================
+
+(function() {
+    'use strict';
+    
+    console.log('🖨️ Initializing print sheet...');
+    
+    // Get data from hidden Django elements
+    function getDjangoData() {
+        try {
+            const productsElement = document.getElementById('products-data');
+            const perRowElement = document.getElementById('per-row-data');
+            const sizeElement = document.getElementById('size-data');
+            const showNameElement = document.getElementById('show-name-data');
+            const showPriceElement = document.getElementById('show-price-data');
+            const errorElement = document.getElementById('error-data');
+            
+            // Parse the data
+            let productsData = [];
+            try {
+                const productsText = productsElement ? productsElement.textContent : '[]';
+                productsData = JSON.parse(productsText);
+            } catch (e) {
+                console.error('Error parsing products JSON:', e);
+                productsData = [];
+            }
+            
+            const printConfig = {
+                perRow: perRowElement ? parseInt(perRowElement.textContent) || 3 : 3,
+                size: sizeElement ? sizeElement.textContent : 'medium',
+                showName: showNameElement ? (showNameElement.textContent === 'true') : true,
+                showPrice: showPriceElement ? (showPriceElement.textContent === 'true') : false
+            };
+            
+            const hasError = errorElement ? (errorElement.textContent.trim().length > 0) : false;
+            const errorMessage = errorElement ? errorElement.textContent : '';
+            
+            console.log('📦 Loaded from Django:');
+            console.log('  Products count:', productsData.length);
+            console.log('  Print config:', printConfig);
+            
+            return {
+                productsData: productsData,
+                printConfig: printConfig,
+                hasError: hasError,
+                errorMessage: errorMessage
+            };
+            
+        } catch (error) {
+            console.error('Error getting Django data:', error);
+            return {
+                productsData: [],
+                printConfig: { perRow: 3, size: 'medium', showName: true, showPrice: false },
+                hasError: false,
+                errorMessage: ''
+            };
+        }
+    }
+    
+    // Main initialization function
+    function main() {
+        const { productsData, printConfig, hasError, errorMessage } = getDjangoData();
+        
+        console.log('✅ Products data:', productsData);
+        console.log('✅ Print config:', printConfig);
+        
+        if (!productsData || productsData.length === 0) {
+            console.warn('⚠️ No products data');
+            showError('No products to print', 'Please go back and select products first.', hasError, errorMessage);
+            return;
+        }
+        
+        console.log('✅ Initializing print sheet with', productsData.length, 'products');
+        
+        // Generate preview for screen viewing
+        generatePreview(productsData, printConfig);
+        
+        // Generate actual print sheets (hidden until printing)
+        generatePrintSheets(productsData, printConfig);
+        
+        setupEventHandlers();
+        updatePrintSummary(productsData, printConfig);
+    }
+    
+    function showError(title, message, hasError, errorMessage) {
+        const container = document.getElementById('previewContainer');
+        if (container) {
+            let html = `
+                <div class="alert alert-danger">
+                    <h4>${title}</h4>
+                    <p>${message}</p>
+            `;
+            
+            if (hasError && errorMessage) {
+                html += `<hr><p class="text-danger"><strong>Server Error:</strong> ${errorMessage}</p>`;
+            }
+            
+            html += `
+                    <button class="btn btn-primary mt-2" onclick="window.history.back()">
+                        <i class="bi bi-arrow-left"></i> Go Back
+                    </button>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+    }
+    
+    function updatePrintSummary(productsData, printConfig) {
+        const summaryEl = document.getElementById('printSummary');
+        if (summaryEl && productsData && productsData.length > 0) {
+            let totalLabels = 0;
+            productsData.forEach(product => {
+                totalLabels += parseInt(product.quantity) || 1;
+            });
+            
+            const perRow = printConfig.perRow;
+            const rowsPerPage = getRowsPerPage(printConfig);
+            const labelsPerPage = perRow * rowsPerPage;
+            const totalPages = Math.ceil(totalLabels / labelsPerPage);
+            
+            summaryEl.textContent = `${totalLabels} label${totalLabels !== 1 ? 's' : ''} across ${totalPages} page${totalPages !== 1 ? 's' : ''}`;
+        }
+    }
+    
+    function getRowsPerPage(printConfig) {
+        switch(printConfig.size) {
+            case 'small': return 10;
+            case 'large': return 5;
+            case 'medium':
+            default: return 7;
+        }
+    }
+    
+    function generatePreview(productsData, printConfig) {
+        const previewContainer = document.getElementById('previewContainer');
+        if (!previewContainer) return;
+        
+        previewContainer.innerHTML = '';
+        
+        const perRow = printConfig.perRow;
+        const rowsPerPage = getRowsPerPage(printConfig);
+        const labelsPerPage = perRow * rowsPerPage;
+        
+        // Create all labels array
+        const allLabels = [];
+        productsData.forEach(product => {
+            const quantity = parseInt(product.quantity) || 1;
+            for (let i = 0; i < quantity; i++) {
+                allLabels.push({
+                    product: product,
+                    copyNumber: i + 1,
+                    totalCopies: quantity
+                });
+            }
+        });
+        
+        console.log('👁️ Generating preview for', allLabels.length, 'labels');
+        
+        const totalPages = Math.ceil(allLabels.length / labelsPerPage);
+        for (let page = 0; page < totalPages; page++) {
+            createPreviewPage(page, allLabels, perRow, rowsPerPage, labelsPerPage, totalPages, printConfig);
+        }
+    }
+    
+    function generatePrintSheets(productsData, printConfig) {
+        const printContainer = document.getElementById('printSheetsContainer');
+        if (!printContainer) return;
+        
+        printContainer.innerHTML = '';
+        
+        const perRow = printConfig.perRow;
+        const rowsPerPage = getRowsPerPage(printConfig);
+        const labelsPerPage = perRow * rowsPerPage;
+        
+        // Create all labels array
+        const allLabels = [];
+        productsData.forEach(product => {
+            const quantity = parseInt(product.quantity) || 1;
+            for (let i = 0; i < quantity; i++) {
+                allLabels.push({
+                    product: product,
+                    copyNumber: i + 1,
+                    totalCopies: quantity
+                });
+            }
+        });
+        
+        console.log('🖨️ Generating print sheets for', allLabels.length, 'labels');
+        
+        const totalPages = Math.ceil(allLabels.length / labelsPerPage);
+        for (let page = 0; page < totalPages; page++) {
+            createPrintPage(page, allLabels, perRow, rowsPerPage, labelsPerPage, totalPages, printConfig);
+        }
+    }
+    
+    function createPreviewPage(pageIndex, allLabels, perRow, rowsPerPage, labelsPerPage, totalPages, printConfig) {
+        const previewContainer = document.getElementById('previewContainer');
+        if (!previewContainer) return;
+        
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'preview-container';
+        
+        const gridDiv = document.createElement('div');
+        gridDiv.className = 'preview-grid';
+        gridDiv.style.gridTemplateColumns = `repeat(${perRow}, 1fr)`;
+        
+        const startIdx = pageIndex * labelsPerPage;
+        const endIdx = Math.min(startIdx + labelsPerPage, allLabels.length);
+        
+        for (let i = startIdx; i < endIdx; i++) {
+            const labelData = allLabels[i];
+            gridDiv.appendChild(createPreviewLabel(labelData, printConfig));
+        }
+        
+        const footerDiv = document.createElement('div');
+        footerDiv.className = 'preview-footer';
+        footerDiv.textContent = `Page ${pageIndex + 1} of ${totalPages} • Generated by FieldMax • ${new Date().toLocaleDateString()}`;
+        
+        previewDiv.appendChild(gridDiv);
+        previewDiv.appendChild(footerDiv);
+        previewContainer.appendChild(previewDiv);
+    }
+    
+    function createPrintPage(pageIndex, allLabels, perRow, rowsPerPage, labelsPerPage, totalPages, printConfig) {
+        const printContainer = document.getElementById('printSheetsContainer');
+        if (!printContainer) return;
+        
+        const sheetDiv = document.createElement('div');
+        sheetDiv.className = 'print-sheet';
+        
+        const gridDiv = document.createElement('div');
+        gridDiv.className = 'labels-grid';
+        
+        // Set inline styles for print compatibility
+        gridDiv.style.display = 'grid';
+        gridDiv.style.gridTemplateColumns = `repeat(${perRow}, 1fr)`;
+        gridDiv.style.gap = '5mm';
+        gridDiv.style.width = '100%';
+        gridDiv.style.height = 'auto';
+        
+        const startIdx = pageIndex * labelsPerPage;
+        const endIdx = Math.min(startIdx + labelsPerPage, allLabels.length);
+        
+        for (let i = startIdx; i < endIdx; i++) {
+            const labelData = allLabels[i];
+            gridDiv.appendChild(createPrintLabel(labelData, printConfig));
+        }
+        
+        const footerDiv = document.createElement('div');
+        footerDiv.className = 'page-footer';
+        footerDiv.textContent = `Page ${pageIndex + 1} of ${totalPages} • Generated by FieldMax • ${new Date().toLocaleDateString()}`;
+        
+        sheetDiv.appendChild(gridDiv);
+        sheetDiv.appendChild(footerDiv);
+        printContainer.appendChild(sheetDiv);
+    }
+    
+    function createPreviewLabel(labelData, printConfig) {
+        const product = labelData.product;
+        
+        let width, height;
+        switch(printConfig.size) {
+            case 'small':
+                width = '45mm';
+                height = '25mm';
+                break;
+            case 'large':
+                width = '65mm';
+                height = '45mm';
+                break;
+            case 'medium':
+            default:
+                width = '55mm';
+                height = '35mm';
+        }
+        
+        const label = document.createElement('div');
+        label.className = 'preview-label';
+        label.style.width = width;
+        label.style.height = height;
+        
+        const barcodeText = product.type === 'single' 
+            ? (product.sku || 'N/A') 
+            : (product.barcode || 'N/A');
+        
+        const codeDiv = document.createElement('div');
+        codeDiv.className = 'preview-code';
+        codeDiv.textContent = product.code || 'N/A';
+        label.appendChild(codeDiv);
+        
+        if (printConfig.showName && product.name) {
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'preview-name';
+            nameDiv.textContent = product.name;
+            label.appendChild(nameDiv);
+        }
+        
+        const barcodeDiv = document.createElement('div');
+        barcodeDiv.className = 'preview-barcode';
+        barcodeDiv.textContent = barcodeText;
+        label.appendChild(barcodeDiv);
+        
+        if (printConfig.showPrice) {
+            const priceDiv = document.createElement('div');
+            priceDiv.className = 'preview-price';
+            priceDiv.textContent = 'KSH 0.00';
+            label.appendChild(priceDiv);
+        }
+        
+        const copyDiv = document.createElement('div');
+        copyDiv.className = 'preview-copy';
+        copyDiv.textContent = `Copy ${labelData.copyNumber} of ${labelData.totalCopies}`;
+        label.appendChild(copyDiv);
+        
+        return label;
+    }
+    
+    function createPrintLabel(labelData, printConfig) {
+        const product = labelData.product;
+        
+        let width, height;
+        switch(printConfig.size) {
+            case 'small':
+                width = '45mm';
+                height = '25mm';
+                break;
+            case 'large':
+                width = '65mm';
+                height = '45mm';
+                break;
+            case 'medium':
+            default:
+                width = '55mm';
+                height = '35mm';
+        }
+        
+        const label = document.createElement('div');
+        label.className = 'print-label';
+        
+        // Set inline styles for print compatibility
+        label.style.width = width;
+        label.style.height = height;
+        label.style.border = '1px solid #000';
+        label.style.background = 'white';
+        label.style.display = 'flex';
+        label.style.flexDirection = 'column';
+        label.style.justifyContent = 'space-between';
+        label.style.alignItems = 'center';
+        label.style.textAlign = 'center';
+        label.style.boxSizing = 'border-box';
+        label.style.padding = '2mm';
+        label.style.borderRadius = '2mm';
+        label.style.gap = '1mm';
+        label.style.pageBreakInside = 'avoid';
+        label.style.breakInside = 'avoid';
+        label.style.WebkitPrintColorAdjust = 'exact';
+        label.style.printColorAdjust = 'exact';
+        
+        const barcodeText = product.type === 'single' 
+            ? (product.sku || 'N/A') 
+            : (product.barcode || 'N/A');
+        
+        const codeDiv = document.createElement('div');
+        codeDiv.className = 'label-code';
+        codeDiv.style.fontWeight = '1000';
+        codeDiv.style.color = '#000000';
+        codeDiv.style.fontSize = '18px';
+        codeDiv.style.lineHeight = '1.2';
+        codeDiv.style.width = '100%';
+        codeDiv.style.wordBreak = 'break-all';
+        codeDiv.textContent = product.code || 'N/A';
+        label.appendChild(codeDiv);
+        
+        if (printConfig.showName && product.name) {
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'label-name';
+            nameDiv.style.color = '#0055ff';
+            nameDiv.style.fontSize = '10px';
+            nameDiv.style.lineHeight = '1.3';
+            nameDiv.style.width = '100%';
+            nameDiv.style.flexGrow = '1';
+            nameDiv.style.display = 'flex';
+            nameDiv.style.alignItems = 'center';
+            nameDiv.style.justifyContent = 'center';
+            nameDiv.style.wordBreak = 'break-word';
+            nameDiv.textContent = product.name;
+            label.appendChild(nameDiv);
+        }
+        
+        const barcodeDiv = document.createElement('div');
+        barcodeDiv.className = 'label-barcode';
+        barcodeDiv.style.fontFamily = "'Courier New', monospace";
+        barcodeDiv.style.background = '#000000';
+        barcodeDiv.style.color = 'white';
+        barcodeDiv.style.padding = '3mm 4mm';
+        barcodeDiv.style.borderRadius = '2mm';
+        barcodeDiv.style.letterSpacing = '1.5px';
+        barcodeDiv.style.fontSize = '15px';
+        barcodeDiv.style.fontWeight = '700';
+        barcodeDiv.style.width = '100%';
+        barcodeDiv.style.boxSizing = 'border-box';
+        barcodeDiv.style.wordBreak = 'break-all';
+        barcodeDiv.style.WebkitPrintColorAdjust = 'exact';
+        barcodeDiv.style.printColorAdjust = 'exact';
+        barcodeDiv.textContent = barcodeText;
+        label.appendChild(barcodeDiv);
+        
+        if (printConfig.showPrice) {
+            const priceDiv = document.createElement('div');
+            priceDiv.className = 'label-price';
+            priceDiv.style.color = '#10b981';
+            priceDiv.style.fontWeight = '700';
+            priceDiv.style.fontSize = '13px';
+            priceDiv.style.width = '100%';
+            priceDiv.textContent = 'KSH 0.00';
+            label.appendChild(priceDiv);
+        }
+        
+        const copyDiv = document.createElement('div');
+        copyDiv.className = 'label-copy';
+        copyDiv.style.fontSize = '8px';
+        copyDiv.style.color = '#9ca3af';
+        copyDiv.style.width = '100%';
+        copyDiv.textContent = `Copy ${labelData.copyNumber} of ${labelData.totalCopies}`;
+        label.appendChild(copyDiv);
+        
+        return label;
+    }
+    
+    function setupEventHandlers() {
+        const printBtn = document.getElementById('printBtn');
+        if (printBtn) {
+            printBtn.addEventListener('click', () => {
+                console.log('🖨️ Print button clicked');
+                
+                // Show the print sheets container
+                const printSheetsContainer = document.getElementById('printSheetsContainer');
+                const previewContainer = document.getElementById('previewContainer');
+                const header = document.querySelector('.print-header');
+                const actions = document.querySelector('.print-actions');
+                
+                if (printSheetsContainer) printSheetsContainer.style.display = 'block';
+                if (previewContainer) previewContainer.style.display = 'none';
+                if (header) header.style.display = 'none';
+                if (actions) actions.style.display = 'none';
+                
+                // Trigger print after a short delay
+                setTimeout(() => {
+                    window.print();
+                    
+                    // Restore the original view after printing
+                    setTimeout(() => {
+                        if (printSheetsContainer) printSheetsContainer.style.display = 'none';
+                        if (previewContainer) previewContainer.style.display = 'block';
+                        if (header) header.style.display = 'block';
+                        if (actions) actions.style.display = 'block';
+                    }, 100);
+                }, 100);
+            });
+        }
+        
+        const pdfBtn = document.getElementById('downloadPDFBtn');
+        if (pdfBtn) {
+            pdfBtn.addEventListener('click', () => {
+                printBtn.click();
+            });
+        }
+        
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => window.history.back());
+        }
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('✅ DOM loaded, running main');
+        main();
+    });
+})();
+</script>
+
+{% endblock %}
