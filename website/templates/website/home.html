@@ -1773,6 +1773,7 @@
 </section>
 
 <!-- Best Selling Items Section -->
+<!-- Best Selling Items Section -->
 <section class="best-selling-section" id="best-selling">
   <div class="container">
     <div class="section-header">
@@ -1796,8 +1797,8 @@
         <div class="performance-card">
           <div class="performance-icon">🔄</div>
           <div class="performance-info">
-            <div class="performance-value">2.5K+</div>
-            <div class="performance-label">Monthly Sales</div>
+            <div class="performance-value">{{ featured_products|length }}+</div>
+            <div class="performance-label">Top Products</div>
           </div>
         </div>
         <div class="performance-card">
@@ -1814,10 +1815,11 @@
     <div class="category-filters">
       <div class="filters-container">
         <button class="filter-btn active" data-category="all">All Products</button>
-        <button class="filter-btn" data-category="smartphones">📱 Smartphones</button>
-        <button class="filter-btn" data-category="accessories">🎧 Accessories</button>
-        <button class="filter-btn" data-category="watches">⌚ Smartwatches</button>
-        <button class="filter-btn" data-category="chargers">🔌 Chargers</button>
+        {% for cat in categories %}
+          <button class="filter-btn" data-category="{{ cat.name|lower|slugify }}">
+            {{ cat.name }}
+          </button>
+        {% endfor %}
       </div>
     </div>
     
@@ -1825,20 +1827,26 @@
     <div class="best-selling-grid">
       {% if featured_products %}
         {% for product in featured_products %}
-          <div class="best-selling-card" data-category="{{ product.category|lower|default:'all' }}">
+          <div class="best-selling-card" data-category="{{ product.category.name|lower|slugify }}">
             <!-- Product Badge -->
             <div class="product-rank">
               <span class="rank-number">#{{ forloop.counter }}</span>
-              <span class="rank-badge">BEST SELLER</span>
+              {% if product.is_featured %}
+                <span class="rank-badge">BEST SELLER</span>
+              {% elif product.sales_count > 50 %}
+                <span class="rank-badge">TRENDING</span>
+              {% else %}
+                <span class="rank-badge">NEW</span>
+              {% endif %}
             </div>
             
             <!-- Product Image -->
             <div class="product-image-container">
               <div class="image-overlay">
-                <span class="view-quick">👁️ QUICK VIEW</span>
+                <a href="{% url 'product_detail' product.id %}" class="view-quick">👁️ QUICK VIEW</a>
               </div>
               {% if product.image %}
-                <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy" class="product-image">
+                <img src="{{ product.image.url }}" alt="{{ product.display_name }}" loading="lazy" class="product-image">
               {% else %}
                 <div class="image-placeholder">
                   <span class="placeholder-icon">📱</span>
@@ -1849,74 +1857,105 @@
             <!-- Product Info -->
             <div class="product-content">
               <div class="product-header">
-                <!-- FIXED: Proper SKU display -->
-                <div class="product-sku">SKU: {{ product.product_code|default:"FMX-" }}{{ forloop.counter|add:1000 }}</div>
+                <div class="product-sku">{{ product.product_code }}</div>
                 {% if product.status == 'available' %}
-                  <div class="stock-status available">In Stock</div>
+                  <div class="stock-status available">
+                    {% if product.category.is_bulk_item %}
+                      {{ product.quantity }} in stock
+                    {% else %}
+                      Available
+                    {% endif %}
+                  </div>
                 {% elif product.status == 'lowstock' %}
-                  <div class="stock-status lowstock">Low Stock</div>
+                  <div class="stock-status lowstock">
+                    Only {{ product.quantity }} left
+                  </div>
+                {% elif product.status == 'sold' %}
+                  <div class="stock-status outstock">Sold Out</div>
                 {% else %}
                   <div class="stock-status outstock">Out of Stock</div>
                 {% endif %}
               </div>
               
-              <h3 class="product-title">{{ product.name }}</h3>
+              <h3 class="product-title">
+                <a href="{% url 'product_detail' product.id %}" style="color: inherit; text-decoration: none;">
+                  {{ product.display_name }}
+                </a>
+              </h3>
+              
+              <!-- Category Badge -->
+              <div class="product-category-badge" style="margin-bottom: 10px;">
+                <span style="background: rgba(102, 126, 234, 0.2); color: #667eea; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                  {{ product.category.name }}
+                </span>
+              </div>
               
               <div class="product-rating">
                 <div class="stars">
-                  <span class="star">⭐</span>
-                  <span class="star">⭐</span>
-                  <span class="star">⭐</span>
-                  <span class="star">⭐</span>
-                  <span class="star">⭐</span>
+                  {% for i in "12345" %}
+                    <span class="star">⭐</span>
+                  {% endfor %}
                   <span class="rating-value">4.8</span>
-                  <span class="rating-count">({{ forloop.counter|add:150 }})</span>
+                  <span class="rating-count">({{ product.sales_count|default:0 }})</span>
                 </div>
               </div>
               
-              <!-- FIXED: Price section without custom filters -->
+              <!-- Price section -->
               <div class="product-price-section">
-                <div class="price-current">KSh {{ product.selling_price|floatformat:0 }}</div>
-                {% if product.old_price and product.old_price > product.selling_price %}
-                  <div class="price-original">KSh {{ product.old_price|floatformat:0 }}</div>
+                <div class="price-current">KSh {{ product.selling_price|floatformat:0|default:"0" }}</div>
+                {% if product.buying_price and product.buying_price < product.selling_price %}
                   <div class="price-save">
-                    <!-- Simple badge without calculations -->
-                    <span class="save-badge">HOT DEAL</span>
+                    <span class="save-badge">
+                      Save KSh {{ product.profit_margin|floatformat:0 }}
+                    </span>
                   </div>
                 {% endif %}
               </div>
               
-              <!-- Sales Progress - FIXED -->
-              <div class="sales-progress">
-                <div class="progress-label">
-                  <span>Sold: {{ forloop.counter|add:80 }} items</span>
-                  <span>{{ forloop.counter|add:20 }} left</span>
+              <!-- Sales Progress for bulk items -->
+              {% if product.category.is_bulk_item and product.quantity > 0 %}
+                <div class="sales-progress">
+                  <div class="progress-label">
+                    <span>Available: {{ product.quantity }} units</span>
+                    {% if product.reorder_level %}
+                      <span>Reorder at: {{ product.reorder_level }}</span>
+                    {% endif %}
+                  </div>
+                  <div class="progress-bar">
+                    {% with reorder=product.reorder_level|default:10 %}
+                      {% widthratio product.quantity reorder 100 as progress_width %}
+                      <div class="progress-fill" data-width="{{ progress_width }}"></div>
+                    {% endwith %}
+                  </div>
                 </div>
-                <div class="progress-bar">
-                  <div class="progress-fill"></div>
-                </div>
-              </div>
+              {% endif %}
               
               <!-- Action Buttons -->
               <div class="product-actions">
                 {% if product.status == 'available' or product.status == 'lowstock' %}
                   <button class="action-btn add-cart-btn"
                           data-product-id="{{ product.id }}"
-                          data-product-name="{{ product.name }}"
-                          data-product-price="{{ product.selling_price }}">
+                          data-product-name="{{ product.display_name }}"
+                          data-product-price="{{ product.selling_price }}"
+                          data-product-code="{{ product.product_code }}">
                     <span class="btn-icon">🛒</span>
                     <span class="btn-text">ADD TO CART</span>
                   </button>
-                  <button class="action-btn wishlist-btn" title="Add to Wishlist">
+                  <button class="action-btn wishlist-btn" 
+                          title="Add to Wishlist"
+                          data-product-id="{{ product.id }}">
                     <span class="btn-icon">❤️</span>
                   </button>
-                  <button class="action-btn compare-btn" title="Compare">
-                    <span class="btn-icon">⚖️</span>
-                  </button>
+                  <a href="{% url 'product_detail' product.id %}" 
+                     class="action-btn compare-btn" 
+                     title="View Details"
+                     style="text-decoration: none; color: inherit;">
+                    <span class="btn-icon">👁️</span>
+                  </a>
                 {% else %}
                   <button class="action-btn outstock-btn" disabled>
                     <span class="btn-icon">⏳</span>
-                    <span class="btn-text">NOTIFY ME</span>
+                    <span class="btn-text">SOLD OUT</span>
                   </button>
                 {% endif %}
               </div>
@@ -1928,12 +1967,30 @@
                   <span class="stat-text">Free Shipping</span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-icon">🔄</span>
-                  <span class="stat-text">30-Day Returns</span>
+                  <span class="stat-icon">
+                    {% if product.warranty_months %}
+                      🔒
+                    {% else %}
+                      🔄
+                    {% endif %}
+                  </span>
+                  <span class="stat-text">
+                    {% if product.warranty_months %}
+                      {{ product.warranty_months }}mo Warranty
+                    {% else %}
+                      Returns
+                    {% endif %}
+                  </span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-icon">🔒</span>
-                  <span class="stat-text">2-Year Warranty</span>
+                  <span class="stat-icon">
+                    {% if product.condition == 'new' %}
+                      ✨
+                    {% else %}
+                      ♻️
+                    {% endif %}
+                  </span>
+                  <span class="stat-text">{{ product.get_condition_display }}</span>
                 </div>
               </div>
             </div>

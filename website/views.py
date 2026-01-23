@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
@@ -220,7 +220,6 @@ def api_category_details(request, category_id):
             'success': False,
             'message': str(e)
         }, status=500)
-
 # ============================================
 # HOME VIEW
 # ============================================
@@ -301,10 +300,24 @@ def home(request):
             is_active=True
         ).order_by('-created_at')[:12]
     
+    # ✅ NEW: Get all active categories that have products for filtering
+    try:
+        categories = Category.objects.filter(
+            products__is_active=True,
+            products__isnull=False
+        ).filter(
+            Q(products__status='available') | Q(products__status='lowstock')
+        ).distinct().order_by('name')
+        
+    except Exception as e:
+        # Fallback: Get all categories
+        categories = Category.objects.all().order_by('name')
+    
     context = {
         'page_title': 'Home - Fieldmax | Premium Tech at Unbeatable Prices',
         'dashboard_url': dashboard_url,
         'featured_products': best_sellers,
+        'categories': categories,  # ✅ Added for category filters
     }
     
     return render(request, 'website/home.html', context)
@@ -455,6 +468,32 @@ def get_product_emoji(product):
                 return emoji
     
     return '📦'
+
+
+
+
+def product_detail(request, pk):
+    """Product detail page"""
+    product = get_object_or_404(Product, pk=pk, is_active=True)
+    
+    # Increment view count
+    product.view_count += 1
+    product.save(update_fields=['view_count'])
+    
+    # Get related products (same category)
+    related_products = Product.objects.filter(
+        category=product.category,
+        is_active=True
+    ).exclude(id=product.id)[:4]
+    
+    context = {
+        'product': product,
+        'related_products': related_products,
+    }
+    
+    return render(request, 'website/product_detail.html', context)
+
+
 
 # ============================================
 # TRENDING STATS

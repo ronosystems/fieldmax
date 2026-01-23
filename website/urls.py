@@ -22,6 +22,7 @@ urlpatterns = [
     # ============================================
     path('', home, name='home'),
     path('products/', views.products_page, name='products_page'),
+    path('product/<int:pk>/', views.product_detail, name='product_detail'),
 
     # ============================================
     # API ENDPOINTS FOR HOME PAGE
