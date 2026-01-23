@@ -1,8 +1,3 @@
-<!-- ============================================
-     UPDATED pending_orders.html TEMPLATE
-     Uses order.items.all instead of order.cart_items
-     ============================================ -->
-
 {% extends 'website/base.html' %}
 {% load static %}
 
@@ -24,7 +19,7 @@
     <div class="row">
         {% for order in pending_orders %}
         <div class="col-lg-6 col-xl-4 mb-4">
-            <div class="card shadow-sm border-warning border-2 h-100">
+            <div class="card shadow-sm border-warning border-2 h-100 d-flex flex-column">
                 <!-- Order Header -->
                 <div class="card-header bg-warning bg-opacity-10">
                     <div class="d-flex justify-content-between align-items-center">
@@ -40,8 +35,9 @@
                     </small>
                 </div>
 
-                <!-- Customer Details -->
-                <div class="card-body">
+                <!-- Card Body - Scrollable Content -->
+                <div class="card-body flex-grow-1" style="overflow-y: auto; max-height: 400px;">
+                    <!-- Customer Details -->
                     <div class="mb-3">
                         <h6 class="text-muted mb-2">Customer Details</h6>
                         <div class="mb-1">
@@ -77,26 +73,60 @@
                         </div>
                     </div>
 
-                    <!-- Items List - USING order.items.all INSTEAD -->
+                    <!-- Items List with Checkboxes -->
                     <div class="mb-3">
                         <button class="btn btn-sm btn-outline-secondary w-100" type="button" 
                                 data-bs-toggle="collapse" data-bs-target="#items-{{ order.order_id }}">
                             <i class="bi bi-list-ul"></i> View Items ({{ order.item_count }})
+                            <span id="checked-count-{{ order.order_id }}" class="badge bg-info ms-2">0/{{ order.item_count }} checked</span>
                         </button>
                         <div class="collapse mt-2" id="items-{{ order.order_id }}">
                             <div class="list-group list-group-flush">
                                 {% for item in order.items.all %}
                                 <div class="list-group-item px-0 py-2 small">
-                                    <div class="d-flex justify-content-between">
-                                        <span>{{ item.product_name }}</span>
-                                        <span>x{{ item.quantity }}</span>
+                                    <div class="form-check">
+                                        <input class="form-check-input item-checkbox" 
+                                               type="checkbox" 
+                                               value="{{ item.id }}"
+                                               data-order="{{ order.order_id }}"
+                                               id="item-{{ order.order_id }}-{{ item.id }}"
+                                               onchange="updateCheckedCount('{{ order.order_id }}')">
+                                        <label class="form-check-label w-100" for="item-{{ order.order_id }}-{{ item.id }}">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span>{{ item.product_name }}</span>
+                                                <span>x{{ item.quantity }}</span>
+                                            </div>
+                                            <small class="text-muted">
+                                                KSh {{ item.unit_price|floatformat:2 }} each
+                                                (Total: KSh {{ item.total_price|floatformat:2 }})
+                                            </small>
+                                            {% if item.product_code %}
+                                            <div class="mt-1">
+                                                <small class="text-muted">Code: {{ item.product_code }}</small>
+                                            </div>
+                                            {% endif %}
+                                        </label>
                                     </div>
-                                    <small class="text-muted">
-                                        KSh {{ item.unit_price|floatformat:2 }} each
-                                        (Total: KSh {{ item.total_price|floatformat:2 }})
-                                    </small>
                                 </div>
                                 {% endfor %}
+                                
+                                <!-- Check All Controls -->
+                                <div class="list-group-item px-0 py-2 bg-light">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="form-check">
+                                            <input class="form-check-input" 
+                                                   type="checkbox" 
+                                                   id="check-all-{{ order.order_id }}"
+                                                   onchange="toggleAllItems('{{ order.order_id }}', this.checked)">
+                                            <label class="form-check-label small" for="check-all-{{ order.order_id }}">
+                                                Check all items
+                                            </label>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="uncheckAllItems('{{ order.order_id }}')">
+                                            <i class="bi bi-x-circle"></i> Clear All
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -106,17 +136,26 @@
                         <strong>Notes:</strong> {{ order.notes }}
                     </div>
                     {% endif %}
-                </div>
 
-                <!-- Action Buttons -->
-                <div class="card-footer bg-white border-top">
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-success" onclick="approveOrder('{{ order.order_id }}')">
-                            <i class="bi bi-check-circle"></i> Approve Order
-                        </button>
-                        <button class="btn btn-outline-danger" onclick="showRejectModal('{{ order.order_id }}')">
-                            <i class="bi bi-x-circle"></i> Reject Order
-                        </button>
+                    <!-- Action Buttons - MOVED INSIDE CARD BODY IN COLUMN LAYOUT -->
+                    <div class="mt-auto">
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <button class="btn btn-success w-100" onclick="approveOrder('{{ order.order_id }}')" id="approve-btn-{{ order.order_id }}">
+                                    <i class="bi bi-check-circle"></i> Approve Order
+                                </button>
+                            </div>
+                            <div class="col-12">
+                                <button class="btn btn-outline-warning w-100" onclick="approveSelectedItems('{{ order.order_id }}')" id="partial-approve-btn-{{ order.order_id }}" style="display: none;">
+                                    <i class="bi bi-check-square"></i> Approve Selected Items
+                                </button>
+                            </div>
+                            <div class="col-12">
+                                <button class="btn btn-outline-danger w-100" onclick="showRejectModal('{{ order.order_id }}')">
+                                    <i class="bi bi-x-circle"></i> Reject Order
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -196,12 +235,106 @@ function hideLoading() {
     if (overlay) overlay.remove();
 }
 
-// Approve Order
+// Update checked items count
+function updateCheckedCount(orderId) {
+    const checkboxes = document.querySelectorAll(`.item-checkbox[data-order="${orderId}"]`);
+    const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+    const totalCount = checkboxes.length;
+    
+    // Update badge
+    document.getElementById(`checked-count-${orderId}`).textContent = `${checkedCount}/${totalCount} checked`;
+    
+    // Show/hide partial approve button
+    const partialBtn = document.getElementById(`partial-approve-btn-${orderId}`);
+    const approveBtn = document.getElementById(`approve-btn-${orderId}`);
+    
+    if (checkedCount > 0 && checkedCount < totalCount) {
+        partialBtn.style.display = 'block';
+        approveBtn.textContent = `Approve All Items (${totalCount})`;
+    } else if (checkedCount === totalCount) {
+        partialBtn.style.display = 'none';
+        approveBtn.textContent = 'Approve All Items';
+    } else {
+        partialBtn.style.display = 'none';
+        approveBtn.textContent = 'Approve Order';
+    }
+}
+
+// Toggle all items
+function toggleAllItems(orderId, isChecked) {
+    const checkboxes = document.querySelectorAll(`.item-checkbox[data-order="${orderId}"]`);
+    checkboxes.forEach(cb => {
+        cb.checked = isChecked;
+    });
+    updateCheckedCount(orderId);
+}
+
+// Uncheck all items
+function uncheckAllItems(orderId) {
+    const checkboxes = document.querySelectorAll(`.item-checkbox[data-order="${orderId}"]`);
+    checkboxes.forEach(cb => {
+        cb.checked = false;
+    });
+    document.getElementById(`check-all-${orderId}`).checked = false;
+    updateCheckedCount(orderId);
+}
+
+// Get selected item IDs
+function getSelectedItemIds(orderId) {
+    const checkboxes = document.querySelectorAll(`.item-checkbox[data-order="${orderId}"]:checked`);
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+// Approve Order (all items)
 async function approveOrder(orderId) {
-    if (!confirm(`Approve order ${orderId}? This will create a sale and deduct stock.`)) {
+    const checkboxes = document.querySelectorAll(`.item-checkbox[data-order="${orderId}"]`);
+    const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+    const totalCount = checkboxes.length;
+    
+    if (checkedCount === 0) {
+        // No items checked, approve entire order
+        if (!confirm(`Approve ALL items in order ${orderId}? This will create a sale and deduct stock for all ${totalCount} items.`)) {
+            return;
+        }
+        await processApproval(orderId, []);
+    } else if (checkedCount === totalCount) {
+        // All items checked
+        if (!confirm(`Approve ALL ${totalCount} items in order ${orderId}? This will create a sale and deduct stock.`)) {
+            return;
+        }
+        const itemIds = getSelectedItemIds(orderId);
+        await processApproval(orderId, itemIds);
+    } else {
+        // Some items checked - ask if they want to approve only checked or all
+        const choice = confirm(`You have ${checkedCount}/${totalCount} items checked.\n\nClick OK to approve only the checked items.\nClick Cancel to approve ALL items.`);
+        if (choice) {
+            // Approve only checked items
+            const itemIds = getSelectedItemIds(orderId);
+            await processApproval(orderId, itemIds);
+        } else {
+            // Approve all items
+            await processApproval(orderId, []);
+        }
+    }
+}
+
+// Approve only selected items
+async function approveSelectedItems(orderId) {
+    const itemIds = getSelectedItemIds(orderId);
+    if (itemIds.length === 0) {
+        alert('Please select at least one item to approve.');
         return;
     }
+    
+    if (!confirm(`Approve only the ${itemIds.length} selected items in order ${orderId}?`)) {
+        return;
+    }
+    
+    await processApproval(orderId, itemIds);
+}
 
+// Process approval request
+async function processApproval(orderId, itemIds) {
     showLoading('Approving order...');
 
     try {
@@ -210,7 +343,11 @@ async function approveOrder(orderId) {
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
-            }
+            },
+            body: JSON.stringify({ 
+                item_ids: itemIds,
+                approve_all: itemIds.length === 0
+            })
         });
 
         const data = await response.json();
@@ -276,11 +413,11 @@ async function confirmReject() {
     }
 }
 
-// Auto-refresh every 30 seconds to check for new orders
+// Auto-refresh every 60 seconds to check for new orders
 setInterval(() => {
     console.log('Auto-refreshing pending orders...');
     location.reload();
-}, 30000);
+}, 60000); // Changed from 30000 to 60000 (60 seconds)
 </script>
 
 <style>
@@ -300,6 +437,35 @@ setInterval(() => {
 .alert-sm {
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
+}
+
+.form-check-input:checked {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.form-check-input:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Make card body scrollable but keep action buttons at bottom */
+.card {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Style for action buttons container */
+.mt-auto {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #dee2e6;
 }
 </style>
 {% endblock %}

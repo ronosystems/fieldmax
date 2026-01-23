@@ -1,6 +1,7 @@
 #====================================
 # SALES IMPORTS
 #====================================
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.views.generic import ListView, DetailView, UpdateView, DeleteView
@@ -31,6 +32,7 @@ from .models import Sale, SaleReversal, SaleItem
 from .forms import SaleForm
 from .serializers import SaleSerializer
 from inventory.models import Product, StockEntry
+from website.models import Order, PendingOrder, Customer, OrderItem
 import pytz
 try:
     import pdfkit

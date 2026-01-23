@@ -1,5 +1,6 @@
 # website/urls.py
 from django.urls import path
+from website.api_views import search_order, view_receipt
 from .views import (
     RoleBasedLoginView,
     admin_dashboard,
@@ -38,6 +39,15 @@ urlpatterns = [
     path('api/validate-cart/', validate_cart, name='validate-cart'),
     path('checkout/', views.checkout_page, name='checkout'),
     path('api/cart/add/', views.api_add_to_cart, name='api-add-to-cart'),
+
+        # ============================================
+    # ORDER SEARCH & RECEIPT
+    # ============================================
+    path('search-order/', search_order, name='search-order'),
+    path('api/search-order/', search_order, name='api-search-order'),
+    path('orders/search/', search_order, name='orders-search'),
+    path('receipt/<str:order_id>/', view_receipt, name='view-receipt'),
+    path('api/order/<str:order_id>/receipt/', view_receipt, name='api-order-receipt'),
 
     # ============================================
     # PENDING ORDERS SYSTEM
