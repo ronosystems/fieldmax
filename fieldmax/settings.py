@@ -490,29 +490,44 @@ FIELDMAX_BUSINESS_HOURS = {
     'Sunday': 'Closed',
 }
 
+
+
 # ============================================
-# EMAIL CONFIGURATION
+# EMAIL CONFIGURATION - OPTIMIZED
 # ============================================
-if DEBUG:
+# Get email settings from environment
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+
+# Determine email backend based on credentials and debug mode
+if DEBUG or not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
+    # Use console email for development or when credentials are missing
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     if IS_MAIN_PROCESS:
-        print("📧 Development mode - using console email backend")
+        if DEBUG:
+            print("📧 Development mode - using console email backend")
+        elif not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
+            print("⚠️  Email credentials missing. Using console backend.")
 else:
+    # Production email configuration
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-    EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
     EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@fieldmax.co.ke')
-    SERVER_EMAIL = DEFAULT_FROM_EMAIL
+    EMAIL_USE_SSL = False
+    EMAIL_TIMEOUT = 30
     
-    if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
-        if IS_MAIN_PROCESS:
-            print(f"📧 Email configured: {EMAIL_HOST_USER}")
-    else:
-        if IS_MAIN_PROCESS:
-            print("⚠️  Email credentials missing. Email functionality disabled.")
+    # Gmail-specific optimization
+    if 'gmail.com' in EMAIL_HOST:
+        # These settings help with Gmail reliability
+        EMAIL_SSL_CERTFILE = None
+        EMAIL_SSL_KEYFILE = None
+        
+    if IS_MAIN_PROCESS:
+        print(f"📧 Production email configured: {EMAIL_HOST_USER}")
+        print(f"   Host: {EMAIL_HOST}:{EMAIL_PORT}")
+
 
 # ============================================
 # LOGGING CONFIGURATION

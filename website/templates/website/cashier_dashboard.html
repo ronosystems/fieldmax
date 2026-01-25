@@ -20,6 +20,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #ff00aa;
             padding: 20px;
+            padding-bottom: 40px; /* Add padding at bottom to prevent footer overlap */
         }
 
         .container {
@@ -101,30 +102,45 @@
             color: #000000;
         }
 
-        /* Row 3 - 2 Columns */
+        /* Row 3 - 2 Columns - NO FIXED HEIGHT */
         .row-3 {
             display: grid;
             grid-template-columns: 1fr 2fr;
             gap: 20px;
+            min-height: 400px; /* Minimum height only */
+        }
+
+        /* Column A - Compact */
+        .row-3 .card:first-child {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .row-3 .card:first-child h3 {
+            margin-bottom: 15px;
+            color: #000000;
+            font-size: 20px;
         }
 
         .input-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .input-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-weight: 600;
             color: #000000;
+            font-size: 14px;
         }
 
         .input-group input {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 6px;
+            font-size: 14px;
         }
 
         .input-group input:focus {
@@ -146,15 +162,15 @@
 
         .add-btn {
             width: 100%;
-            padding: 15px;
+            padding: 12px;
             background: linear-gradient(135deg,#00ffff 100%);
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 18px;
-            font-weight: 700;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 15px;
             transition: transform 0.2s;
         }
 
@@ -168,11 +184,29 @@
             transform: none;
         }
 
-        /* Cart Table */
+        /* Column B - Cart Display */
+        .cart-card {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            height: 100%;
+        }
+
         .cart-card h3 {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             color: #000000;
-            font-size: 24px;
+            font-size: 20px;
+        }
+
+        /* Scrollable Table Container - Takes available space */
+        .table-container {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            min-height: 150px;
+            max-height: 250px; /* Maximum height, but can be less */
         }
 
         table {
@@ -183,19 +217,22 @@
         thead {
             background: #000000;
             color: white;
+            position: sticky;
+            top: 0;
         }
 
         th {
-            padding: 15px;
+            padding: 10px 12px;
             text-align: left;
-            font-weight: 700;
+            font-weight: 600;
             text-transform: uppercase;
-            font-size: 14px;
+            font-size: 12px;
         }
 
         td {
-            padding: 15px;
+            padding: 10px 12px;
             border-bottom: 1px solid #eee;
+            font-size: 13px;
         }
 
         tbody tr:hover {
@@ -204,12 +241,13 @@
 
         .remove-cell {
             text-align: center;
+            width: 40px;
         }
 
         .remove-icon {
             cursor: pointer;
             color: #ff4757;
-            font-size: 20px;
+            font-size: 16px;
             transition: transform 0.2s;
         }
 
@@ -219,44 +257,44 @@
 
         .empty-cart {
             text-align: center;
-            padding: 60px 20px;
+            padding: 40px 20px;
             color: #0c0a0a;
-            font-size: 18px;
+            font-size: 14px;
         }
 
         .cart-summary {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 3px solid #667eea;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #667eea;
             text-align: right;
         }
 
         .summary-row {
             display: flex;
             justify-content: flex-end;
-            gap: 100px;
-            margin-bottom: 10px;
-            font-size: 18px;
+            gap: 80px;
+            margin-bottom: 8px;
+            font-size: 14px;
         }
 
         .summary-row.total {
-            font-size: 32px;
-            font-weight: 900;
+            font-size: 22px;
+            font-weight: 700;
             color: #000000;
-            margin-top: 15px;
+            margin-top: 10px;
         }
 
         .checkout-btn {
             width: 100%;
-            padding: 20px;
+            padding: 15px;
             background: #28a745;
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 20px;
-            font-weight: 700;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 15px;
             transition: background 0.3s;
         }
 
@@ -269,22 +307,37 @@
             cursor: not-allowed;
         }
 
-        /* Row 4 - Payment Methods */
-        .row-4 {
+        /* Payment Methods */
+        .payment-methods-container {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #667eea;
+        }
+
+        .payment-methods-container h4 {
+            margin-bottom: 15px;
+            color: #000000;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .payment-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
+            gap: 12px;
         }
 
         .payment-card {
             text-align: center;
-            border: 3px solid #ddd;
+            border: 2px solid #ddd;
+            padding: 12px;
+            border-radius: 6px;
             transition: all 0.3s;
         }
 
         .payment-card:hover {
             border-color: #667eea;
-            transform: translateY(-5px);
+            transform: translateY(-2px);
         }
 
         .payment-card.active {
@@ -293,26 +346,26 @@
         }
 
         .payment-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
+            font-size: 28px;
+            margin-bottom: 5px;
         }
 
         .payment-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 800;
+            color: #ff0000;
+            margin-bottom: 10px;
             text-transform: uppercase;
         }
 
         .payment-input {
             width: 100%;
-            padding: 12px;
+            padding: 8px;
             border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 18px;
+            border-radius: 4px;
+            font-size: 14px;
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
         }
 
         .payment-input:focus {
@@ -322,13 +375,13 @@
 
         .submit-btn {
             width: 100%;
-            padding: 15px;
+            padding: 10px;
             background: #28a745;
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: 700;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
             transition: background 0.3s;
         }
@@ -342,10 +395,12 @@
             cursor: not-allowed;
         }
 
+        /* Messages */
         .alert {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 13px;
         }
 
         .alert-success {
@@ -379,21 +434,21 @@
 
         .processing-message {
             background: white;
-            padding: 30px;
-            border-radius: 10px;
+            padding: 20px;
+            border-radius: 8px;
             text-align: center;
-            font-size: 20px;
-            font-weight: 700;
+            font-size: 16px;
+            font-weight: 600;
         }
 
         .spinner {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #667eea;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             animation: spin 1s linear infinite;
-            margin: 20px auto;
+            margin: 15px auto;
         }
 
         @keyframes spin {
@@ -408,7 +463,7 @@
             .row-3 {
                 grid-template-columns: 1fr;
             }
-            .row-4 {
+            .payment-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
@@ -418,22 +473,11 @@
                 font-size: 48px;
                 letter-spacing: 4px;
             }
-            .row-4 {
+            .payment-grid {
                 grid-template-columns: 1fr;
             }
         }
     </style>
-
-
-
-
-
-
-
-
-
-
-
 </head>
 <body>
     <div class="container">
@@ -486,23 +530,28 @@
                 <h3>Sales Cart</h3>
                 <!-- Messages Container -->
                 <div id="messageContainer"></div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Product Code</th>
-                            <th>Product Name</th>
-                            <th>Quantity</th>
-                            <th>Unit Price</th>
-                            <th>Total Price</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="cartTableBody">
-                        <tr>
-                            <td colspan="6" class="empty-cart">Cart is empty. Add products to start.</td>
-                        </tr>
-                    </tbody>
-                </table>
+                
+                <!-- Scrollable Table Container -->
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product Code</th>
+                                <th>Product Name</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Total Price</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cartTableBody">
+                            <tr>
+                                <td colspan="6" class="empty-cart">Cart is empty. Add products to start.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
                 <div class="cart-summary" id="cartSummary" style="display: none;">
                     <div class="summary-row">
                         <span>Subtotal:</span>
@@ -516,45 +565,44 @@
                         <span>TOTAL:</span>
                         <span id="total">KSh 0.00</span>
                     </div>
-                    <button class="checkout-btn" id="checkoutBtn">Proceed to Payment</button>
+                </div>
+
+                <!-- Payment Methods - INSIDE COLUMN B -->
+                <div class="payment-methods-container">
+                    <h4><strong>Select Payment Methods</strong></h4>
+                    <div class="payment-grid">
+                        <!-- Cash Payment -->
+                        <div class="payment-card" data-payment="cash">
+                            <div class="payment-title"><strong>Cash</strong></div>
+                            <input type="number" class="payment-input" id="cashAmount" placeholder="Enter Amount" min="0" step="0.01">
+                            <button class="submit-btn" data-payment="cash">Submit Sale</button>
+                        </div>
+
+                        <!-- M-Pesa Payment -->
+                        <div class="payment-card" data-payment="mpesa">
+                            <div class="payment-title"><strong>M-Pesa</strong></div>
+                            <input type="number" class="payment-input" id="mpesaAmount" placeholder="Enter Amount" min="0" step="0.01">
+                            <button class="submit-btn" data-payment="mpesa">Submit Sale</button>
+                        </div>
+
+                        <!-- Card Payment -->
+                        <div class="payment-card" data-payment="card">
+                            <div class="payment-title"><strong>Card</strong></div>
+                            <input type="number" class="payment-input" id="cardAmount" placeholder="Enter Amount" min="0" step="0.01">
+                            <button class="submit-btn" data-payment="card">Submit Sale</button>
+                        </div>
+
+                        <!-- Points Payment -->
+                        <div class="payment-card" data-payment="points">
+                            <div class="payment-title"><strong>Points</strong></div>
+                            <input type="number" class="payment-input" id="pointsAmount" placeholder="Enter Points" min="0" step="1">
+                            <button class="submit-btn" data-payment="points">Submit Sale</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Row 4: Payment Methods -->
-        <div class="row row-4">
-            <!-- Cash Payment -->
-            <div class="card payment-card" data-payment="cash">
-                <div class="payment-icon">💵</div>
-                <div class="payment-title">Cash</div>
-                <input type="number" class="payment-input" id="cashAmount" placeholder="Enter Amount" min="0" step="0.01">
-                <button class="submit-btn" data-payment="cash">Submit Sale</button>
-            </div>
-
-            <!-- M-Pesa Payment -->
-            <div class="card payment-card" data-payment="mpesa">
-                <div class="payment-icon">📱</div>
-                <div class="payment-title">M-Pesa</div>
-                <input type="number" class="payment-input" id="mpesaAmount" placeholder="Enter Amount" min="0" step="0.01">
-                <button class="submit-btn" data-payment="mpesa">Submit Sale</button>
-            </div>
-
-            <!-- Card Payment -->
-            <div class="card payment-card" data-payment="card">
-                <div class="payment-icon">💳</div>
-                <div class="payment-title">Card</div>
-                <input type="number" class="payment-input" id="cardAmount" placeholder="Enter Amount" min="0" step="0.01">
-                <button class="submit-btn" data-payment="card">Submit Sale</button>
-            </div>
-
-            <!-- Points Payment -->
-            <div class="card payment-card" data-payment="points">
-                <div class="payment-icon">⭐</div>
-                <div class="payment-title">Points</div>
-                <input type="number" class="payment-input" id="pointsAmount" placeholder="Enter Points" min="0" step="1">
-                <button class="submit-btn" data-payment="points">Submit Sale</button>
-            </div>
-        </div>
+        <!-- End of Row 3 -->
     </div>
 
     <!-- Processing Overlay -->
@@ -562,21 +610,9 @@
         <div class="processing-message">
             <div class="spinner"></div>
             <div>Processing Sale...</div>
-            <div style="margin-top: 10px; font-size: 16px; font-weight: normal;">Please wait, do not refresh</div>
+            <div style="margin-top: 10px; font-size: 14px; font-weight: normal;">Please wait, do not refresh</div>
         </div>
     </div>
-
-
-
-
-
-
-
-
-
-
-
-
 
     <script>
         // ============================================
@@ -800,7 +836,7 @@
         }
 
         // ============================================
-        // UPDATE CART DISPLAY
+        // UPDATE CART DISPLAY - SHOW NEWEST FIRST
         // ============================================
         function updateCartDisplay() {
             const tbody = document.getElementById('cartTableBody');
@@ -811,19 +847,28 @@
                 return;
             }
 
-            tbody.innerHTML = cart.map((item, index) => `
+            // Show newest items first (reverse the array)
+            const reversedCart = [...cart].reverse();
+            
+            tbody.innerHTML = reversedCart.map((item, index) => `
                 <tr>
                     <td><strong>${item.code}</strong></td>
                     <td><strong>${item.name}</strong></td>
                     <td>${item.quantity}</td>
                     <td>KSh ${item.amount.toFixed(2)}</td>
                     <td><strong>KSh ${item.totalPrice.toFixed(2)}</strong></td>
-                    <td class="remove-cell"><span class="remove-icon" onclick="removeItem(${index})">🗑️</span></td>
+                    <td class="remove-cell"><span class="remove-icon" onclick="removeItem(${cart.length - 1 - index})">🗑️</span></td>
                 </tr>
             `).join('');
 
             document.getElementById('cartSummary').style.display = 'block';
             updateTotals();
+            
+            // Auto scroll to top to show newest items
+            const tableContainer = document.querySelector('.table-container');
+            if (tableContainer) {
+                tableContainer.scrollTop = 0;
+            }
         }
 
         function removeItem(index) {
@@ -880,7 +925,8 @@
             const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
             showMessage(`Total: KSh ${total.toFixed(2)} - Select payment method below`, 'success');
             
-            document.querySelector('.row-4').scrollIntoView({ behavior: 'smooth' });
+            // Scroll to payment methods
+            document.querySelector('.payment-methods-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
 
         // Payment submission with duplicate prevention
@@ -1068,7 +1114,6 @@
             const formattedMessage = message.replace(/\n/g, '<br>');
             
             container.innerHTML = `<div class="alert ${alertClass}">${formattedMessage}</div>`;
-            container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             
             setTimeout(() => {
                 if (type !== 'success' || !isSubmittingSale) {
@@ -1116,10 +1161,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('productCode').focus();
             console.log('Cashier Dashboard initialized');
-            console.log('Features: Smart duplicate handling, Editable amounts, Keyboard shortcuts');
         });
     </script>
 </body>
 </html>
 
-{% endblock %}  
+{% endblock %}

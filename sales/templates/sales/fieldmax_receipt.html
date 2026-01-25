@@ -1,6 +1,6 @@
 {% extends "website/base.html" %}
 {% load static %}
-{% load tz %}  <!-- ✅ ADD THIS - Load timezone template tags -->
+{% load tz %}
 {% block title %}Batch Receipt #{{ receipt.receipt_number }}{% endblock %}
 
 {% block content %}
@@ -51,7 +51,6 @@ body {
     color: #007bff; 
 }
 
-/* BATCH INDICATOR - Fixed gradient */
 .batch-indicator {
     background: linear-gradient(135deg, #434141 0%, #595959 100%);
     color: rgb(0, 0, 0);
@@ -159,38 +158,6 @@ body {
     padding: 6px 0;
 }
 
-.batch-summary {
-    background-color: #e0f7ff;
-    border: 2px solid #0dcaf0;
-    border-radius: 6px;
-    padding: 12px;
-    margin: 15px 0;
-    font-size: 12px;
-}
-
-.batch-summary-title {
-    font-weight: bold;
-    font-size: 14px;
-    color: #0a7a8f;
-    margin-bottom: 8px;
-    text-align: center;
-}
-
-.batch-summary-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 0;
-    border-bottom: 1px dotted #0dcaf0;
-}
-
-.batch-summary-row:last-child {
-    border-bottom: none;
-    font-weight: bold;
-    margin-top: 6px;
-    padding-top: 6px;
-    border-top: 2px solid #0dcaf0;
-}
-
 .receipt-footer {
     text-align: center;
     font-size: 12px;
@@ -221,35 +188,60 @@ body {
     margin-bottom: 5px;
 }
 
+/* ✅ BUTTON STYLES - SINGLE ROW LAYOUT */
 .no-print { 
     text-align: center; 
-    margin-top: 15px; 
+    margin: 25px auto;
+    max-width: 600px;
+}
+
+.button-group {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
 }
 
 .btn {
-    padding: 10px 20px;
-    margin: 5px;
-    font-size: 13px;
-    border-radius: 5px;
+    padding: 14px 28px;
+    font-size: 15px;
+    border-radius: 6px;
     border: none;
     cursor: pointer;
     font-weight: bold;
     transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+    max-width: 180px;
 }
 
-.btn-print { background: #28a745; color: #fff; }
-.btn-download { background: #007bff; color: #fff; }
-.btn-close { background: #dc3545; color: #fff; }
+.btn-print { 
+    background: #28a745; 
+    color: #fff; 
+}
+
+.btn-download { 
+    background: #007bff; 
+    color: #fff; 
+}
+
+.btn-dashboard { 
+    background: #17a2b8; 
+    color: #fff; 
+}
 
 .btn:hover { 
-    opacity: 0.85; 
+    opacity: 0.9; 
     transform: translateY(-2px);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
-.btn:focus {
-    outline: 2px solid #fff;
-    outline-offset: 2px;
+.btn:active {
+    transform: translateY(0);
 }
 
 .empty-state {
@@ -303,6 +295,14 @@ body {
     body {
         padding: 10px;
     }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
 }
 </style>
 
@@ -338,50 +338,14 @@ body {
         <div class="receipt-column">
             <div class="receipt-row">
                 <span class="receipt-label">Date:</span>
-                <!-- ✅ OPTION 1: If passing receipt dict from view -->
                 <span class="receipt-value">{{ receipt.date|default:"N/A" }}</span>
             </div>
             <div class="receipt-row">
                 <span class="receipt-label">Time:</span>
-                <!-- ✅ OPTION 1: If passing receipt dict from view -->
                 <span class="receipt-value">{{ receipt.time|default:"N/A" }}</span>
             </div>
         </div>
     </div>
-
-    <!-- ✅ ALTERNATIVE: If you want to use the sale object directly -->
-    {% comment %}
-    <div class="receipt-details">
-        <div class="receipt-column">
-            <div class="receipt-row">
-                <span class="receipt-label">Rcpt_No:</span>
-                <span class="receipt-value">{{ sale.etr_receipt_number|default:"N/A" }}</span>
-            </div>
-            <div class="receipt-row">
-                <span class="receipt-label">User:</span>
-                <span class="receipt-value">{{ sale.seller.username|default:"Unknown" }}</span>
-            </div>
-        </div>
-        <div class="receipt-column">
-            <div class="receipt-row">
-                <span class="receipt-label">Date:</span>
-                <span class="receipt-value">
-                    {% timezone "Africa/Nairobi" %}
-                        {{ sale.sale_date|date:"Y-m-d" }}
-                    {% endtimezone %}
-                </span>
-            </div>
-            <div class="receipt-row">
-                <span class="receipt-label">Time:</span>
-                <span class="receipt-value">
-                    {% timezone "Africa/Nairobi" %}
-                        {{ sale.sale_date|date:"H:i:s" }}
-                    {% endtimezone %}
-                </span>
-            </div>
-        </div>
-    </div>
-    {% endcomment %}
 
     <!-- Client Information -->
     {% if receipt.client_name %}
@@ -479,37 +443,56 @@ body {
     </div>
 </div>
 
-<!-- Print/Download/Close Buttons -->
+<!-- ✅ NAVIGATION BUTTONS - SINGLE ROW -->
 <div class="no-print">
-    <button class="btn btn-print" onclick="window.print()" aria-label="Print receipt">
-        🖨️ Print Receipt
-    </button>
-    <button class="btn btn-download" onclick="downloadPDF()" aria-label="Download receipt as PDF">
-        📥 Download PDF
-    </button>
+    <div class="button-group">
+        <!-- Dashboard Button -->
+        <button class="btn btn-dashboard" onclick="goToDashboard()" aria-label="Go to dashboard">
+            🏠 Back ToDashboard
+        </button>
+
+        <!-- Print Button -->
+        <button class="btn btn-print" onclick="window.print()" aria-label="Print receipt">
+            🖨️ Print Receipt
+        </button>
+
+        <!-- Download PDF Button -->
+        <button class="btn btn-download" onclick="downloadPDF()" aria-label="Download receipt as PDF">
+            📥 Download PDF
+        </button>
+    </div>
 </div>
 
 <script>
+// ✅ GO TO DASHBOARD
+function goToDashboard() {
+    // Redirect to cashier dashboard
+    window.location.href = '/cashier-dashboard/';
+}
+
 function downloadPDF() {
+    // Set a flag that we're printing
+    sessionStorage.setItem('receipt_printed', 'true');
     alert('Please use "Save as PDF" option in the print dialog');
     window.print();
 }
 
-function goToDashboard() {
-    window.location.href = '/agent-dashboard/';
-}
-
-window.addEventListener('beforeunload', function(e) {
-    if (!document.querySelector('.receipt-container')) {
-        return;
-    }
-    const hasInteracted = sessionStorage.getItem('receipt_printed');
-    if (!hasInteracted) {
+// ✅ KEYBOARD SHORTCUTS
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + P for print
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
         e.preventDefault();
-        e.returnValue = '';
+        window.print();
+    }
+    
+    // Ctrl/Cmd + H for dashboard
+    if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+        e.preventDefault();
+        goToDashboard();
     }
 });
 
+// Track if receipt was printed
 window.addEventListener('beforeprint', function() {
     sessionStorage.setItem('receipt_printed', 'true');
 });
