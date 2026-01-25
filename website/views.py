@@ -220,6 +220,114 @@ def api_category_details(request, category_id):
             'success': False,
             'message': str(e)
         }, status=500)
+    
+
+
+
+
+
+from django.db.models import Q
+from difflib import SequenceMatcher
+
+@require_http_methods(["GET"])
+def search_products(request):
+    """
+    Search products and display full details if found, 
+    or suggest related products if not found
+    """
+    query = request.GET.get('q', '').strip()
+    
+    context = {
+        'page_title': 'Search Results',
+        'search_query': query,
+        'categories': Category.objects.all(),
+    }
+    
+    if not query:
+        context['message'] = 'Please enter a search term'
+        return render(request, 'website/search_results.html', context)
+    
+    # Search for exact or close matches
+    exact_matches = Product.objects.filter(
+        Q(name__iexact=query) |
+        Q(product_code__iexact=query) |
+        Q(sku_value__iexact=query),
+        is_active=True,
+        category__isnull=False
+    ).select_related('category', 'owner')
+    
+    if exact_matches.exists():
+        # Exact match found - show full details
+        context['exact_match'] = exact_matches.first()
+        context['match_type'] = 'exact'
+        
+        # Also get related products from same category
+        if context['exact_match'].category:
+            context['related_products'] = Product.objects.filter(
+                category=context['exact_match'].category,
+                is_active=True,
+                category__isnull=False
+            ).exclude(
+                id=context['exact_match'].id
+            ).order_by('-created_at')[:6]
+        
+        return render(request, 'website/search_results.html', context)
+    
+    # No exact match - search for partial matches
+    partial_matches = Product.objects.filter(
+        Q(name__icontains=query) |
+        Q(product_code__icontains=query) |
+        Q(sku_value__icontains=query) |
+        Q(category__name__icontains=query),
+        is_active=True,
+        category__isnull=False
+    ).select_related('category', 'owner').order_by('-created_at')
+    
+    if partial_matches.exists():
+        context['products'] = partial_matches
+        context['match_type'] = 'partial'
+        context['message'] = f'Found {partial_matches.count()} product(s) matching "{query}"'
+        return render(request, 'website/search_results.html', context)
+    
+    # No matches found - suggest related products based on query keywords
+    query_words = query.lower().split()
+    
+    # Try to find products with any of the query words
+    suggested_products = Product.objects.filter(
+        is_active=True,
+        category__isnull=False
+    ).select_related('category', 'owner')
+    
+    for word in query_words:
+        if len(word) > 2:  # Only use words longer than 2 characters
+            suggested_products = suggested_products.filter(
+                Q(name__icontains=word) |
+                Q(category__name__icontains=word)
+            )
+    
+    suggested_products = suggested_products.distinct().order_by('-created_at')[:12]
+    
+    if suggested_products.exists():
+        context['products'] = suggested_products
+        context['match_type'] = 'suggested'
+        context['message'] = f'No exact match for "{query}". Here are some suggestions:'
+    else:
+        # Fallback to popular/recent products
+        context['products'] = Product.objects.filter(
+            is_active=True,
+            category__isnull=False,
+            status__in=['available', 'lowstock']
+        ).select_related('category', 'owner').order_by('-created_at')[:12]
+        
+        context['match_type'] = 'fallback'
+        context['message'] = f'No products found for "{query}". Browse our latest products:'
+    
+    return render(request, 'website/search_results.html', context)
+
+
+
+
+
 # ============================================
 # HOME VIEW
 # ============================================

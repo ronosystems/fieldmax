@@ -1,7 +1,7 @@
 # sales/urls.py - FIXED VERSION
 
 from django.urls import path
-from . import views, api
+from . import views, api, api_views
 from .views import (
     SaleListView,
     SaleDetailView,
@@ -69,4 +69,8 @@ urlpatterns = [
     path('api/get-sellers/', views.get_sellers_api, name='get-sellers-api'),
     path('api/get-all-sellers/', views.get_all_sellers_api, name='get-all-sellers-api'),
     path('api/recent-sales/', api.recent_sales, name='api-recent-sales'),
+
+    # API Endpoints
+    path('api/sales-list/', api_views.sales_list_api, name='sales-list-api'),
+    path('api/recent-sales/', api_views.recent_sales_api, name='recent-sales-api'),
 ]

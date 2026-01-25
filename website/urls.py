@@ -23,6 +23,7 @@ urlpatterns = [
     path('', home, name='home'),
     path('products/', views.products_page, name='products_page'),
     path('product/<int:pk>/', views.product_detail, name='product_detail'),
+    path('search/', views.search_products, name='search'),
 
     # ============================================
     # API ENDPOINTS FOR HOME PAGE
