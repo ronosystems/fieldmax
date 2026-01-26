@@ -1158,13 +1158,13 @@
                         const receiptUrl = `/sales/fieldmax-receipt/${data.batch_id}/`;
                         message += `\n\nReceipt generated successfully!`;
                         setTimeout(() => {
-                            window.open(receiptUrl, '_blank');
+                            window.location.href = receiptUrl;  // Opens in same tab
                             showMessage(message, 'success');
                         }, 500);
                     } else if (data.receipt_url) {
                         message += `\n\nReceipt generated successfully!`;
                         setTimeout(() => {
-                            window.open(data.receipt_url, '_blank');
+                            window.location.href = data.receipt_url;  // Opens in same tab
                             showMessage(message, 'success');
                         }, 500);
                     } else {
