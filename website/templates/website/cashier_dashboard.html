@@ -18,14 +18,15 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #ff00aa;
+            background: #4f4e4e;
             padding: 20px;
-            padding-bottom: 40px; /* Add padding at bottom to prevent footer overlap */
+            padding-bottom: 40px;
         }
 
         .container {
             max-width: 1600px;
             margin: 0 auto;
+            background: #00acfc;
         }
 
         .row {
@@ -33,7 +34,7 @@
         }
 
         .card {
-            background: rgb(3, 188, 240);
+            background: rgb(133, 143, 143);
             border-radius: 10px;
             padding: 25px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -42,8 +43,8 @@
         /* Row 1 - Shop Name */
         .header-card {
             text-align: center;
-            background: linear-gradient(135deg, #000000 100%, #000000 100%);
-            color: rgb(255, 255, 255);
+            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -99,15 +100,15 @@
         }
 
         .price-value {
-            color: #000000;
+            color: #001eff;
         }
 
-        /* Row 3 - 2 Columns - NO FIXED HEIGHT */
+        /* Row 3 - 2 Columns */
         .row-3 {
             display: grid;
             grid-template-columns: 1fr 2fr;
             gap: 20px;
-            min-height: 400px; /* Minimum height only */
+            min-height: 400px;
         }
 
         /* Column A - Compact */
@@ -145,7 +146,7 @@
 
         .input-group input:focus {
             outline: none;
-            border-color: #00ffff;
+            border-color: #667eea;
         }
 
         /* Highlight editable sale amount */
@@ -163,7 +164,7 @@
         .add-btn {
             width: 100%;
             padding: 12px;
-            background: linear-gradient(135deg,#00ffff 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -184,6 +185,39 @@
             transform: none;
         }
 
+        /* NEW: Total Price Card Inside Card */
+        .total-price-card {
+            background: linear-gradient(135deg, #000000 0%, #333333 100%);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: none; /* Hidden by default */
+            border: 3px solid #00ffff;
+        }
+
+        .total-price-label {
+            color: #ffffff;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
+        .total-price-value {
+            color: #00ffff;
+            font-size: 48px;
+            font-weight: 1000;
+            text-shadow: 0 2px 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .total-price-currency {
+            font-size: 28px;
+            color: #ffffff;
+            margin-right: 5px;
+        }
+
         /* Column B - Cart Display */
         .cart-card {
             display: flex;
@@ -198,7 +232,7 @@
             font-size: 20px;
         }
 
-        /* Scrollable Table Container - Takes available space */
+        /* Scrollable Table Container */
         .table-container {
             flex: 1;
             overflow-y: auto;
@@ -206,7 +240,7 @@
             border-radius: 8px;
             margin-bottom: 10px;
             min-height: 150px;
-            max-height: 250px; /* Maximum height, but can be less */
+            max-height: 250px;
         }
 
         table {
@@ -231,8 +265,8 @@
 
         td {
             padding: 10px 12px;
-            border-bottom: 1px solid #eee;
-            font-size: 13px;
+            border-bottom: 1px solid #000000;
+            font-size:20px;
         }
 
         tbody tr:hover {
@@ -258,7 +292,7 @@
         .empty-cart {
             text-align: center;
             padding: 40px 20px;
-            color: #0c0a0a;
+            color: #666;
             font-size: 14px;
         }
 
@@ -353,7 +387,7 @@
         .payment-title {
             font-size: 16px;
             font-weight: 800;
-            color: #ff0000;
+            color: #333;
             margin-bottom: 10px;
             text-transform: uppercase;
         }
@@ -476,10 +510,19 @@
             .payment-grid {
                 grid-template-columns: 1fr;
             }
+            .total-price-value {
+                font-size: 36px;
+            }
+            .total-price-currency {
+                font-size: 24px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- CSRF Token (Essential for Django POST requests) -->
+    {% csrf_token %}
+    
     <div class="container">
         <!-- Row 1: Shop Name -->
         <div class="row">
@@ -523,6 +566,15 @@
                     </div>
                     <button type="button" class="add-btn" id="addToCartBtn">Add to Cart</button>
                 </form>
+                
+                <!-- NEW: Total Price Card Inside Card -->
+                <div class="total-price-card" id="totalPriceCard">
+                    <div class="total-price-label"><strong>Totals</strong></div>
+                    <div class="total-price-value">
+                        <span class="total-price-currency">KSh</span>
+                        <span id="bigTotalPrice"><strong>0.00</strong></span>
+                    </div>
+                </div>
             </div>
 
             <!-- Column B: Cart Display -->
@@ -626,9 +678,16 @@
         let lastSubmissionTime = 0;
         const SUBMISSION_COOLDOWN = 3000; // 3 seconds cooldown between submissions
 
-        // Get CSRF token
+        // Get CSRF token - FIXED VERSION
         function getCSRFToken() {
-            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+            // Try multiple ways to get CSRF token
+            const token1 = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            const token2 = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+            const token3 = document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+            
+            const token = token1 || token2 || token3 || '';
+            console.log('CSRF Token found:', token ? 'Yes' : 'No');
+            return token;
         }
 
         // ============================================
@@ -844,6 +903,7 @@
             if (cart.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" class="empty-cart">Cart is empty. Add products to start.</td></tr>';
                 document.getElementById('cartSummary').style.display = 'none';
+                document.getElementById('totalPriceCard').style.display = 'none'; // Hide total card
                 return;
             }
 
@@ -887,10 +947,44 @@
             document.getElementById('subtotal').textContent = `KSh ${subtotal.toFixed(2)}`;
             document.getElementById('tax').textContent = `KSh ${tax.toFixed(2)}`;
             document.getElementById('total').textContent = `KSh ${total.toFixed(2)}`;
+            
+            // NEW: Update the big total price card
+            updateBigTotalCard(total);
+        }
+
+        // NEW: Function to update big total price card
+        function updateBigTotalCard(total) {
+            const totalPriceCard = document.getElementById('totalPriceCard');
+            const bigTotalPrice = document.getElementById('bigTotalPrice');
+            
+            if (cart.length > 0) {
+                // Show the card with animation
+                totalPriceCard.style.display = 'block';
+                setTimeout(() => {
+                    totalPriceCard.style.opacity = '1';
+                    totalPriceCard.style.transform = 'translateY(0)';
+                }, 10);
+                
+                // Update the big number
+                bigTotalPrice.textContent = total.toFixed(2);
+                
+                // Add pulse animation for new updates
+                bigTotalPrice.style.animation = 'none';
+                setTimeout(() => {
+                    bigTotalPrice.style.animation = 'pulse 0.5s';
+                }, 10);
+            } else {
+                // Hide the card with animation
+                totalPriceCard.style.opacity = '0';
+                totalPriceCard.style.transform = 'translateY(10px)';
+                setTimeout(() => {
+                    totalPriceCard.style.display = 'none';
+                }, 300);
+            }
         }
 
         // ============================================
-        // PAYMENT METHODS
+        // PAYMENT METHODS - FIXED EVENT LISTENERS
         // ============================================
         const paymentCards = document.querySelectorAll('.payment-card');
         const paymentInputs = {
@@ -918,22 +1012,17 @@
             });
         });
 
-        // Checkout button
-        document.getElementById('checkoutBtn').addEventListener('click', function() {
-            if (cart.length === 0) return;
-            
-            const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-            showMessage(`Total: KSh ${total.toFixed(2)} - Select payment method below`, 'success');
-            
-            // Scroll to payment methods
-            document.querySelector('.payment-methods-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-
-        // Payment submission with duplicate prevention
+        // Payment submission - FIXED VERSION
         document.querySelectorAll('.submit-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
+            btn.addEventListener('click', async function(e) {
                 e.preventDefault();
-                e.stopPropagation();
+                e.stopImmediatePropagation(); // Prevent event bubbling
+
+                console.log('=== SUBMIT BUTTON CLICKED ===');
+                console.log('Button:', this);
+                console.log('Payment type:', this.getAttribute('data-payment'));
+                console.log('Cart items:', cart.length);
+                console.log('CSRF Token present:', getCSRFToken() ? 'Yes' : 'No');
 
                 const now = Date.now();
                 if (now - lastSubmissionTime < SUBMISSION_COOLDOWN) {
@@ -956,11 +1045,15 @@
                 };
                 
                 const amount = document.getElementById(`${paymentType}Amount`).value;
+                console.log('Amount entered:', amount);
+                
                 processSale(paymentMethodMap[paymentType], amount);
             });
         });
 
         async function processSale(paymentMethod, amount) {
+            console.log('processSale called with:', { paymentMethod, amount });
+            
             if (isSubmittingSale) {
                 console.log('Sale already being processed, blocked duplicate');
                 return;
@@ -978,6 +1071,7 @@
             }
 
             const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+            console.log('Cart total:', total);
 
             if (amountPaid < total) {
                 showMessage(`Insufficient amount! Total: KSh ${total.toFixed(2)}`, 'danger');
@@ -989,7 +1083,7 @@
             lastSubmissionTime = Date.now();
             
             // Disable ALL interactive elements
-            document.querySelectorAll('.submit-btn, .add-btn, .checkout-btn').forEach(btn => {
+            document.querySelectorAll('.submit-btn, .add-btn').forEach(btn => {
                 btn.disabled = true;
             });
             document.querySelectorAll('input').forEach(input => {
@@ -1007,17 +1101,24 @@
                     unit_price: item.amount
                 }));
 
-                console.log('Submitting sale:', {
+                console.log('Submitting sale data:', {
                     payment_method: paymentMethod,
                     amount_paid: amountPaid,
-                    items_count: salesData.length
+                    items_count: salesData.length,
+                    sales_data: salesData
                 });
+
+                const csrfToken = getCSRFToken();
+                if (!csrfToken) {
+                    throw new Error('CSRF token not found');
+                }
 
                 const response = await fetch('/sales/batch-create/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': getCSRFToken()
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: JSON.stringify({
                         sales_cart: salesData,
@@ -1026,12 +1127,22 @@
                     })
                 });
 
-                const data = await response.json();
+                console.log('Response status:', response.status);
+                
+                let data;
+                try {
+                    data = await response.json();
+                    console.log('Response data:', data);
+                } catch (jsonError) {
+                    const text = await response.text();
+                    console.error('Failed to parse JSON:', text);
+                    throw new Error('Invalid response from server');
+                }
 
                 // Hide processing overlay
                 document.getElementById('processingOverlay').classList.remove('active');
 
-                if (data.status === 'success') {
+                if (response.ok && data.status === 'success') {
                     // Reset submission flag immediately on success
                     isSubmittingSale = false;
                     
@@ -1046,13 +1157,19 @@
                     if (data.batch_id) {
                         const receiptUrl = `/sales/fieldmax-receipt/${data.batch_id}/`;
                         message += `\n\nReceipt generated successfully!`;
-                        setTimeout(() => window.open(receiptUrl, '_blank'), 500);
+                        setTimeout(() => {
+                            window.open(receiptUrl, '_blank');
+                            showMessage(message, 'success');
+                        }, 500);
                     } else if (data.receipt_url) {
                         message += `\n\nReceipt generated successfully!`;
-                        setTimeout(() => window.open(data.receipt_url, '_blank'), 500);
+                        setTimeout(() => {
+                            window.open(data.receipt_url, '_blank');
+                            showMessage(message, 'success');
+                        }, 500);
+                    } else {
+                        showMessage(message, 'success');
                     }
-
-                    showMessage(message, 'success');
 
                     // Clear everything immediately
                     cart = [];
@@ -1062,7 +1179,7 @@
 
                     // Re-enable inputs for next transaction
                     setTimeout(() => {
-                        document.querySelectorAll('.submit-btn, .add-btn, .checkout-btn').forEach(btn => {
+                        document.querySelectorAll('.submit-btn, .add-btn').forEach(btn => {
                             btn.disabled = false;
                         });
                         document.querySelectorAll('input').forEach(input => {
@@ -1071,10 +1188,10 @@
                         document.getElementById('productCode').focus();
                     }, 1500);
                 } else {
-                    showMessage(`❌ Sale failed: ${data.message}`, 'danger');
+                    showMessage(`❌ Sale failed: ${data.message || 'Unknown error'}`, 'danger');
                     
                     // Re-enable elements on failure
-                    document.querySelectorAll('.submit-btn, .add-btn, .checkout-btn').forEach(btn => {
+                    document.querySelectorAll('.submit-btn, .add-btn').forEach(btn => {
                         btn.disabled = false;
                     });
                     document.querySelectorAll('input').forEach(input => {
@@ -1088,10 +1205,10 @@
             } catch (error) {
                 console.error('Sale error:', error);
                 document.getElementById('processingOverlay').classList.remove('active');
-                showMessage('❌ Error processing sale. Please try again.', 'danger');
+                showMessage(`❌ Error: ${error.message}`, 'danger');
                 
                 // Re-enable elements on error
-                document.querySelectorAll('.submit-btn, .add-btn, .checkout-btn').forEach(btn => {
+                document.querySelectorAll('.submit-btn, .add-btn').forEach(btn => {
                     btn.disabled = false;
                 });
                 document.querySelectorAll('input').forEach(input => {
@@ -1161,9 +1278,11 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('productCode').focus();
             console.log('Cashier Dashboard initialized');
+            
+            // Test CSRF token
+            console.log('CSRF Token:', getCSRFToken());
         });
     </script>
 </body>
 </html>
-
 {% endblock %}
