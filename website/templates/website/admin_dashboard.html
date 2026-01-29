@@ -4,6 +4,618 @@
 
 {% block content %}
 <style>
+
+/* ======================================== */
+/* ============ PROFESSIONAL DASHBOARD SIDEBAR ========= */
+/* ======================================== */
+
+:root {
+    /* Professional Color Palette */
+    --sidebar-bg: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    --sidebar-text: #e2e8f0;
+    --sidebar-text-muted: #94a3b8;
+    --sidebar-border: rgba(255, 255, 255, 0.1);
+    --sidebar-hover: rgba(255, 255, 255, 0.05);
+    --sidebar-active: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    
+    /* Section Colors */
+    --section-main: #3b82f6;
+    --section-inventory: #10b981;
+    --section-management: #f59e0b;
+    --section-system: #8b5cf6;
+    
+    /* Professional Spacing */
+    --sidebar-spacing-sm: 0.75rem;
+    --sidebar-spacing-md: 1rem;
+    --sidebar-spacing-lg: 1.5rem;
+    --sidebar-spacing-xl: 2rem;
+}
+
+/* ======================================== */
+/* ============ SIDEBAR BASE ========= */
+/* ======================================== */
+
+.dashboard-sidebar {
+    width: 280px;
+    height: 100vh;
+    background: var(--sidebar-bg);
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ======================================== */
+/* ============ SIDEBAR HEADER ========= */
+/* ======================================== */
+
+.sidebar-header {
+    padding: var(--sidebar-spacing-lg) var(--sidebar-spacing-xl) var(--sidebar-spacing-md);
+    border-bottom: 1px solid var(--sidebar-border);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+}
+
+.sidebar-title {
+    display: flex;
+    align-items: center;
+    gap: var(--sidebar-spacing-sm);
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin: 0 0 var(--sidebar-spacing-md) 0;
+}
+
+.sidebar-title i {
+    color: #60a5fa;
+    font-size: 1.5rem;
+    background: rgba(96, 165, 250, 0.1);
+    padding: 0.5rem;
+    border-radius: 10px;
+}
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: var(--sidebar-spacing-sm);
+    padding: 0.75rem 1rem;
+    background: rgb(0, 0, 0);
+    border-radius: 12px;
+    border: 1px solid rgb(0, 0, 0);
+    transition: all 0.3s ease;
+}
+
+.sidebar-user:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.sidebar-user i {
+    font-size: 1.75rem;
+    color: #60a5fa;
+    filter: drop-shadow(0 2px 4px rgba(0, 110, 245, 0.96));
+}
+
+.sidebar-user span {
+    font-weight: 500;
+    color: var(--sidebar-text);
+    font-size: 0.95rem;
+    flex: 1;
+}
+
+/* ======================================== */
+/* ============ SIDEBAR NAVIGATION ========= */
+/* ======================================== */
+
+.sidebar-nav {
+    flex: 1;
+    padding: var(--sidebar-spacing-md) var(--sidebar-spacing-lg);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Section Titles */
+.sidebar-section {
+    margin-bottom: var(--sidebar-spacing-md);
+}
+
+.sidebar-section-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    color: var(--sidebar-text-muted);
+    margin-bottom: 0.75rem;
+    padding-left: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sidebar-section-title::before {
+    content: '';
+    width: 4px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+/* Section Color Indicators */
+.sidebar-section:nth-child(1) .sidebar-section-title::before { background: var(--section-main); }
+.sidebar-section:nth-child(2) .sidebar-section-title::before { background: var(--section-inventory); }
+.sidebar-section:nth-child(3) .sidebar-section-title::before { background: var(--section-management); }
+.sidebar-section:nth-child(4) .sidebar-section-title::before { background: var(--section-system); }
+
+/* Navigation Items */
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--sidebar-spacing-sm);
+    padding: 0.875rem var(--sidebar-spacing-md);
+    color: var(--sidebar-text-muted);
+    text-decoration: none;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-size: 0.925rem;
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: transparent;
+    border-radius: 0 3px 3px 0;
+    transition: all 0.3s ease;
+}
+
+.nav-item:hover {
+    background: var(--sidebar-hover);
+    color: white;
+    transform: translateX(5px);
+}
+
+.nav-item:hover::before {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-item.active {
+    background: var(--sidebar-active);
+    color: white;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+}
+
+.nav-item.active::before {
+    background: white;
+    box-shadow: 0 0 10px white;
+}
+
+.nav-item i:first-child {
+    font-size: 1.1rem;
+    width: 24px;
+    text-align: center;
+}
+
+.nav-item .bi-chevron-down {
+    margin-left: auto;
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+}
+
+.nav-item[aria-expanded="true"] .bi-chevron-down {
+    transform: rotate(180deg);
+}
+
+/* Submenu Styles */
+.submenu {
+    margin-left: 2.75rem;
+    margin-top: 0.25rem;
+    padding-left: 0.5rem;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.submenu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 1rem;
+    color: var(--sidebar-text-muted);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+    position: relative;
+}
+
+.submenu-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    padding-left: 1.25rem;
+}
+
+.submenu-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.submenu-item:hover::before {
+    opacity: 1;
+    left: 0.5rem;
+}
+
+.submenu-item.active {
+    background: rgba(59, 130, 246, 0.1);
+    color: white;
+    border-left: 2px solid #3b82f6;
+}
+
+/* ======================================== */
+/* ============ USER PROFILE FOOTER ========= */
+/* ======================================== */
+
+.sidebar-footer {
+    margin-top: auto;
+    padding: var(--sidebar-spacing-md);
+    border-top: 1px solid var(--sidebar-border);
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.user-profile-card {
+    display: flex;
+    align-items: center;
+    gap: var(--sidebar-spacing-sm);
+    padding: var(--sidebar-spacing-sm);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.user-profile-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+}
+
+.user-profile-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.user-avatar::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, 
+        transparent 30%, 
+        rgba(255, 255, 255, 0.1) 50%, 
+        transparent 70%);
+    animation: shine 3s infinite linear;
+}
+
+@keyframes shine {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 2px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-role {
+    font-size: 0.75rem;
+    color: var(--sidebar-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.user-role i {
+    font-size: 0.8rem;
+}
+
+/* Role Colors */
+.user-role .bi-shield-check { color: #10b981; }
+.user-role .bi-person-badge { color: #3b82f6; }
+.user-role .bi-person { color: #f59e0b; }
+
+/* ======================================== */
+/* ============ SCROLLBAR STYLING ========= */
+/* ======================================== */
+
+.sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ======================================== */
+/* ============ RESPONSIVE DESIGN ========= */
+/* ======================================== */
+
+@media (max-width: 1024px) {
+    .dashboard-sidebar {
+        transform: translateX(-100%);
+        box-shadow: none;
+    }
+    
+    .dashboard-sidebar.active {
+        transform: translateX(0);
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-sidebar {
+        width: 260px;
+    }
+    
+    .sidebar-header {
+        padding: var(--sidebar-spacing-md) var(--sidebar-spacing-lg) var(--sidebar-spacing-sm);
+    }
+    
+    .sidebar-nav {
+        padding: var(--sidebar-spacing-sm) var(--sidebar-spacing-md);
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-sidebar {
+        width: 240px;
+    }
+    
+    .user-profile-card {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--sidebar-spacing-sm);
+    }
+    
+    .user-info {
+        text-align: center;
+    }
+}
+
+/* ======================================== */
+/* ============ ANIMATIONS & EFFECTS ========= */
+/* ======================================== */
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.nav-item {
+    animation: slideIn 0.3s ease-out;
+    animation-fill-mode: both;
+}
+
+.nav-item:nth-child(1) { animation-delay: 0.1s; }
+.nav-item:nth-child(2) { animation-delay: 0.15s; }
+.nav-item:nth-child(3) { animation-delay: 0.2s; }
+.nav-item:nth-child(4) { animation-delay: 0.25s; }
+.nav-item:nth-child(5) { animation-delay: 0.3s; }
+
+/* Active State Indicator */
+.nav-item.active::after {
+    content: '';
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+}
+
+/* Hover Ripple Effect */
+.nav-item {
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-item .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+}
+
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Glowing Effect for Active Item */
+.nav-item.active {
+    animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+    }
+    to {
+        box-shadow: 0 4px 30px rgba(59, 130, 246, 0.5);
+    }
+}
+
+/* ======================================== */
+/* ============ UTILITY CLASSES ========= */
+/* ======================================== */
+
+/* Status Indicators */
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-online { background: #10b981; }
+.status-offline { background: #ef4444; }
+.status-away { background: #f59e0b; }
+
+/* Text Utilities */
+.text-gradient {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Loading States */
+.skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Floating Animation */
+.floating {
+    animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* Fade In Animation */
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Glass Morphism Effect */
+.glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Gradient Border */
+.gradient-border {
+    position: relative;
+    border-radius: 12px;
+    background: var(--sidebar-bg);
+    padding: 1px;
+}
+
+.gradient-border::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-radius: 13px;
+    z-index: -1;
+}
+
+
+
+
 /* Dashboard Specific Styles */
 .dashboard-wrapper {
   display: flex;
@@ -2248,30 +2860,39 @@ strong[style*="background-color"] {
 <!-- ======================================== -->
 <!-- ============SIDEBAR NAVIGATION ========= -->
 <!-- ======================================== -->
-  <!-- Sidebar Navigation -->
-  <aside class="dashboard-sidebar" id="dashboardSidebar">
-    <div class="sidebar-header">
-      <h2 class="sidebar-title">
-        <i class="bi bi-grid-3x3-gap-fill"></i>
-        <span>ADMIN PANEL</span>
-      </h2>
-      <div class="sidebar-user mt-2">
-        <i class="bi bi-person-circle"></i>
-        <span>
-          {% if user.is_authenticated %}
-           {{ user.get_full_name|default:user.username }}
-          {% else %}
-          Guest
-          {% endif %}
-        </span>
-      </div>
+<aside class="dashboard-sidebar" id="dashboardSidebar">
+  <div class="sidebar-header">
+    <h2 class="sidebar-title">
+      <i class="bi bi-grid-3x3-gap-fill"></i>
+      <span>ADMIN PANEL</span>
+    </h2>
+    <div class="sidebar-user mt-2">
+      <i class="bi bi-person-circle"></i>
+      <span>
+        {% if user.is_authenticated %}
+         {{ user.get_full_name|default:user.username }}
+        {% else %}
+        Guest
+        {% endif %}
+      </span>
     </div>
+  </div>
 
-    <nav class="sidebar-nav">
+  <nav class="sidebar-nav">
+    
+    <!-- ======================= -->
+    <!-- MAIN SECTION -->
+    <!-- ======================= -->
+    <div class="sidebar-section">
+      <h3 class="sidebar-section-title">MAIN</h3>
+      
+      <!-- Dashboard -->
       <a href="#dashboard" class="nav-item active" data-section="dashboard">
         <i class="bi bi-speedometer2"></i>
         <span>Dashboard</span>
       </a>
+      
+      <!-- Products -->
       <button class="nav-item" data-bs-toggle="collapse" data-bs-target="#productsSubmenu" aria-expanded="false">
         <i class="bi bi-box-seam"></i>
         <span>Products</span>
@@ -2282,28 +2903,9 @@ strong[style*="background-color"] {
           <i class="bi bi-list-ul"></i>
           <span>All Products</span>
         </a>
-        <a href="{% url 'inventory:category-create' %}" class="submenu-item" data-section="add-category">
-          <i class="bi bi-plus-circle"></i>
-          <span>Add Category</span>
-        </a>
-        <a href="{% url 'inventory:product-create' %}" class="submenu-item" data-section="add-product">
-          <i class="bi bi-plus-circle"></i>
-          <span>Add Product</span>
-        </a>
-        <a href="#" class="submenu-item" data-section="restock-product">
-          <i class="bi bi-plus-circle"></i>
-          <span>Restock products</span>
-        </a>
-        <a href="#" class="submenu-item" data-section="transfer-product">
-          <i class="bi bi-plus-circle"></i>
-          <span>Transfer Product</span>
-        </a>
-        <a href="#" class="submenu-item" data-section="print-code">
-          <i class="bi bi-plus-circle"></i>
-          <span>Print Labels</span>
-        </a>
       </div>
-
+      
+      <!-- Sales -->
       <button class="nav-item" data-bs-toggle="collapse" data-bs-target="#salesSubmenu" aria-expanded="false">
         <i class="bi bi-cart-check"></i>
         <span>Sales</span>
@@ -2314,47 +2916,136 @@ strong[style*="background-color"] {
           <i class="bi bi-list-check"></i>
           <span>All Sales</span>
         </a>
-        <a href="#record-sale" class="submenu-item" data-section="record-sale">
-          <i class="bi bi-plus-circle"></i>
-          <span>Record Sale</span>
+      </div>
+      
+      <!-- Users -->
+      <button class="nav-item" data-bs-toggle="collapse" data-bs-target="#usersSubmenu" aria-expanded="false">
+        <i class="bi bi-people"></i>
+        <span>Users</span>
+        <i class="bi bi-chevron-down"></i>
+      </button>
+      <div class="submenu collapse" id="usersSubmenu">
+        <a href="#users-list" class="submenu-item" data-section="users-list">
+          <i class="bi bi-people"></i>
+          <span>All Users</span>
         </a>
-        <a href="#generate-report" class="submenu-item" data-section="generate-report">
-          <i class="bi bi-plus-circle"></i>
-          <span>Generate Report</span>
-        </a>       
       </div>
-
-<!-- USER MANAGEMENT -->
-      <div style="margin-top: auto; padding: 1rem; border-top: 2px solid #0055ff;">
-        <button class="nav-item" data-bs-toggle="collapse" data-bs-target="#userSubmenu" aria-expanded="false" style="width: 100%;">
-          <i class="bi bi-person-circle"></i>
-          <span>User Management</span>
-          <i class="bi bi-chevron-down"></i>
-        </button>
-        <div class="submenu collapse" id="userSubmenu">
-          <a href="#users-list" class="submenu-item" data-section="users-list">
-            <i class="bi bi-people"></i>
-            <span>All Users</span>
-          </a>
-          <a href="#add-user" class="submenu-item" data-section="add-user">
-            <i class="bi bi-person-plus"></i>
-            <span>Add User</span>
-          </a>
-          <a href="#roles-permissions" class="submenu-item" data-section="roles-permissions">
-            <i class="bi bi-shield-check"></i>
-            <span>Roles & Permissions</span>
-          </a>
-          <form method="post" action="{% url 'logout' %}" style="margin: 0;">
-            {% csrf_token %}
-            <button type="submit" class="submenu-item" style="border: 1px solid #dc2626; background: #fee2e2; color: #dc2626; width: 100%;">
-              <i class="bi bi-box-arrow-right"></i>
-              <span>Logout</span>
-            </button>
-          </form>
-        </div>
+    </div>
+    
+    <!-- ======================= -->
+    <!-- INVENTORY SECTION -->
+    <!-- ======================= -->
+    <div class="sidebar-section">
+      <h3 class="sidebar-section-title">INVENTORY</h3>
+      
+      <!-- Restock Products -->
+      <a href="#restock-product" class="nav-item" data-section="restock-product">
+        <i class="bi bi-plus-circle"></i>
+        <span>Restock Products</span>
+      </a>
+      
+      <!-- Transfer Products -->
+      <a href="#transfer-product" class="nav-item" data-section="transfer-product">
+        <i class="bi bi-arrow-left-right"></i>
+        <span>Transfer Products</span>
+      </a>
+      
+      <!-- Print Labels -->
+      <a href="#print-code" class="nav-item" data-section="print-code">
+        <i class="bi bi-printer"></i>
+        <span>Print Labels</span>
+      </a>
+    </div>
+    
+    <!-- ======================= -->
+    <!-- MANAGEMENT SECTION -->
+    <!-- ======================= -->
+    <div class="sidebar-section">
+      <h3 class="sidebar-section-title">MANAGEMENT</h3>
+      
+      <!-- Add Category -->
+      <a href="{% url 'inventory:category-create' %}" class="nav-item" data-section="add-category">
+        <i class="bi bi-plus-square"></i>
+        <span>Add Category</span>
+      </a>
+      
+      <!-- Add Product -->
+      <a href="{% url 'inventory:product-create' %}" class="nav-item" data-section="add-product">
+        <i class="bi bi-plus-circle"></i>
+        <span>Add Product</span>
+      </a>
+      
+      <!-- Record Sale -->
+      <a href="#record-sale" class="nav-item" data-section="record-sale">
+        <i class="bi bi-cart-plus"></i>
+        <span>Record Sale</span>
+      </a>
+      
+      <!-- Generate Report -->
+      <a href="#generate-report" class="nav-item" data-section="generate-report">
+        <i class="bi bi-bar-chart"></i>
+        <span>Generate Report</span>
+      </a>
+    </div>
+    
+    <!-- ======================= -->
+    <!-- SYSTEM SECTION -->
+    <!-- ======================= -->
+    <div class="sidebar-section">
+      <h3 class="sidebar-section-title">SYSTEM</h3>
+      
+      <!-- Add User -->
+      <a href="#add-user" class="nav-item" data-section="add-user">
+        <i class="bi bi-person-plus"></i>
+        <span>Add User</span>
+      </a>
+      
+      <!-- Roles & Permissions -->
+      <a href="#roles-permissions" class="nav-item" data-section="roles-permissions">
+        <i class="bi bi-shield-check"></i>
+        <span>Roles & Permissions</span>
+      </a>
+    </div>
+    
+  </nav>
+  
+  <!-- ======================= -->
+  <!-- FOOTER - USER PROFILE -->
+  <!-- ======================= -->
+  <div class="sidebar-footer">
+    <div class="user-profile-card">
+      <div class="user-avatar">
+        <i class="bi bi-person-circle"></i>
       </div>
-    </nav>
-  </aside>
+      <div class="user-info">
+        <h4 class="user-name">
+          {% if user.is_authenticated %}
+            {{ user.get_full_name|default:user.username }}
+          {% else %}
+            Guest User
+          {% endif %}
+        </h4>
+        <p class="user-role">
+          {% if user.is_superuser %}
+            <i class="bi bi-shield-check"></i> Super Admin
+          {% elif user.is_staff %}
+            <i class="bi bi-person-badge"></i> Staff
+          {% else %}
+            <i class="bi bi-person"></i> User
+          {% endif %}
+        </p>
+      </div>
+      <div class="user-actions">
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="logout-btn" title="Logout">
+            <i class="bi bi-box-arrow-right"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</aside>
 
 
 

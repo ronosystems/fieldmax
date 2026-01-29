@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.http import HttpResponse
 import csv
 from cloudinary import CloudinaryImage
-from .models import Category, Product, StockEntry
+from .models import Category, Product, StockEntry, ProductImage
 
 # ============================================
 # CUSTOM ACTIONS
@@ -42,9 +42,53 @@ def mark_as_inactive(modeladmin, request, queryset):
 mark_as_inactive.short_description = "Mark as inactive"
 
 
+def mark_as_primary_image(modeladmin, request, queryset):
+    """Mark selected images as primary (only one per product)"""
+    for obj in queryset:
+        # First, unset primary for all images of this product
+        ProductImage.objects.filter(product=obj.product, is_primary=True).update(is_primary=False)
+        # Then set this one as primary
+        obj.is_primary = True
+        obj.save()
+mark_as_primary_image.short_description = "Mark as primary image"
+
+
+def reorder_images(modeladmin, request, queryset):
+    """Reorder images sequentially"""
+    images = list(queryset.order_by('product', 'order'))
+    for i, img in enumerate(images, 1):
+        img.order = i
+        img.save()
+reorder_images.short_description = "Re-order selected images"
+
+
 # ============================================
 # INLINE ADMINS
 # ============================================
+
+class ProductImageInline(admin.TabularInline):
+    """Inline admin for multiple product images"""
+    model = ProductImage
+    extra = 3  # How many empty forms to show
+    max_num = 10  # Maximum images per product
+    fields = ('image', 'is_primary', 'order', 'image_preview')
+    readonly_fields = ('image_preview',)
+    
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" style="max-height: 100px; max-width: 100px; border-radius: 4px;" />',
+                obj.image.url
+            )
+        return "No Image"
+    image_preview.short_description = 'Preview'
+    
+    class Media:
+        js = ('admin/js/vendor/jquery/jquery.js', 'admin/js/jquery.init.js')
+        css = {
+            'all': ('admin/css/base.css',)
+        }
+
 
 class StockEntryInline(admin.TabularInline):
     model = StockEntry
@@ -165,10 +209,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 # ============================================
-# PRODUCT ADMIN
-# ============================================
-# ============================================
-# PRODUCT ADMIN - WITH BARCODE SUPPORT
+# PRODUCT ADMIN - WITH MULTIPLE IMAGES SUPPORT
 # ============================================
 
 @admin.register(Product)
@@ -178,13 +219,14 @@ class ProductAdmin(admin.ModelAdmin):
         'product_code',
         'name',
         'category_link',
-        'identifier_display',  # ✅ CHANGED: Shows SKU or Barcode based on item type
+        'identifier_display',
         'quantity_display',
         'status_badge',
         'pricing_info',
         'profit_display',
         'owner_link',
         'is_active',
+        'image_count',
     ]
     list_filter = [
         'is_active',
@@ -197,7 +239,7 @@ class ProductAdmin(admin.ModelAdmin):
         'product_code',
         'name',
         'sku_value',
-        'barcode',  # ✅ ADD: Search by barcode
+        'barcode',
         'owner__username'
     ]
     readonly_fields = [
@@ -209,8 +251,9 @@ class ProductAdmin(admin.ModelAdmin):
         'inventory_summary',
         'profit_margin',
         'profit_percentage',
+        'image_gallery',
     ]
-
+    
     fieldsets = (
         ('Basic Information', {
             'fields': (
@@ -219,19 +262,24 @@ class ProductAdmin(admin.ModelAdmin):
                 'category',
             )
         }),
-        ('Identifiers', {  # ✅ NEW SECTION
+        ('Identifiers', {
             'fields': (
                 'sku_value',
                 'barcode',
             ),
             'description': 'SKU for single items (IMEI/Serial), Barcode for bulk items'
         }),
-        ('Product Image', {
+        ('Main Product Image', {
             'fields': (
                 'image',
                 'live_image_preview',
             ),
-            'description': 'Upload an image to see it instantly below'
+            'description': 'Primary/legacy image field'
+        }),
+        ('Image Gallery', {
+            'fields': ('image_gallery',),
+            'description': 'All product images',
+            'classes': ('collapse',)
         }),
         ('Inventory', {
             'fields': (
@@ -265,15 +313,11 @@ class ProductAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-
-    inlines = [StockEntryInline]
+    
+    inlines = [ProductImageInline, StockEntryInline]
     actions = [export_to_csv, mark_as_active, mark_as_inactive]
     date_hierarchy = 'created_at'
     list_per_page = 50
-
-    # ============================================
-    # MEDIA FOR LIVE IMAGE PREVIEW
-    # ============================================
     
     class Media:
         js = ('admin/js/vendor/jquery/jquery.js', 'admin/js/jquery.init.js')
@@ -282,72 +326,55 @@ class ProductAdmin(admin.ModelAdmin):
         }
 
     # ============================================
-    # ✅ NEW: IDENTIFIER DISPLAY (SKU OR BARCODE)
-    # ============================================
-
-    def identifier_display(self, obj):
-        """Display SKU for single items, Barcode for bulk items"""
-        if obj.category.is_single_item:
-            # Single items: Show SKU (IMEI/Serial)
-            if obj.sku_value:
-                sku_short = obj.sku_value[:15] + '...' if len(obj.sku_value) > 15 else obj.sku_value
-                return format_html(
-                    '<div style="display: flex; align-items: center; gap: 4px;">'
-                    '<span style="background: #e0f7ff; color: #0369a1; padding: 2px 6px; '
-                    'border-radius: 4px; font-size: 11px; font-weight: 600;">'
-                    '📱 SKU</span>'
-                    '<code style="font-size: 11px;">{}</code>'
-                    '</div>',
-                    sku_short
-                )
-            else:
-                return format_html(
-                    '<span style="color: #999; font-size: 11px;">No SKU</span>'
-                )
-        else:
-            # Bulk items: Show Barcode
-            if obj.barcode:
-                barcode_short = obj.barcode[:15] + '...' if len(obj.barcode) > 15 else obj.barcode
-                return format_html(
-                    '<div style="display: flex; align-items: center; gap: 4px;">'
-                    '<span style="background: #fef3c7; color: #92400e; padding: 2px 6px; '
-                    'border-radius: 4px; font-size: 11px; font-weight: 600;">'
-                    '🔍 BARCODE</span>'
-                    '<code style="font-size: 11px;">{}</code>'
-                    '</div>',
-                    barcode_short
-                )
-            else:
-                return format_html(
-                    '<span style="color: #999; font-size: 11px;">No Barcode</span>'
-                )
-    
-    identifier_display.short_description = 'SKU / Barcode'
-    identifier_display.admin_order_field = 'sku_value'  # Default sort by SKU
-
-    # ============================================
-    # EXISTING METHODS (KEEP AS IS)
+    # CUSTOM METHODS FOR PRODUCT ADMIN
     # ============================================
 
     def show_image(self, obj):
+        # Try to get primary image first
+        primary_image = obj.images.filter(is_primary=True).first()
+        if primary_image and primary_image.image:
+            return format_html(
+                '<img src="{}" width="80" height="80" style="border-radius: 8px; object-fit: cover;" />',
+                primary_image.image.url
+            )
+        
+        # Fallback to main image field
         if obj.image:
-            return format_html('<img src="{}" width="100" height="100" />', obj.image.url)
-        return "-"
+            return format_html(
+                '<img src="{}" width="80" height="80" style="border-radius: 8px; object-fit: cover;" />',
+                obj.image.url
+            )
+        
+        # Show image count if no images
+        image_count = obj.images.count()
+        if image_count > 0:
+            return format_html(
+                '<div style="width: 80px; height: 80px; background: #f8f9fa; border-radius: 8px; '
+                'display: flex; align-items: center; justify-content: center; '
+                'border: 2px dashed #dee2e6;">'
+                '<span style="color: #6c757d; font-weight: bold;">{}</span>'
+                '</div>',
+                image_count
+            )
+        
+        return format_html(
+            '<div style="width: 80px; height: 80px; background: #f8f9fa; border-radius: 8px; '
+            'display: flex; align-items: center; justify-content: center; '
+            'border: 2px dashed #dee2e6;">'
+            '<span style="color: #adb5bd;">📷</span>'
+            '</div>'
+        )
     show_image.short_description = 'Image'
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.select_related('category', 'owner')
+        return qs.select_related('category', 'owner').prefetch_related('images')
     
     def has_change_permission(self, request, obj=None):
         return True
     
     def has_delete_permission(self, request, obj=None):
         return True
-
-    # ============================================
-    # LIVE IMAGE PREVIEW (KEEP AS IS)
-    # ============================================
 
     def live_image_preview(self, obj):
         """Live preview that updates when image is uploaded"""
@@ -464,9 +491,45 @@ class ProductAdmin(admin.ModelAdmin):
     
     live_image_preview.short_description = '📸 Live Image Preview'
 
-    # ============================================
-    # OTHER DISPLAY METHODS (KEEP AS IS)
-    # ============================================
+    def identifier_display(self, obj):
+        """Display SKU for single items, Barcode for bulk items"""
+        if obj.category.is_single_item:
+            # Single items: Show SKU (IMEI/Serial)
+            if obj.sku_value:
+                sku_short = obj.sku_value[:15] + '...' if len(obj.sku_value) > 15 else obj.sku_value
+                return format_html(
+                    '<div style="display: flex; align-items: center; gap: 4px;">'
+                    '<span style="background: #e0f7ff; color: #0369a1; padding: 2px 6px; '
+                    'border-radius: 4px; font-size: 11px; font-weight: 600;">'
+                    '📱 SKU</span>'
+                    '<code style="font-size: 11px;">{}</code>'
+                    '</div>',
+                    sku_short
+                )
+            else:
+                return format_html(
+                    '<span style="color: #999; font-size: 11px;">No SKU</span>'
+                )
+        else:
+            # Bulk items: Show Barcode
+            if obj.barcode:
+                barcode_short = obj.barcode[:15] + '...' if len(obj.barcode) > 15 else obj.barcode
+                return format_html(
+                    '<div style="display: flex; align-items: center; gap: 4px;">'
+                    '<span style="background: #fef3c7; color: #92400e; padding: 2px 6px; '
+                    'border-radius: 4px; font-size: 11px; font-weight: 600;">'
+                    '🔍 BARCODE</span>'
+                    '<code style="font-size: 11px;">{}</code>'
+                    '</div>',
+                    barcode_short
+                )
+            else:
+                return format_html(
+                    '<span style="color: #999; font-size: 11px;">No Barcode</span>'
+                )
+    
+    identifier_display.short_description = 'SKU / Barcode'
+    identifier_display.admin_order_field = 'sku_value'
 
     def category_link(self, obj):
         if obj.category:
@@ -538,6 +601,137 @@ class ProductAdmin(admin.ModelAdmin):
     owner_link.short_description = 'Owner'
     owner_link.admin_order_field = 'owner__username'
 
+    def image_count(self, obj):
+        total_images = obj.images.count()
+        if obj.image:
+            total_images += 1  # Count main image too
+        
+        if total_images == 0:
+            return format_html(
+                '<span style="color: #dc3545; font-weight: bold;">📷 0</span>'
+            )
+        elif total_images == 1:
+            return format_html(
+                '<span style="color: #6c757d; font-weight: bold;">📷 1</span>'
+            )
+        else:
+            return format_html(
+                '<span style="color: #28a745; font-weight: bold;">📷 {}</span>',
+                total_images
+            )
+    image_count.short_description = 'Images'
+
+    def image_gallery(self, obj):
+        images_html = []
+        
+        # Show main image if exists
+        if obj.image:
+            try:
+                public_id = obj.image.name
+                img_url = CloudinaryImage(public_id).build_url(
+                    width=150,
+                    height=150,
+                    crop='limit',
+                    quality='auto',
+                    fetch_format='auto'
+                )
+                images_html.append(f'''
+                    <div style="display: inline-block; margin: 10px; text-align: center; vertical-align: top;">
+                        <div style="position: relative;">
+                            <img src="{img_url}" 
+                                 style="width: 150px; height: 150px; object-fit: cover; 
+                                        border-radius: 8px; border: 3px solid #007bff;" 
+                                 alt="Main image" />
+                            <div style="position: absolute; top: 5px; right: 5px; 
+                                        background: #007bff; color: white; 
+                                        padding: 2px 6px; border-radius: 3px; 
+                                        font-size: 10px; font-weight: bold;">
+                                MAIN
+                            </div>
+                        </div>
+                        <div style="margin-top: 5px; font-size: 11px; color: #007bff;">
+                            Legacy Image Field
+                        </div>
+                    </div>
+                ''')
+            except Exception as e:
+                images_html.append(f'''
+                    <div style="display: inline-block; margin: 10px; text-align: center;">
+                        <div style="width: 150px; height: 150px; background: #f8f9fa; 
+                                    border-radius: 8px; border: 2px dashed #dee2e6;
+                                    display: flex; align-items: center; justify-content: center;">
+                            <span style="color: #6c757d;">Main Image Error</span>
+                        </div>
+                    </div>
+                ''')
+        
+        # Show all ProductImage instances
+        for i, product_image in enumerate(obj.images.all(), 1):
+            try:
+                public_id = product_image.image.name
+                img_url = CloudinaryImage(public_id).build_url(
+                    width=150,
+                    height=150,
+                    crop='limit',
+                    quality='auto',
+                    fetch_format='auto'
+                )
+                
+                primary_badge = ''
+                if product_image.is_primary:
+                    primary_badge = '''
+                        <div style="position: absolute; top: 5px; right: 5px; 
+                                    background: #28a745; color: white; 
+                                    padding: 2px 6px; border-radius: 3px; 
+                                    font-size: 10px; font-weight: bold;">
+                            PRIMARY
+                        </div>
+                    '''
+                
+                images_html.append(f'''
+                    <div style="display: inline-block; margin: 10px; text-align: center; vertical-align: top;">
+                        <div style="position: relative;">
+                            <img src="{img_url}" 
+                                 style="width: 150px; height: 150px; object-fit: cover; 
+                                        border-radius: 8px; border: 2px solid { '#28a745' if product_image.is_primary else '#e0e0e0'};" 
+                                 alt="Image {i}" />
+                            {primary_badge}
+                        </div>
+                        <div style="margin-top: 5px; font-size: 11px; color: #6c757d;">
+                            #{product_image.order} • {product_image.is_primary and "Primary" or "Secondary"}
+                        </div>
+                    </div>
+                ''')
+            except Exception as e:
+                images_html.append(f'''
+                    <div style="display: inline-block; margin: 10px; text-align: center;">
+                        <div style="width: 150px; height: 150px; background: #f8f9fa; 
+                                    border-radius: 8px; border: 2px dashed #dee2e6;
+                                    display: flex; align-items: center; justify-content: center;">
+                            <span style="color: #dc3545;">Image Error</span>
+                        </div>
+                        <div style="margin-top: 5px; font-size: 11px; color: #dc3545;">
+                            Image #{i}
+                        </div>
+                    </div>
+                ''')
+        
+        if not images_html:
+            return format_html('''
+                <div style="padding: 40px; text-align: center; background: #f8f9fa; 
+                            border-radius: 8px; border: 2px dashed #dee2e6;">
+                    <span style="font-size: 3rem; color: #adb5bd;">🖼️</span><br>
+                    <span style="color: #6c757d; font-size: 1rem;">No images uploaded yet</span><br>
+                    <small style="color: #6c757d;">Use the "Product Images" section below to add images</small>
+                </div>
+            ''')
+        
+        return format_html(
+            '<div style="display: flex; flex-wrap: wrap; gap: 20px; padding: 10px;">{}</div>',
+            ''.join(images_html)
+        )
+    image_gallery.short_description = '📷 Image Gallery'
+
     def inventory_summary(self, obj):
         stock_entries = obj.stock_entries.all()
         total_entries = stock_entries.count()
@@ -549,61 +743,171 @@ class ProductAdmin(admin.ModelAdmin):
         total_value = float(Decimal(obj.buying_price or 0) * Decimal(obj.quantity or 0))
         formatted_value = 'KSH {:,.2f}'.format(total_value)
 
-        # ✅ ADD: Display identifier info
-        identifier_info = ''
+        # Build identifier row if exists
+        identifier_row = ''
         if obj.category.is_single_item and obj.sku_value:
-            identifier_info = f'<tr><td style="padding:8px; border:1px solid #dee2e6;">SKU/IMEI</td><td style="padding:8px; text-align:right; border:1px solid #dee2e6;"><code>{obj.sku_value}</code></td></tr>'
+            identifier_row = f'''
+                <tr>
+                    <td style="padding:8px; border:1px solid #dee2e6;">SKU/IMEI</td>
+                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;"><code>{obj.sku_value}</code></td>
+                </tr>
+            '''
         elif obj.category.is_bulk_item and obj.barcode:
-            identifier_info = f'<tr><td style="padding:8px; border:1px solid #dee2e6;">Barcode</td><td style="padding:8px; text-align:right; border:1px solid #dee2e6;"><code>{obj.barcode}</code></td></tr>'
+            identifier_row = f'''
+                <tr>
+                    <td style="padding:8px; border:1px solid #dee2e6;">Barcode</td>
+                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;"><code>{obj.barcode}</code></td>
+                </tr>
+            '''
+        
+        # Build image info row
+        total_images = obj.images.count()
+        primary_images = obj.images.filter(is_primary=True).count()
+        image_row = ''
+        if total_images > 0:
+            image_row = f'''
+                <tr>
+                    <td style="padding:8px; border:1px solid #dee2e6;">Additional Images</td>
+                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">
+                        <strong>{total_images}</strong> images
+                        {f'({primary_images} primary)' if primary_images > 0 else ''}
+                    </td>
+                </tr>
+            '''
 
-        return format_html(
-            """
+        # Build the full HTML table
+        html_table = f"""
             <table style="width:100%; border-collapse: collapse;">
                 <tr style="background-color:#f8f9fa;">
                     <th style="padding:8px; text-align:left; border:1px solid #dee2e6;">Metric</th>
                     <th style="padding:8px; text-align:right; border:1px solid #dee2e6;">Value</th>
                 </tr>
-                {}
+                {identifier_row}
+                {image_row}
                 <tr>
                     <td style="padding:8px; border:1px solid #dee2e6;">Total Stock Entries</td>
-                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{}</td>
+                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{total_entries}</td>
                 </tr>
                 <tr>
                     <td style="padding:8px; border:1px solid #dee2e6;">Total Purchased</td>
-                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{} units</td>
+                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{purchases} units</td>
                 </tr>
                 <tr>
                     <td style="padding:8px; border:1px solid #dee2e6;">Total Sold</td>
-                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{} units</td>
+                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{abs(sales)} units</td>
                 </tr>
                 <tr>
                     <td style="padding:8px; border:1px solid #dee2e6;">Total Returns</td>
-                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{} units</td>
+                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{returns} units</td>
                 </tr>
                 <tr>
                     <td style="padding:8px; border:1px solid #dee2e6;">Total Adjustments</td>
-                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{} units</td>
+                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{adjustments} units</td>
                 </tr>
                 <tr style="background-color:#f8f9fa; font-weight:bold;">
                     <td style="padding:8px; border:1px solid #dee2e6;">Current Stock Value</td>
-                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{}</td>
+                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{formatted_value}</td>
                 </tr>
                 <tr style="background-color:#f8f9fa; font-weight:bold;">
                     <td style="padding:8px; border:1px solid #dee2e6;">Can Restock</td>
-                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{}</td>
+                    <td style="padding:8px; text-align:right; border:1px solid #dee2e6;">{'Yes' if getattr(obj, 'can_restock', False) else 'No'}</td>
                 </tr>
             </table>
-            """,
-            identifier_info,
-            total_entries,
-            purchases,
-            abs(sales),
-            returns,
-            adjustments,
-            formatted_value,
-            'Yes' if getattr(obj, 'can_restock', False) else 'No'
-        )
+        """
+        
+        return format_html(html_table)
     inventory_summary.short_description = 'Inventory Summary'
+    
+    def save_model(self, request, obj, form, change):
+        # Ensure only one primary image exists
+        if obj.pk:  # Only for existing products
+            primary_images = ProductImage.objects.filter(product=obj, is_primary=True)
+            if primary_images.count() > 1:
+                # Keep the first one as primary, mark others as not primary
+                for i, img in enumerate(primary_images):
+                    if i == 0:
+                        continue
+                    img.is_primary = False
+                    img.save()
+        
+        super().save_model(request, obj, form, change)
+
+
+# ============================================
+# PRODUCT IMAGE ADMIN
+# ============================================
+
+@admin.register(ProductImage)
+class ProductImageAdmin(admin.ModelAdmin):
+    list_display = [
+        'image_preview',
+        'product_link',
+        'is_primary_display',
+        'order_display',
+        'created_info',
+    ]
+    list_filter = [
+        'is_primary',
+        'product',
+        'product__category',
+    ]
+    search_fields = [
+        'product__name',
+        'product__product_code',
+    ]
+    list_per_page = 50
+    actions = [mark_as_primary_image, reorder_images]
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('product')
+    
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" style="max-height: 80px; max-width: 80px; border-radius: 4px;" />',
+                obj.image.url
+            )
+        return "-"
+    image_preview.short_description = 'Image'
+    
+    def product_link(self, obj):
+        if obj.product:
+            url = reverse('admin:inventory_product_change', args=[obj.product.id])
+            return format_html(
+                '<a href="{}">{} ({})</a>',
+                url,
+                obj.product.name,
+                obj.product.product_code
+            )
+        return '-'
+    product_link.short_description = 'Product'
+    
+    def is_primary_display(self, obj):
+        if obj.is_primary:
+            return format_html(
+                '<span style="background-color: #28a745; color: white; '
+                'padding: 3px 8px; border-radius: 3px; font-size: 11px;">PRIMARY</span>'
+            )
+        return format_html(
+            '<span style="background-color: #6c757d; color: white; '
+            'padding: 3px 8px; border-radius: 3px; font-size: 11px;">SECONDARY</span>'
+        )
+    is_primary_display.short_description = 'Type'
+    is_primary_display.admin_order_field = 'is_primary'
+    
+    def order_display(self, obj):
+        return obj.order
+    order_display.short_description = 'Order'
+    order_display.admin_order_field = 'order'
+    
+    def created_info(self, obj):
+        if obj.product:
+            total_images = obj.product.images.count()
+            primary_count = obj.product.images.filter(is_primary=True).count()
+            return f"{total_images} images ({primary_count} primary)"
+        return '-'
+    created_info.short_description = 'Product Info'
 
 
 # ============================================

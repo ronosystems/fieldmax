@@ -1738,94 +1738,118 @@ video {
 
 <div class="dashboard-wrapper">
 
-<!-- ======================================= -->
-<!-- SIDEBAR  TEMPLATE -->
-<!-- ======================================= -->
-  <aside class="dashboard-sidebar" id="dashboardSidebar">
+<!-- ======================================== -->
+<!-- ============ SIDEBAR NAVIGATION ======== -->
+<!-- ======================================== -->
+<!-- Sidebar Navigation -->
+<aside class="dashboard-sidebar" id="dashboardSidebar">
     <div class="sidebar-header">
-      <h2 class="sidebar-title">
-        <i class="bi bi-grid-3x3-gap-fill"></i>
-        <span>MANAGER PANEL</span>
-      </h2>
-      <div class="sidebar-user mt-2">
-        <i class="bi bi-person-circle"></i>
-        <span>
-          {% if user.is_authenticated %}
-           {{ user.get_full_name|default:user.username }}
-          {% else %}
-          Guest
-          {% endif %}
-        </span>
-      </div>
+        <div class="logo">FM</div>
+        <div class="logo-text">Fieldmax</div>
     </div>
-
-    <nav class="sidebar-nav">
-      <a href="#dashboard" class="nav-item active" data-section="dashboard">
-        <i class="bi bi-speedometer2"></i>
-        <span>Dashboard</span>
-      </a>
-
-      <button class="nav-item" data-bs-toggle="collapse" data-bs-target="#productsSubmenu" aria-expanded="false">
-        <i class="bi bi-box-seam"></i>
-        <span>Products</span>
-        <i class="bi bi-chevron-down"></i>
-      </button>
-      <div class="submenu collapse" id="productsSubmenu">
-        <a href="#product-list" class="submenu-item" data-section="product-list">
-          <i class="bi bi-list-ul"></i>
-          <span>All Products</span>
-        </a>
-        <a href="{% url 'inventory:category-create' %}" class="submenu-item" data-section="add-category">
-          <i class="bi bi-plus-circle"></i>
-          <span>Add Category</span>
-        </a>
-        <a href="{% url 'inventory:product-create' %}" class="submenu-item" data-section="add-product">
-          <i class="bi bi-plus-circle"></i>
-          <span>Add Product</span>
-        </a>
-        <a href="#" class="submenu-item" data-section="restock-product">
-          <i class="bi bi-plus-circle"></i>
-          <span>Restock products</span>
-        </a>
-        <a href="#" class="submenu-item" data-section="transfer-product">
-          <i class="bi bi-plus-circle"></i>
-          <span>Transfer products</span>
-        </a>
-      </div>
-
-      <button class="nav-item" data-bs-toggle="collapse" data-bs-target="#salesSubmenu" aria-expanded="false">
-        <i class="bi bi-cart-check"></i>
-        <span>Sales</span>
-        <i class="bi bi-chevron-down"></i>
-      </button>
-      <div class="submenu collapse" id="salesSubmenu">
-        <a href="#sales-list" class="submenu-item" data-section="sales-list">
-          <i class="bi bi-list-check"></i>
-          <span>All Sales</span>
-        </a>
-        <a href="#record-sale" class="submenu-item" data-section="record-sale">
-          <i class="bi bi-plus-circle"></i>
-          <span>Record Sale</span>
-        </a>
-        <a href="#generate-report" class="submenu-item" data-section="generate-report">
-          <i class="bi bi-plus-circle"></i>
-          <span>Generate Report</span>
-        </a>
-      </div>
-
-      <!-- LOGOUT -->
-      <div style="margin-top: auto; padding: 1rem; border-top: 2px solid #e5e7eb;">
-        <form method="post" action="{% url 'logout' %}">
-        {% csrf_token %}
-          <button type="submit" class="nav-item" style="border: 1px solid #dc2626; background: #fee2e2; color: #dc2626; width: 100%;">
-            <i class="bi bi-box-arrow-right"></i>
-            <span>Logout</span>
-          </button>
+    
+    <div class="sidebar-nav">
+        <div class="menu-section">
+            <div class="menu-label">Main</div>
+            <a href="#dashboard" class="menu-item active" data-section="dashboard">
+                <i class="menu-icon bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#dashboard" class="menu-item" data-section="dashboard">
+                <i class="menu-icon bi bi-box-seam"></i>
+                <span>Products</span>
+                <span class="menu-badge">{{ total_products|default:"0" }}</span>
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="menu-label">Products</div>
+            <a href="#product-list" class="menu-item" data-section="product-list">
+                <i class="menu-icon bi bi-list-ul"></i>
+                <span>All Products</span>
+            </a>
+            <a href="{% url 'inventory:product-create' %}" class="menu-item" data-section="add-product">
+                <i class="menu-icon bi bi-plus-circle"></i>
+                <span>Add Product</span>
+            </a>
+            <a href="{% url 'inventory:category-create' %}" class="menu-item" data-section="add-category">
+                <i class="menu-icon bi bi-tags"></i>
+                <span>Add Category</span>
+            </a>
+            <a href="#restock-product" class="menu-item" data-section="restock-product">
+                <i class="menu-icon bi bi-arrow-up-circle"></i>
+                <span>Restock Products</span>
+            </a>
+            <a href="#transfer-product" class="menu-item" data-section="transfer-product">
+                <i class="menu-icon bi bi-arrow-left-right"></i>
+                <span>Transfer Product</span>
+            </a>
+            <a href="#print-code" class="menu-item" data-section="print-code">
+                <i class="menu-icon bi bi-printer"></i>
+                <span>Print Labels</span>
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="menu-label">Sales</div>
+            <a href="#sales-list" class="menu-item" data-section="sales-list">
+                <i class="menu-icon bi bi-cart-check"></i>
+                <span>All Sales</span>
+                <span class="menu-badge">{{ total_sales_count|default:"0" }}</span>
+            </a>
+            <a href="#record-sale" class="menu-item" data-section="record-sale">
+                <i class="menu-icon bi bi-cart-plus"></i>
+                <span>Record Sale</span>
+            </a>
+            <a href="#generate-report" class="menu-item" data-section="generate-report">
+                <i class="menu-icon bi bi-bar-chart"></i>
+                <span>Generate Report</span>
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="menu-label">Users</div>
+            <a href="#users-list" class="menu-item" data-section="users-list">
+                <i class="menu-icon bi bi-people"></i>
+                <span>All Users</span>
+            </a>
+            <a href="#add-user" class="menu-item" data-section="add-user">
+                <i class="menu-icon bi bi-person-plus"></i>
+                <span>Add User</span>
+            </a>
+            <a href="#roles-permissions" class="menu-item" data-section="roles-permissions">
+                <i class="menu-icon bi bi-shield-check"></i>
+                <span>Roles & Permissions</span>
+            </a>
+        </div>
+    </div>
+    
+    <div class="sidebar-footer">
+        <div class="user-avatar">
+            {% if user.is_authenticated %}
+                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+            {% else %}
+                GU
+            {% endif %}
+        </div>
+        <div class="user-info">
+            <div class="user-name">
+                {% if user.is_authenticated %}
+                    {{ user.get_full_name|default:user.username|truncatechars:15 }}
+                {% else %}
+                    Guest
+                {% endif %}
+            </div>
+            <div class="user-role">Administrator</div>
+        </div>
+        <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+            {% csrf_token %}
+            <button type="submit" class="header-btn" style="background: none; border: none; cursor: pointer;">
+                <i class="bi bi-box-arrow-right"></i>
+            </button>
         </form>
-     </div>
-    </nav>
-  </aside>
-
+    </div>
+</aside>
 
 <!-- ======================================= -->
 <!-- MAIN DASHBOARD TEMPLATE -->
