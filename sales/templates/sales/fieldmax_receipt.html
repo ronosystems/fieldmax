@@ -447,7 +447,7 @@ body {
 <div class="no-print">
     <div class="button-group">
         <!-- Dashboard Button -->
-        <button class="btn btn-dashboard" onclick="goToDashboard()" aria-label="Go to dashboard">
+        <button class="btn btn-dashboard" onclick="Back()" aria-label="Go to dashboard">
             🏠 Back ToDashboard
         </button>
 
@@ -465,9 +465,9 @@ body {
 
 <script>
 // ✅ GO TO DASHBOARD
-function goToDashboard() {
-    // Redirect to cashier dashboard
-    window.location.href = '/cashier-dashboard/';
+function Back() {
+    // Redirect to dashboard
+    window.history.back();
 }
 
 function downloadPDF() {

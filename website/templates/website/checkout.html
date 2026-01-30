@@ -5,6 +5,7 @@
 
 {% block content %}
 <style>
+    /* All your existing CSS remains the same */
     :root {
         --primary-blue: #0066cc;
         --primary-dark: #003366;
@@ -19,7 +20,7 @@
         --text-dark: #1a1f2e;
     }
 
-    .checkout-page {
+      .checkout-page {
         min-height: 100vh;
         background: linear-gradient(135deg, var(--primary-light) 0%, white 100%);
         padding: 30px 4%;
@@ -575,9 +576,6 @@
 <div class="checkout-page">
     <div class="checkout-container">
         <div class="page-header">
-            <div class="logo-container">
-                <img src="{% static 'images/LOGO.jpg' %}?v=2" alt="Fieldmax Logo" class="logo" onerror="console.error('Logo failed to load')">
-            </div>
             <h1>Secure Checkout</h1>
         </div>
 
@@ -602,7 +600,8 @@
         <div class="checkout-grid">
             <!-- Left: Checkout Form -->
             <div class="checkout-form">
-                <form id="checkoutForm" onsubmit="event.preventDefault(); submitOrder();">
+                <!-- FIXED: Using proper AJAX submission to your existing endpoint -->
+                <form id="checkoutForm">
                     <!-- Customer Information -->
                     <div class="form-section">
                         <h3 class="section-title">
@@ -680,6 +679,12 @@
                             <textarea id="orderNotes" class="form-input" rows="3" placeholder="Any special instructions or requests..."></textarea>
                         </div>
                     </div>
+
+                    <!-- Submit button -->
+                    <button type="button" class="place-order-btn" id="placeOrderBtn" onclick="submitOrder()">
+                        <span>🔒</span>
+                        <span>PLACE ORDER</span>
+                    </button>
                 </form>
             </div>
 
@@ -701,11 +706,6 @@
                         <span id="total">KSh 0</span>
                     </div>
                 </div>
-
-                <button type="button" class="place-order-btn" id="placeOrderBtn" onclick="submitOrder()">
-                    <span>🔒</span>
-                    <span>PLACE ORDER</span>
-                </button>
 
                 <a href="{% url 'shopping-cart' %}" class="back-to-cart">
                     ← Back to Cart
@@ -854,7 +854,7 @@
         document.getElementById(errorId).classList.add('show');
     }
 
-    // Submit order
+    // Submit order - FIXED VERSION that works with your backend
     async function submitOrder() {
         if (!validateForm()) {
             showAlert('Please fix the errors in the form', 'error');
@@ -870,20 +870,29 @@
         document.getElementById('loadingOverlay').classList.add('show');
         document.getElementById('placeOrderBtn').disabled = true;
 
-        // Collect form data
+        // Prepare order data matching your backend's expected format
         const orderData = {
-            cart: cart,
+            cart: cart.map(item => ({
+                id: item.id || 0,
+                name: item.name || 'Unknown Product',
+                quantity: parseInt(item.quantity) || 1,
+                price: parseFloat(item.price) || 0,
+                item_type: item.item_type || 'single',
+                product_code: item.product_code || ''
+            })),
             buyer_name: document.getElementById('buyerName').value.trim(),
             buyer_phone: document.getElementById('buyerPhone').value.trim(),
             buyer_email: document.getElementById('buyerEmail').value.trim(),
             buyer_id: document.getElementById('buyerId').value.trim(),
             payment_method: document.querySelector('input[name="payment"]:checked').value,
-            notes: document.getElementById('orderNotes').value.trim(),
-            total_amount: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+            notes: document.getElementById('orderNotes').value.trim()
         };
 
+        console.log('Submitting order to backend:', orderData);
+
         try {
-            const response = await fetch('/api/pending-orders/create/', {
+            // FIXED: Using your existing endpoint
+            const response = await fetch('/api/public/create-order/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -893,38 +902,42 @@
             });
 
             const data = await response.json();
+            console.log('Backend response:', data);
 
             if (data.success) {
-                // Clear cart from localStorage
+                // Clear cart
                 localStorage.removeItem('fieldmax_cart');
                 
                 // Update cart count in navbar
-                window.dispatchEvent(new Event('cartUpdated'));
-
-                // Store order info in sessionStorage for the success page
+                if (window.updateCartCount) {
+                    window.updateCartCount();
+                }
+                
+                // Show success message
+                showAlert('Order submitted successfully! It is now pending staff approval.', 'success');
+                
+                // Store order info for success page
                 sessionStorage.setItem('order_info', JSON.stringify({
                     order_id: data.order_id,
                     buyer_name: orderData.buyer_name,
                     buyer_phone: orderData.buyer_phone,
+                    total_amount: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                    item_count: cart.reduce((sum, item) => sum + item.quantity, 0),
                     payment_method: orderData.payment_method,
-                    total_amount: orderData.total_amount,
-                    item_count: cart.reduce((sum, item) => sum + item.quantity, 0)
+                    status: 'pending'
                 }));
-
-                // Show success message
-                showAlert('Order submitted successfully! Redirecting...', 'success');
-
-                // Redirect to order success page after 1 second
+                
+                // Redirect to success page after 2 seconds
                 setTimeout(() => {
                     window.location.href = '/order-success/';
-                }, 1000);
+                }, 2000);
                 
             } else {
-                showAlert(data.message || 'Failed to process order', 'error');
+                showAlert(data.message || 'Failed to place order. Please try again.', 'error');
             }
         } catch (error) {
-            console.error('Order error:', error);
-            showAlert('Failed to process order. Please try again.', 'error');
+            console.error('Order submission error:', error);
+            showAlert('Network error. Please check your connection and try again.', 'error');
         } finally {
             document.getElementById('loadingOverlay').classList.remove('show');
             document.getElementById('placeOrderBtn').disabled = false;

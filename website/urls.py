@@ -50,13 +50,16 @@ urlpatterns = [
     path('orders/search/', search_order, name='orders-search'),
     path('receipt/<str:order_id>/', view_receipt, name='view-receipt'),
     path('api/order/<str:order_id>/receipt/', view_receipt, name='api-order-receipt'),
+    path('api/notifications/', views.get_notifications, name='api-notifications'),
+    path('api/notifications/<str:notification_id>/read/', views.mark_notification_read, name='api-notification-read'),
+    path('api/pending-orders/<str:order_id>/', views.get_order_details_notification, name='api-order-details'),
 
     # ============================================
     # PENDING ORDERS SYSTEM
     # ============================================
     # Customer submits order
     path('order-success/', views.order_success, name='order-success'),
-    path('api/pending-orders/create/', views.create_pending_order, name='create-pending-order'),
+    path('api/public/create-order/', views.public_create_order, name='public-create-order'),
     path('api/pending-orders-count/', pending_orders_count, name='pending_orders_count'),
     
     # Staff views and actions

@@ -40,8 +40,8 @@
 
 body {
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background-color: #f8f9fa;
-  color: #1a1f2e;
+  background-color: #ea00ff;
+  color: #0040ff;
   line-height: 1.6;
   overflow-x: hidden;
   min-height: 100vh;
@@ -51,13 +51,14 @@ body {
 
 /* Navigation Bar */
 .main-navbar {
-  background: linear-gradient(135deg, #0dcaf0 0%, #0ab4d6 100%);
+  background: linear-gradient(135deg, hwb(184 0% 0%) 0%, #00ffea 100%);
+  border: 2px solid rgb(0, 0, 0);
   padding: 0;
   position: sticky;
   top: 0;
   z-index: 1001;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  height: 70px;
+  box-shadow: 0 4px 6px rgb(255, 0, 0);
+  height: 100px;
 }
 
 .navbar-content {
@@ -79,19 +80,19 @@ body {
 }
 
 .brand-logo {
-  width: 48px;
-  height: 48px;
+  width: 55px;
+  height: 55px;
   border-radius: 0.5rem;
   object-fit: cover;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgb(0, 0, 0);
 }
 
 .brand-text {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 3rem;
+  font-weight: 800;
   color: #ffffff;
   letter-spacing: 0.5px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 2px 4px rgb(0, 0, 0);
   white-space: nowrap;
 }
 
@@ -108,8 +109,8 @@ body {
   font-size: 0.85rem;
   font-weight: 500;
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgb(0, 0, 0);
+  border: 1px solid rgb(4, 0, 255);
   border-radius: 0.5rem;
   padding: 0.5rem 0.875rem;
   cursor: pointer;
@@ -119,8 +120,8 @@ body {
 }
 
 .categories-toggle:hover {
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
+  background: rgb(255, 255, 255);
+  color: #000000;
   transform: translateY(-1px);
 }
 
@@ -224,8 +225,8 @@ body {
   font-size: 0.85rem;
   font-weight: 500;
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgb(0, 0, 0);
+  border: 1px solid rgb(34, 0, 255);
   border-radius: 0.5rem;
   padding: 0.5rem 0.875rem;
   cursor: pointer;
@@ -236,13 +237,14 @@ body {
 }
 
 .login-btn:hover, .user-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
+  background: rgb(255, 255, 255);
+  color: #000000;
+  border: 1px solid rgb(34, 0, 255);
   transform: translateY(-1px);
 }
 
 .login-btn.active, .user-btn.active {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgb(255, 255, 255);
 }
 
 .login-btn i, .user-btn i {
@@ -286,12 +288,12 @@ body {
   gap: 0.5rem;
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 2px solid #0dcaf0;
+  border-bottom: 2px solid #000000;
 }
 
 .login-dropdown-header i, .user-dropdown-header i {
   font-size: 1.5rem;
-  color: #0dcaf0;
+  color: #00bfff;
 }
 
 .login-dropdown-title, .user-dropdown-title {
@@ -317,7 +319,7 @@ body {
   width: 100%;
   padding: 0.625rem 0.875rem;
   font-size: 0.95rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid #000000;
   border-radius: 0.375rem;
   transition: all 0.2s ease;
   font-family: 'Poppins', sans-serif;
@@ -326,7 +328,7 @@ body {
 .login-form-input:focus {
   outline: none;
   border-color: #0dcaf0;
-  box-shadow: 0 0 0 3px rgba(13, 202, 240, 0.1);
+  box-shadow: 0 0 0 3px rgb(0, 0, 0);
 }
 
 .login-submit-btn, .logout-submit-btn {
@@ -396,7 +398,7 @@ body {
   display: none;
   background: transparent;
   border: none;
-  color: #ffffff;
+  color: #2600ff;
   font-size: 1.75rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -424,12 +426,12 @@ body {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  color: #ffffff;
+  color: #000000;
   font-weight: 500;
   border-radius: 0.5rem;
   transition: all 0.3s ease;
-  background: transparent;
-  border: none;
+  background: #ffffff;
+  border: 1px solid #000000;
   cursor: pointer;
   font-size: 0.95rem;
   text-decoration: none;
@@ -437,8 +439,8 @@ body {
 }
 
 .nav-link:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  background: rgb(255, 255, 255);
+  color: #0004ff;
   transform: translateY(-2px);
 }
 
@@ -485,7 +487,7 @@ body {
   flex: 1;
   width: 100%;
   padding: 0;
-  background-color: #f8f9fa;
+  background-color: #ffffff;
 }
 
 /* Footer */
@@ -539,8 +541,8 @@ body {
 }
 
 .footer-title {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 2rem;
+  font-weight: 800;
   color: #ffffff;
   margin-bottom: 0.5rem;
 }
@@ -580,7 +582,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding-top: 1.5rem;
-  border-top: 1px solid #2d3748;
+  border-top: 1px solid #000000;
   font-size: 0.9rem;
   flex-wrap: wrap;
   gap: 1rem;
@@ -617,8 +619,8 @@ body {
   position: absolute;
   top: -5px;
   right: -8px;
-  background: linear-gradient(135deg, #f093fb, #f5576c);
-  color: #fff;
+  background: linear-gradient(135deg, #e600ff, #ff0022);
+  color: #ffffff;
   font-size: 11px;
   font-weight: 700;
   min-width: 20px;
@@ -628,14 +630,78 @@ body {
   align-items: center;
   justify-content: center;
   padding: 2px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgb(0, 0, 0);
   animation: pulse 2s infinite;
 }
 
 .pending-orders-badge {
-  background: linear-gradient(135deg, #ff9500, #ff6b00);
+  background: #fe0202;
+  border: 1px solid #000000;
+}
+/* Orders text with inline count */
+#ordersText {
+  position: relative;
+  padding-right: 4px;
 }
 
+.orders-count {
+  display: inline-block;
+  background: #ff0000;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 22px;
+  height: 22px;
+  line-height: 22px;
+  border-radius: 11px;
+  text-align: center;
+  padding: 0 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  animation: pulse 2s infinite;
+}
+
+.orders-count.empty {
+  display: none;
+}
+
+/* Pending Orders Notification Dot */
+.pending-notification-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  background: #ff0000;
+  border-radius: 50%;
+  border: 2px solid #000000;
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.3);
+  animation: pulse-dot 2s infinite;
+  z-index: 1;
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.3);
+  }
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 4px rgba(255, 0, 0, 0.5);
+  }
+}
+
+@keyframes vibration {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-2px); }
+  40%, 80% { transform: translateX(2px); }
+}
+
+@keyframes highlight {
+  0% { background-color: rgba(255, 0, 0, 0.1); }
+  100% { background-color: transparent; }
+}
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); }
@@ -674,7 +740,7 @@ body {
     width: 300px;
     max-width: 85vw;
     height: 100vh;
-    background: #ffffff;
+    background: #000000;
     flex-direction: column;
     align-items: stretch;
     padding: 5rem 1.5rem 1.5rem;
@@ -691,14 +757,14 @@ body {
   .nav-link {
     justify-content: flex-start;
     padding: 0.875rem 1rem;
-    color: #1a1f2e;
+    color: #000000;
     border-radius: 0.5rem;
     font-size: 1rem;
   }
 
   .nav-link:hover {
-    background: #f3f4f6;
-    color: #0dcaf0;
+    background: #e600ff;
+    color: #1e00ff;
     transform: translateX(5px);
   }
 
@@ -1049,6 +1115,73 @@ body {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* Cart text with inline count */
+#cartText {
+  position: relative;
+  padding-right: 4px;
+}
+
+.cart-count {
+  display: inline-block;
+  background: #00ff08;
+  color: rgb(0, 0, 0);
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 22px;
+  height: 22px;
+  line-height: 22px;
+  border-radius: 11px;
+  text-align: center;
+  padding: 0 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+  box-shadow: 0 2px 4px rgb(0, 0, 0);
+  animation: pulse 2s infinite;
+}
+
+.cart-count.empty {
+  display: none;
+}
+
+/* Cart Notification Dot */
+.cart-notification-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(135deg, #0dcaf0, #0ab4d6);
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 2px rgba(13, 202, 240, 0.3);
+  animation: pulse-cart-dot 2s infinite;
+  z-index: 1;
+}
+
+@keyframes pulse-cart-dot {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 2px rgba(13, 202, 240, 0.3);
+  }
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 4px rgba(13, 202, 240, 0.5);
+  }
+}
+
+@keyframes cart-vibration {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-2px); }
+  40%, 80% { transform: translateX(2px); }
+}
+
+@keyframes cart-highlight {
+  0% { background-color: rgba(13, 202, 240, 0.1); }
+  100% { background-color: transparent; }
+}
+
+
 </style>
 </head>
 
@@ -1222,7 +1355,7 @@ body {
       <!-- Home Link -->
       <a href="{% url 'home' %}" class="nav-link">
         <i class="bi bi-house-door"></i>
-        <span>Home</span>
+        <span>HOME</span>
       </a>
       
       <!-- Show different links based on authentication -->
@@ -1232,15 +1365,18 @@ body {
         <!-- Dashboard -->
         <a href="{{ dashboard_url }}" class="nav-link">
           <i class="bi bi-speedometer2"></i>
-          <span>Dashboard</span>
+          <span>DASHBOARD</span>
         </a>
         
-        <!-- Pending Orders -->
-        <a href="{% url 'pending-orders-list' %}" class="nav-link cart-link">
-          <i class="bi bi-clock-history"></i>
-          <span>Pending Orders</span>
-          <span class="cart-badge pending-orders-badge" id="pendingOrdersBadge">0</span>
-        </a>
+<!-- Pending Orders -->
+<a href="{% url 'pending-orders-list' %}" class="nav-link cart-link" id="pendingOrdersLink">
+  <i class="bi bi-clock-history"></i>
+  <span id="ordersText">
+    ORDERS <!-- Count will be inserted here -->
+  </span>
+  <!-- Notification dot for new orders -->
+  <span class="pending-notification-dot" id="pendingNotificationDot" style="display: none;"></span>
+</a>
         
       {% else %}
         <!-- Non-authenticated User Links (Customer) -->
@@ -1248,22 +1384,25 @@ body {
         <!-- Shop Link -->
         <a href="{% url 'shop' %}" class="nav-link">
           <i class="bi bi-shop"></i>
-          <span>Shop</span>
+          <span>SHOP</span>
         </a>
         
-        <!-- Shopping Cart -->
-        <a href="{% url 'shopping-cart' %}" class="nav-link cart-link">
-          <i class="bi bi-cart3"></i>
-          <span>Cart</span>
-          <span class="cart-badge" id="cartBadge">0</span>
-        </a>
+<!-- Shopping Cart -->
+<a href="{% url 'shopping-cart' %}" class="nav-link cart-link" id="shoppingCartLink">
+  <i class="bi bi-cart3"></i>
+  <span id="cartText">
+    CART <!-- Count will be inserted here -->
+  </span>
+  <!-- Notification dot for cart updates -->
+  <span class="cart-notification-dot" id="cartNotificationDot" style="display: none;"></span>
+</a>
         
       {% endif %}
       
       <!-- Common Links -->
       <a href="#" class="nav-link">
         <i class="bi bi-envelope"></i>
-        <span>Contact</span>
+        <span>CONTACT</span>
       </a>
     </div>
   </div>
@@ -1556,54 +1695,158 @@ if (isAuthenticated) {
     connectionStatus.appendChild(statusIcon);
     connectionStatus.appendChild(statusText);
   }
-  
-  function updatePendingOrdersCount() {
-    fetch('/api/pending-orders-count/')
-      .then(response => response.json())
-      .then(data => {
-        const badge = document.getElementById('pendingOrdersBadge');
-        if (badge && data.count !== undefined) {
-          badge.textContent = data.count;
-          if (data.count === 0) {
-            badge.classList.add('empty');
-          } else {
-            badge.classList.remove('empty');
-          }
+
+
+// ========================================
+// PENDING ORDERS COUNT & NOTIFICATIONS
+// ========================================
+function updatePendingOrdersCount() {
+  fetch('/api/pending-orders-count/')
+    .then(response => response.json())
+    .then(data => {
+      const ordersText = document.getElementById('ordersText');
+      const notificationDot = document.getElementById('pendingNotificationDot');
+      const pendingOrdersLink = document.getElementById('pendingOrdersLink');
+      
+      if (ordersText && data.count !== undefined) {
+        // Store the current count before updating
+        const currentCountElement = ordersText.querySelector('.orders-count');
+        const oldCount = currentCountElement ? parseInt(currentCountElement.textContent) : 0;
+        const newCount = data.count;
+        
+        // Remove existing count element
+        const existingCount = ordersText.querySelector('.orders-count');
+        if (existingCount) {
+          existingCount.remove();
         }
-      })
-      .catch(error => {
-        console.error('Error fetching pending orders count:', error);
-      });
-  }
-
-  document.addEventListener('DOMContentLoaded', updatePendingOrdersCount);
-  setInterval(updatePendingOrdersCount, 30000);
-  
-} else {
-  function updateCartCount() {
-    const cart = JSON.parse(localStorage.getItem('fieldmax_cart') || '[]');
-    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    
-    const cartBadge = document.getElementById('cartBadge');
-    if (cartBadge) {
-      cartBadge.textContent = totalItems;
-      if (totalItems === 0) {
-        cartBadge.classList.add('empty');
-      } else {
-        cartBadge.classList.remove('empty');
+        
+        // Add count if there are pending orders
+        if (newCount > 0) {
+          const countSpan = document.createElement('span');
+          countSpan.className = 'orders-count';
+          countSpan.textContent = newCount;
+          ordersText.appendChild(countSpan);
+          
+          // Show notification dot and animation if count increased
+          if (newCount > oldCount && oldCount > 0) {
+            notificationDot.style.display = 'block';
+            
+            // Add vibration effect
+            pendingOrdersLink.style.animation = 'vibration 0.3s ease';
+            setTimeout(() => {
+              pendingOrdersLink.style.animation = '';
+            }, 300);
+            
+            // Add highlight animation to the button
+            pendingOrdersLink.style.animation = 'highlight 0.5s ease';
+            
+            // Auto-hide notification dot after 5 seconds
+            setTimeout(() => {
+              notificationDot.style.display = 'none';
+            }, 5000);
+          }
+        } else {
+          // If count is 0, ensure button shows clean state
+          notificationDot.style.display = 'none';
+        }
       }
+    })
+    .catch(error => {
+      console.error('Error fetching pending orders count:', error);
+    });
+}
+
+// Initial call on page load
+document.addEventListener('DOMContentLoaded', function() {
+  if (isAuthenticated) {
+    updatePendingOrdersCount();
+    // Poll every 30 seconds for updates
+    setInterval(updatePendingOrdersCount, 30000);
+  }
+});
+} else {
+  console.log('[APP] User not authenticated');
+}
+
+
+
+// ========================================
+// SHOPPING CART COUNT & NOTIFICATIONS
+// ========================================
+function updateCartCount() {
+  // Get cart from localStorage
+  const cart = JSON.parse(localStorage.getItem('fieldmax_cart') || '[]');
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  
+  const cartText = document.getElementById('cartText');
+  const cartNotificationDot = document.getElementById('cartNotificationDot');
+  const shoppingCartLink = document.getElementById('shoppingCartLink');
+  
+  if (cartText) {
+    // Get current count from DOM
+    const currentCountElement = cartText.querySelector('.cart-count');
+    const oldCount = currentCountElement ? parseInt(currentCountElement.textContent) : 0;
+    const newCount = totalItems;
+    
+    // Remove existing count element
+    const existingCount = cartText.querySelector('.cart-count');
+    if (existingCount) {
+      existingCount.remove();
+    }
+    
+    // Add count if there are items in cart
+    if (newCount > 0) {
+      const countSpan = document.createElement('span');
+      countSpan.className = 'cart-count';
+      countSpan.textContent = newCount;
+      cartText.appendChild(countSpan);
+      
+      // Show notification dot and animation if count increased
+      if (newCount > oldCount && oldCount > 0) {
+        cartNotificationDot.style.display = 'block';
+        
+        // Add vibration effect
+        shoppingCartLink.style.animation = 'cart-vibration 0.3s ease';
+        setTimeout(() => {
+          shoppingCartLink.style.animation = '';
+        }, 300);
+        
+        // Add highlight animation to the button
+        shoppingCartLink.style.animation = 'cart-highlight 0.5s ease';
+        
+        // Auto-hide notification dot after 3 seconds
+        setTimeout(() => {
+          cartNotificationDot.style.display = 'none';
+        }, 3000);
+      }
+    } else {
+      // If count is 0, ensure button shows clean state
+      cartNotificationDot.style.display = 'none';
     }
   }
-
-  document.addEventListener('DOMContentLoaded', updateCartCount);
-  window.addEventListener('storage', function(e) {
-    if (e.key === 'fieldmax_cart') {
-      updateCartCount();
-    }
-  });
-  window.addEventListener('cartUpdated', updateCartCount);
-  window.updateCartCount = updateCartCount;
 }
+
+// Initialize cart count on page load
+document.addEventListener('DOMContentLoaded', function() {
+  if (!isAuthenticated) { // Only for non-authenticated users (customers)
+    updateCartCount();
+    
+    // Listen for cart updates
+    window.addEventListener('cartUpdated', updateCartCount);
+    
+    // Listen for storage events (from other tabs)
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'fieldmax_cart') {
+        updateCartCount();
+      }
+    });
+  }
+});
+
+// Make function globally available for other scripts
+window.updateCartCount = updateCartCount;
+
+
 
 // ========================================
 // CLOSE DROPDOWNS ON ESCAPE KEY

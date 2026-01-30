@@ -24,6 +24,7 @@ from django.views.decorators.http import require_POST, require_GET
 from django.views.decorators.cache import cache_page
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
+from django.utils.timesince import timesince
 
 
 
@@ -1106,10 +1107,9 @@ def checkout(request):
 # ============================================
 @csrf_exempt
 @require_http_methods(["POST"])
-def create_pending_order(request):
+def public_create_order(request):
     """
-    API endpoint for customers to submit orders
-    URL: /api/pending-orders/create/
+    DEFINITELY public endpoint for customer orders
     """
     try:
         data = json.loads(request.body)
@@ -1162,16 +1162,16 @@ def create_pending_order(request):
                 )
         
         logger.info(
-            f"[PENDING ORDER CREATED] {order.order_id} | "
+            f"[PUBLIC ORDER CREATED] {order.order_id} | "
             f"Buyer: {buyer_name} | Items: {item_count} | "
             f"Total: KSh {total_amount}"
         )
         
         return JsonResponse({
             'success': True,
-            'message': 'Order submitted successfully and is pending approval.',
+            'message': 'Order submitted successfully!',
             'order_id': order.order_id,
-            'redirect_url': '/orders/pending/'
+            'redirect_url': '/order-success/'
         })
         
     except json.JSONDecodeError:
@@ -1180,11 +1180,17 @@ def create_pending_order(request):
             'message': 'Invalid JSON data'
         }, status=400)
     except Exception as e:
-        logger.error(f"[PENDING ORDER ERROR] {str(e)}", exc_info=True)
+        logger.error(f"[PUBLIC ORDER ERROR] {str(e)}", exc_info=True)
         return JsonResponse({
             'success': False,
             'message': f'Failed to create order: {str(e)}'
         }, status=500)
+
+
+
+
+
+
 
 # ============================================
 # CHECKOUT PAGE
@@ -1198,6 +1204,12 @@ def checkout_page(request):
     return render(request, 'website/checkout.html', {
         'page_title': 'Checkout - Fieldmax'
     })
+
+
+
+
+
+
 
 # ============================================
 # STAFF VIEW: LIST PENDING ORDERS
@@ -1661,6 +1673,207 @@ def process_order(request):
             'success': False,
             'message': f'Failed to process order: {str(e)}'
         }, status=500)
+
+
+
+
+# ============================================
+# NOTIFICATION SYSTEM - ADD THESE FUNCTIONS
+# ============================================
+
+@login_required
+@require_http_methods(["GET"])
+def get_notifications(request):
+    """
+    Get all notifications (pending orders and recent activity)
+    URL: /api/notifications/
+    """
+    try:
+        # Get pending orders
+        pending_orders = PendingOrder.objects.filter(
+            status='pending'
+        ).order_by('-created_at')[:20]
+        
+        # Get completed/rejected orders from last 24 hours
+        yesterday = timezone.now() - timezone.timedelta(days=1)
+        recent_orders = PendingOrder.objects.filter(
+            status__in=['completed', 'rejected'],
+            updated_at__gte=yesterday
+        ).order_by('-updated_at')[:10]
+        
+        notifications = []
+        
+        # Add pending order notifications
+        for order in pending_orders:
+            try:
+                cart_items = json.loads(order.cart_data) if order.cart_data else []
+            except:
+                cart_items = []
+            
+            item_count = len(cart_items)
+            
+            notifications.append({
+                'id': f'pending_{order.id}',
+                'order_id': order.order_id,
+                'type': 'pending_order',
+                'status': 'pending',
+                'title': 'New Order Pending Review',
+                'message': f'Order #{order.order_id} for Ksh {order.total_amount:,.0f} from {order.buyer_name}',
+                'buyer_name': order.buyer_name,
+                'buyer_phone': order.buyer_phone,
+                'total_amount': float(order.total_amount),
+                'item_count': item_count,
+                'created_at': order.created_at.isoformat(),
+                'read': False
+            })
+        
+        # Add recent activity notifications
+        for order in recent_orders:
+            if order.status == 'completed':
+                notifications.append({
+                    'id': f'completed_{order.id}',
+                    'order_id': order.order_id,
+                    'type': 'order_completed',
+                    'status': 'completed',
+                    'title': 'Order Completed',
+                    'message': f'Order #{order.order_id} from {order.buyer_name} was approved and processed',
+                    'created_at': order.updated_at.isoformat(),
+                    'read': True
+                })
+            elif order.status == 'rejected':
+                notifications.append({
+                    'id': f'rejected_{order.id}',
+                    'order_id': order.order_id,
+                    'type': 'order_rejected',
+                    'status': 'rejected',
+                    'title': 'Order Rejected',
+                    'message': f'Order #{order.order_id} from {order.buyer_name} was rejected',
+                    'created_at': order.updated_at.isoformat(),
+                    'read': True
+                })
+        
+        return JsonResponse({
+            'success': True,
+            'notifications': notifications,
+            'unread_count': len([n for n in notifications if not n.get('read', False)])
+        })
+        
+    except Exception as e:
+        logger.error(f"[NOTIFICATIONS ERROR] {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'notifications': []
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def mark_notification_read(request, notification_id):
+    """
+    Mark a notification as read
+    URL: /api/notifications/<notification_id>/read/
+    """
+    # In a real implementation, you'd store read status in database
+    # For now, we just return success
+    return JsonResponse({
+        'success': True,
+        'message': 'Notification marked as read'
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def approve_pending_order_notification(request, order_id):
+    """
+    Approve a pending order from notification panel
+    URL: /api/pending-orders/<order_id>/approve/
+    
+    This is a wrapper around your existing approve_order function
+    """
+    try:
+        # Call your existing approve_order function
+        return approve_order(request, order_id)
+        
+    except Exception as e:
+        logger.error(f"[APPROVE FROM NOTIFICATION ERROR] {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def reject_pending_order_notification(request, order_id):
+    """
+    Reject a pending order from notification panel
+    URL: /api/pending-orders/<order_id>/reject/
+    
+    This is a wrapper around your existing reject_order function
+    """
+    try:
+        # Call your existing reject_order function
+        return reject_order(request, order_id)
+        
+    except Exception as e:
+        logger.error(f"[REJECT FROM NOTIFICATION ERROR] {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_order_details_notification(request, order_id):
+    """
+    Get detailed information about a specific order
+    URL: /api/pending-orders/<order_id>/
+    """
+    try:
+        order = PendingOrder.objects.get(order_id=order_id)
+        
+        # Parse cart data
+        try:
+            cart_items = json.loads(order.cart_data) if order.cart_data else []
+        except:
+            cart_items = []
+        
+        return JsonResponse({
+            'success': True,
+            'order': {
+                'order_id': order.order_id,
+                'buyer_name': order.buyer_name,
+                'buyer_phone': order.buyer_phone,
+                'buyer_email': order.buyer_email,
+                'buyer_id_number': order.buyer_id_number,
+                'total_amount': float(order.total_amount),
+                'payment_method': order.payment_method,
+                'notes': order.notes,
+                'status': order.status,
+                'cart_items': cart_items,
+                'created_at': order.created_at.isoformat(),
+                'reviewed_by': order.reviewed_by.username if order.reviewed_by else None,
+                'reviewed_at': order.reviewed_at.isoformat() if order.reviewed_at else None,
+                'rejection_reason': order.rejection_reason
+            }
+        })
+        
+    except PendingOrder.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Order not found'
+        }, status=404)
+    except Exception as e:
+        logger.error(f"[ORDER DETAILS ERROR] {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+
 
 # ============================================
 # ORDER SUCCESS
