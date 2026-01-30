@@ -3006,45 +3006,7 @@ strong[style*="background-color"] {
         <span>Roles & Permissions</span>
       </a>
     </div>
-    
   </nav>
-  
-  <!-- ======================= -->
-  <!-- FOOTER - USER PROFILE -->
-  <!-- ======================= -->
-  <div class="sidebar-footer">
-    <div class="user-profile-card">
-      <div class="user-avatar">
-        <i class="bi bi-person-circle"></i>
-      </div>
-      <div class="user-info">
-        <h4 class="user-name">
-          {% if user.is_authenticated %}
-            {{ user.get_full_name|default:user.username }}
-          {% else %}
-            Guest User
-          {% endif %}
-        </h4>
-        <p class="user-role">
-          {% if user.is_superuser %}
-            <i class="bi bi-shield-check"></i> Super Admin
-          {% elif user.is_staff %}
-            <i class="bi bi-person-badge"></i> Staff
-          {% else %}
-            <i class="bi bi-person"></i> User
-          {% endif %}
-        </p>
-      </div>
-      <div class="user-actions">
-        <form method="post" action="{% url 'logout' %}">
-          {% csrf_token %}
-          <button type="submit" class="logout-btn" title="Logout">
-            <i class="bi bi-box-arrow-right"></i>
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
 </aside>
 
 
