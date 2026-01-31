@@ -69,6 +69,7 @@ urlpatterns = [
     
     # API for badge count
     path('api/pending-orders/count/', views.pending_orders_count, name='pending-orders-count'),
+    path('api/pending-orders/', views.api_get_all_orders, name='api-all-orders'),
 
     # ============================================
     # AUTHENTICATION

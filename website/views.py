@@ -1260,7 +1260,35 @@ def pending_orders_count(request):
         })
     
 
-
+@login_required
+@require_http_methods(["GET"])
+def api_get_all_orders(request):
+    """Get all pending orders for admin view"""
+    try:
+        orders = PendingOrder.objects.all().order_by('-created_at')
+        
+        orders_list = []
+        for order in orders:
+            orders_list.append({
+                'order_id': order.order_id,
+                'buyer_name': order.buyer_name,
+                'buyer_phone': order.buyer_phone,
+                'buyer_id_number': order.buyer_id_number or '',
+                'buyer_email': order.buyer_email or '',
+                'total_amount': float(order.total_amount),
+                'status': order.status,
+                'created_at': order.created_at.isoformat(),
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'orders': orders_list
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 
 

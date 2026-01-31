@@ -5,7 +5,6 @@
 
 {% block content %}
 <style>
-    /* All your existing CSS remains the same */
     :root {
         --primary-blue: #0066cc;
         --primary-dark: #003366;
@@ -20,9 +19,9 @@
         --text-dark: #1a1f2e;
     }
 
-      .checkout-page {
+    .checkout-page {
         min-height: 100vh;
-        background: linear-gradient(135deg, var(--primary-light) 0%, white 100%);
+        background: rgb(82, 81, 81) 100%;
         padding: 30px 4%;
     }
 
@@ -50,20 +49,21 @@
 
     .page-header h1 {
         font-size: clamp(28px, 4vw, 42px);
-        font-weight: 800;
+        font-weight: 1200;
         margin-bottom: 10px;
-        background: linear-gradient(135deg, var(--primary-blue), var(--primary-dark));
+        background:#ffffff;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
 
+    /* Progress Bar - Fixed to span the width of column A */
     .progress-bar {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
         margin: 20px 0 30px;
-        flex-wrap: wrap;
+        max-width: 100%;
     }
 
     .progress-step {
@@ -74,12 +74,13 @@
         font-weight: 600;
         font-size: 13px;
         position: relative;
+        justify-content: center;
     }
 
     .progress-step:not(:last-child)::after {
         content: '';
         position: absolute;
-        right: -12px;
+        right: -10px;
         top: 50%;
         transform: translateY(-50%);
         width: 20px;
@@ -96,16 +97,17 @@
     }
 
     .progress-step .step-number {
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         background: var(--gray-light);
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 700;
-        font-size: 12px;
+        font-size: 13px;
         border: 2px solid var(--gray-medium);
+        flex-shrink: 0;
     }
 
     .progress-step.active .step-number {
@@ -524,6 +526,12 @@
         .order-summary {
             position: static;
         }
+        
+        /* Progress bar spans full width on tablet */
+        .progress-bar {
+            grid-template-columns: repeat(3, 1fr);
+            max-width: 100%;
+        }
     }
 
     @media (max-width: 768px) {
@@ -544,12 +552,25 @@
             grid-template-columns: 1fr;
         }
 
-        .progress-step:not(:last-child)::after {
-            display: none;
+        /* Progress bar mobile adjustments */
+        .progress-bar {
+            gap: 5px;
+        }
+
+        .progress-step {
+            flex-direction: column;
+            gap: 5px;
+            text-align: center;
         }
 
         .progress-step .step-text {
-            display: none;
+            font-size: 11px;
+        }
+
+        .progress-step:not(:last-child)::after {
+            display: block;
+            width: 15px;
+            right: -8px;
         }
     }
 
@@ -570,6 +591,37 @@
         .page-header h1 {
             font-size: 24px;
         }
+
+        /* Progress bar adjustments for small screens */
+        .progress-step .step-text {
+            font-size: 10px;
+        }
+
+        .progress-step {
+            gap: 3px;
+        }
+
+        .progress-step .step-number {
+            width: 28px;
+            height: 28px;
+            font-size: 11px;
+        }
+
+        .progress-step:not(:last-child)::after {
+            width: 10px;
+            right: -5px;
+        }
+    }
+
+    /* Extra small screens */
+    @media (max-width: 360px) {
+        .progress-step .step-text {
+            font-size: 9px;
+        }
+        
+        .progress-step:not(:last-child)::after {
+            display: none;
+        }
     }
 </style>
 
@@ -579,7 +631,7 @@
             <h1>Secure Checkout</h1>
         </div>
 
-        <!-- Progress Bar -->
+        <!-- Progress Bar - Spaced to fit column A width -->
         <div class="progress-bar">
             <div class="progress-step completed">
                 <span class="step-number">✓</span>

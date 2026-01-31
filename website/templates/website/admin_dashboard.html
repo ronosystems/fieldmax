@@ -2853,6 +2853,28 @@ strong[style*="background-color"] {
   color: #205067;
 }
 
+
+.table th {
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-group-sm .btn {
+  padding: 0.25rem 0.5rem;
+}
+
+#ordersTable tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+.badge {
+  font-size: 0.875rem;
+  padding: 0.35rem 0.65rem;
+}
+
+
 </style>
 
 <div class="dashboard-wrapper">
@@ -2928,6 +2950,19 @@ strong[style*="background-color"] {
         <a href="#users-list" class="submenu-item" data-section="users-list">
           <i class="bi bi-people"></i>
           <span>All Users</span>
+        </a>
+      </div>
+
+      <!-- Orders -->
+      <button class="nav-item" data-bs-toggle="collapse" data-bs-target="#ordersSubmenu" aria-expanded="false">
+        <i class="bi bi-clipboard2-check"></i>
+        <span>Orders</span>
+        <i class="bi bi-chevron-down"></i>
+      </button>
+      <div class="submenu collapse" id="ordersSubmenu">
+        <a href="#orders-list" class="submenu-item" data-section="orders-list">
+          <i class="bi bi-clipboard2-check"></i>
+          <span>All Orders</span>
         </a>
       </div>
     </div>
@@ -3763,6 +3798,79 @@ strong[style*="background-color"] {
     </div>
   </div>
 </div>
+
+
+
+<!-- ======================================== -->
+<!-- ===========ORDERS LIST SECTION ========= -->
+<!-- ======================================== -->
+<section id="orders-list" class="content-section">
+  <div class="section-header mb-4">
+    <h2><i class="bi bi-clipboard2-check me-2"></i>All Orders</h2>
+    <p class="text-muted">View and manage all customer orders</p>
+  </div>
+
+  <!-- Filters & Search -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <input type="text" class="form-control" id="orderSearchInput" placeholder="Search by Order ID, Name, Phone...">
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" id="orderStatusFilter">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <input type="date" class="form-control" id="orderDateFilter">
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-primary w-100" onclick="filterOrders()">
+            <i class="bi bi-funnel me-1"></i>Filter
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" id="ordersTable">
+          <thead class="table-light">
+            <tr>
+              <th>ORDER ID</th>
+              <th>CLIENT NAME</th>
+              <th>CLIENT PHONE</th>
+              <th>CLIENT ID NUMBER</th>
+              <th>CLIENT EMAIL</th>
+              <th>TOTAL AMOUNT</th>
+              <th>ORDER STATUS</th>
+              <th>DATE</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody">
+            <!-- Loading State -->
+            <tr id="ordersLoading">
+              <td colspan="9" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading orders...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
 
 
 
@@ -9897,6 +10005,200 @@ document.addEventListener('DOMContentLoaded', function() {
         productCodeInput.focus();
     }
 });
+
+
+
+
+    // ============================================
+    // ORDERS MANAGEMENT SECTION 🧾🧾🧾
+    // ============================================
+// Load orders when section is shown
+document.addEventListener('DOMContentLoaded', function() {
+  loadOrders();
+  
+  // Reload orders every 30 seconds
+  setInterval(loadOrders, 30000);
+});
+
+function loadOrders() {
+  fetch('/api/pending-orders/')
+    .then(response => response.json())
+    .then(data => {
+      const tbody = document.getElementById('ordersTableBody');
+      
+      if (data.success && data.orders && data.orders.length > 0) {
+        tbody.innerHTML = data.orders.map(order => `
+          <tr>
+            <td><strong>${order.order_id}</strong></td>
+            <td>${order.buyer_name}</td>
+            <td>${order.buyer_phone}</td>
+            <td>${order.buyer_id_number || 'N/A'}</td>
+            <td>${order.buyer_email || 'N/A'}</td>
+            <td>KSh ${parseFloat(order.total_amount).toLocaleString('en-KE', {minimumFractionDigits: 2})}</td>
+            <td>
+              ${getStatusBadge(order.status)}
+            </td>
+            <td>${new Date(order.created_at).toLocaleDateString('en-KE')}</td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" onclick="viewOrderDetails('${order.order_id}')" title="View Details">
+                  <i class="bi bi-eye"></i>
+                </button>
+                ${order.status === 'pending' ? `
+                  <button class="btn btn-outline-success" onclick="approveOrder('${order.order_id}')" title="Approve">
+                    <i class="bi bi-check-circle"></i>
+                  </button>
+                  <button class="btn btn-outline-danger" onclick="rejectOrder('${order.order_id}')" title="Reject">
+                    <i class="bi bi-x-circle"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="text-center py-5 text-muted">
+              <i class="bi bi-inbox display-4"></i>
+              <p class="mt-3">No orders found</p>
+            </td>
+          </tr>
+        `;
+      }
+    })
+    .catch(error => {
+      console.error('Error loading orders:', error);
+      document.getElementById('ordersTableBody').innerHTML = `
+        <tr>
+          <td colspan="9" class="text-center py-5 text-danger">
+            <i class="bi bi-exclamation-triangle display-4"></i>
+            <p class="mt-3">Error loading orders. Please refresh the page.</p>
+          </td>
+        </tr>
+      `;
+    });
+}
+
+function getStatusBadge(status) {
+  const badges = {
+    'pending': '<span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pending</span>',
+    'completed': '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Completed</span>',
+    'rejected': '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Rejected</span>'
+  };
+  return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
+}
+
+function viewOrderDetails(orderId) {
+  fetch(`/api/pending-orders/${orderId}/`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Show modal with order details (you can customize this)
+        const order = data.order;
+        alert(`Order Details:\n\nOrder ID: ${order.order_id}\nClient: ${order.buyer_name}\nPhone: ${order.buyer_phone}\nTotal: KSh ${parseFloat(order.total_amount).toLocaleString()}\nStatus: ${order.status}`);
+      }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function approveOrder(orderId) {
+  if (!confirm('Are you sure you want to approve this order?')) return;
+  
+  fetch(`/staff/approve-order/${orderId}/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCookie('csrftoken'),
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('Order approved successfully!');
+      loadOrders();
+    } else {
+      alert('Error: ' + data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Failed to approve order');
+  });
+}
+
+function rejectOrder(orderId) {
+  const reason = prompt('Please enter rejection reason:');
+  if (!reason) return;
+  
+  fetch(`/staff/reject-order/${orderId}/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCookie('csrftoken'),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ reason: reason })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('Order rejected successfully!');
+      loadOrders();
+    } else {
+      alert('Error: ' + data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Failed to reject order');
+  });
+}
+
+function filterOrders() {
+  const searchTerm = document.getElementById('orderSearchInput').value.toLowerCase();
+  const statusFilter = document.getElementById('orderStatusFilter').value;
+  const dateFilter = document.getElementById('orderDateFilter').value;
+  
+  const rows = document.querySelectorAll('#ordersTableBody tr');
+  
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    const statusBadge = row.querySelector('.badge');
+    const status = statusBadge ? statusBadge.textContent.toLowerCase() : '';
+    
+    const matchesSearch = text.includes(searchTerm);
+    const matchesStatus = !statusFilter || status.includes(statusFilter);
+    
+    if (matchesSearch && matchesStatus) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+}
+
+// CSRF Token helper
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+
+
+
+
+
+
 
 
 
