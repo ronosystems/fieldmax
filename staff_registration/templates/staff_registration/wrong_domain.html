@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Staff Portal Access</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h2 { 
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .domain-link {
+            background: #4f46e5;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 20px 0;
+            font-size: 18px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .domain-link:hover {
+            background: #4338ca;
+        }
+        .local-test {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            text-align: left;
+        }
+        code {
+            background: #e5e7eb;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Staff Registration Portal</h2>
+        <p>This portal is only accessible at:</p>
+        
+        <a href="https://staff.fieldmaxstore.onrender.com" class="domain-link">
+            🔗 https://staff.fieldmaxstore.onrender.com
+        </a>
+        
+        <p>Please use the above link to register as staff.</p>
+        
+        <div class="local-test">
+            <h3>🛠️ Local Development Testing</h3>
+            <p>For testing during development, you can access this page at:</p>
+            <p><code>http://127.0.0.1:8000/staff/</code></p>
+            <p><code>http://localhost:8000/staff/</code></p>
+            <p><small>Note: These local URLs will redirect to this page in production.</small></p>
+        </div>
+    </div>
+</body>
+</html>

@@ -16,6 +16,10 @@ from . import views
 from django.contrib.auth.views import LogoutView
 from django.views.generic import RedirectView
 
+
+
+
+
 urlpatterns = [
     # ============================================
     # HOME & PRODUCTS
@@ -99,4 +103,21 @@ urlpatterns = [
     path('api/categories/', views.api_get_categories, name='api-get-categories'),
     path('api/categories/<int:category_id>/', views.api_category_details, name='api-category-details'),
     path('categories/', RedirectView.as_view(url='/shop/', permanent=False), name='categories-redirect'),
-]
+
+    # Public staff registration (only accessible via subdomain)
+    path('', views.staff_registration_view, name='staff_registration'),
+    path('status/<int:application_id>/', views.check_application_status, name='check_application_status'),
+    
+    # Staff onboarding management (main domain - for admin)
+    path('staff/onboarding/', views.staff_onboarding_view, name='staff_onboarding'),
+    path('staff/application/roles/', views.get_roles, name='get_roles'),
+    
+    # ⭐ APPLICATION MANAGEMENT ENDPOINTS
+    path('staff/application/<int:pk>/details/', views.application_details, name='application_details'),
+    path('staff/application/<int:pk>/approve/', views.approve_application, name='approve_application'),
+    path('staff/application/<int:pk>/reject/', views.reject_application, name='reject_application'),
+    path('staff/application/<int:pk>/undo-approval/', views.undo_approval, name='undo_approval'),
+    path('staff/application/<int:pk>/reconsider/', views.reconsider_application, name='reconsider_application'),
+    path('staff/applications/batch-approve/', views.batch_approve, name='batch_approve'),
+    path('staff/application/assign-role/', views.assign_role_create_user, name='assign_role_create_user'),
+]    

@@ -1706,19 +1706,16 @@ function updatePendingOrdersCount() {
     .then(data => {
       const ordersText = document.getElementById('ordersText');
       const notificationDot = document.getElementById('pendingNotificationDot');
-      const pendingOrdersLink = document.getElementById('pendingOrdersLink');
       
       if (ordersText && data.count !== undefined) {
-        // Store the current count before updating
+        // Get current count
         const currentCountElement = ordersText.querySelector('.orders-count');
         const oldCount = currentCountElement ? parseInt(currentCountElement.textContent) : 0;
         const newCount = data.count;
         
-        // Remove existing count element
+        // Remove existing count
         const existingCount = ordersText.querySelector('.orders-count');
-        if (existingCount) {
-          existingCount.remove();
-        }
+        if (existingCount) existingCount.remove();
         
         // Add count if there are pending orders
         if (newCount > 0) {
@@ -1727,27 +1724,15 @@ function updatePendingOrdersCount() {
           countSpan.textContent = newCount;
           ordersText.appendChild(countSpan);
           
-          // Show notification dot and animation if count increased
+          // Show notification dot if count increased
           if (newCount > oldCount && oldCount > 0) {
             notificationDot.style.display = 'block';
             
-            // Add vibration effect
-            pendingOrdersLink.style.animation = 'vibration 0.3s ease';
-            setTimeout(() => {
-              pendingOrdersLink.style.animation = '';
-            }, 300);
-            
-            // Add highlight animation to the button
-            pendingOrdersLink.style.animation = 'highlight 0.5s ease';
-            
-            // Auto-hide notification dot after 5 seconds
+            // Auto-hide after 5 seconds
             setTimeout(() => {
               notificationDot.style.display = 'none';
             }, 5000);
           }
-        } else {
-          // If count is 0, ensure button shows clean state
-          notificationDot.style.display = 'none';
         }
       }
     })
@@ -1756,17 +1741,22 @@ function updatePendingOrdersCount() {
     });
 }
 
-// Initial call on page load
+// Initial load on any page
 document.addEventListener('DOMContentLoaded', function() {
   if (isAuthenticated) {
     updatePendingOrdersCount();
-    // Poll every 30 seconds for updates
-    setInterval(updatePendingOrdersCount, 30000);
+    
+    // OPTIONAL: Update when user comes back to tab
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) {
+        updatePendingOrdersCount();
+      }
+    });
   }
 });
-} else {
-  console.log('[APP] User not authenticated');
-}
+
+// Make function globally available for other pages to call
+window.updatePendingOrdersCount = updatePendingOrdersCount;
 
 
 
@@ -1845,6 +1835,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Make function globally available for other scripts
 window.updateCartCount = updateCartCount;
+}
 
 
 

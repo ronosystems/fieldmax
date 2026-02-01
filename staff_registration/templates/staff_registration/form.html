@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Registration - FieldMax Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== CSS Variables ===== */
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #dbeafe;
+            --secondary: #7c3aed;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --radius-sm: 4px;
+            --radius: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: all 0.2s ease-in-out;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        /* ===== Base Styles ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-sans);
+            background: linear-gradient(135deg, #4d4d4d 0%, #4f5051 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* ===== Layout ===== */
+        .registration-wrapper {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .registration-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        
+        /* ===== Header ===== */
+        .registration-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .registration-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .company-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .company-logo {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .company-name {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        .header-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            letter-spacing: -0.5px;
+        }
+        
+        .header-subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+            font-weight: 400;
+        }
+        
+        /* ===== Progress Steps ===== */
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            padding: 40px 40px 0;
+            background: white;
+        }
+        
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 59px;
+            left: 50px;
+            right: 50px;
+            height: 3px;
+            background: var(--gray-200);
+            z-index: 1;
+        }
+        
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            flex: 1;
+        }
+        
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-400);
+            margin-bottom: 12px;
+            transition: var(--transition);
+        }
+        
+        .step.active .step-icon {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 0 4px var(--primary-light);
+        }
+        
+        .step.completed .step-icon {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .step.active .step-label {
+            color: var(--primary);
+        }
+        
+        .step.completed .step-label {
+            color: var(--success);
+        }
+        
+        /* ===== Form Container ===== */
+        .form-container {
+            padding: 40px;
+        }
+        
+        /* ===== Messages ===== */
+        .message {
+            padding: 20px;
+            border-radius: var(--radius);
+            margin-bottom: 30px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        
+        .message.error {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+            border: 1px solid #f87171;
+        }
+        
+        .message.info {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+            border: 1px solid #60a5fa;
+        }
+        
+        /* ===== Form Sections ===== */
+        .form-section {
+            margin-bottom: 50px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .form-section:last-of-type {
+            border-bottom: none;
+            margin-bottom: 30px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .section-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark);
+            flex: 1;
+        }
+        
+        .section-subtitle {
+            font-size: 16px;
+            color: var(--gray-600);
+            margin-top: 5px;
+        }
+        
+        /* ===== Form Grid ===== */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        /* ===== Form Elements ===== */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 15px;
+        }
+        
+        .required::after {
+            content: " *";
+            color: var(--danger);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 16px;
+            font-family: var(--font-sans);
+            transition: var(--transition);
+            background: white;
+            color: var(--gray-800);
+        }
+        
+        input:hover, select:hover, textarea:hover {
+            border-color: var(--gray-300);
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        input.error, select.error, textarea.error {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+        
+        .error-text {
+            color: var(--danger);
+            font-size: 13px;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linecap='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 20px;
+            padding-right: 48px;
+        }
+        
+        /* ===== File Upload ===== */
+        .file-upload-container {
+            border: 2px dashed var(--gray-300);
+            border-radius: var(--radius);
+            padding: 30px;
+            text-align: center;
+            transition: var(--transition);
+            background: var(--gray-50);
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .file-upload-container:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            transform: translateY(-2px);
+        }
+        
+        .file-upload-container.dragover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            border-style: solid;
+        }
+        
+        .file-upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .file-upload-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+        
+        .file-upload-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        
+        .file-upload-hint {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-top: 4px;
+        }
+        
+        .file-input {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+        }
+        
+        .file-preview {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .file-preview-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 10px 16px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            border: 1px solid var(--gray-200);
+            max-width: 100%;
+            box-shadow: var(--shadow-sm);
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .file-preview-icon {
+            color: var(--primary);
+            font-size: 16px;
+        }
+        
+        .file-preview-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .file-preview-name {
+            font-weight: 500;
+            color: var(--gray-800);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .file-preview-size {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 2px;
+        }
+        
+        .file-remove-btn {
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+        
+        .file-remove-btn:hover {
+            color: var(--danger);
+            background: var(--gray-100);
+        }
+        
+        /* ===== Checkboxes ===== */
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--gray-50);
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+        }
+        
+        .checkbox-group:hover {
+            background: var(--gray-100);
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            accent-color: var(--primary);
+        }
+        
+        .checkbox-group label {
+            flex: 1;
+            margin-bottom: 0;
+            font-weight: normal;
+            color: var(--gray-700);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .checkbox-group a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .checkbox-group a:hover {
+            text-decoration: underline;
+        }
+        
+        /* ===== Footer Section ===== */
+        .form-footer {
+            background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+            padding: 30px 40px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .footer-info {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .info-box {
+            background: white;
+            padding: 20px;
+            border-radius: var(--radius);
+            border-left: 4px solid var(--primary);
+            box-shadow: var(--shadow);
+        }
+        
+        .info-box-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 8px;
+        }
+        
+        .info-box-content {
+            font-size: 14px;
+            color: var(--gray-600);
+            line-height: 1.5;
+        }
+        
+        /* ===== Submit Button ===== */
+        .submit-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: var(--radius);
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 220px;
+            justify-content: center;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: var(--shadow);
+        }
+        
+        .submit-btn:disabled::before {
+            display: none;
+        }
+        
+        /* ===== Security Footer ===== */
+        .security-footer {
+            text-align: center;
+            padding: 20px;
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+        
+        .security-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .secure-badge {
+            background: var(--success);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .host-info {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+        
+        /* ===== Progress Bar ===== */
+        .progress-bar {
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+        
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .registration-header {
+                padding: 30px 20px;
+            }
+            
+            .header-title {
+                font-size: 28px;
+            }
+            
+            .header-subtitle {
+                font-size: 16px;
+            }
+            
+            .form-container {
+                padding: 30px 20px;
+            }
+            
+            .progress-steps {
+                padding: 30px 20px 0;
+            }
+            
+            .progress-steps::before {
+                left: 30px;
+                right: 30px;
+            }
+            
+            .form-footer {
+                padding: 20px;
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .footer-info {
+                min-width: 100%;
+            }
+            
+            .submit-btn {
+                min-width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .registration-header {
+                padding: 25px 15px;
+            }
+            
+            .company-brand {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .header-title {
+                font-size: 24px;
+            }
+            
+            .step-label {
+                font-size: 12px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="registration-wrapper">
+        <div class="registration-container">
+            <!-- Header Section -->
+            <header class="registration-header">
+                <div class="header-content">
+                    <div class="company-brand">
+                        <div class="company-logo">
+                            <i class="fas fa-store-alt"></i>
+                        </div>
+                        <div class="company-name">FieldMax Suppliers Limited</div>
+                    </div>
+                    
+                    <h1 class="header-title">Staff Registration Portal</h1>
+                    <p class="header-subtitle">
+                        Join the FieldMax team! Complete this form to apply for available positions. 
+                        All information is kept confidential and secure.
+                    </p>
+                </div>
+            </header>
+            
+            <!-- Progress Steps -->
+            <div class="progress-steps">
+                <div class="step active" id="step1">
+                    <div class="step-icon">1</div>
+                    <div class="step-label">Personal Info</div>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-icon">2</div>
+                    <div class="step-label">Documents</div>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-icon">3</div>
+                    <div class="step-label">Review & Submit</div>
+                </div>
+            </div>
+            
+            <!-- Form Container -->
+            <div class="form-container">
+                <!-- Messages Display -->
+                <div id="message" class="message"></div>
+                
+                <!-- Registration Form -->
+                <form id="registrationForm" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Step 1: Personal Information -->
+                    <section class="form-section" id="personalInfo">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <div>
+                                <h2 class="section-title">Personal Information</h2>
+                                <p class="section-subtitle">Enter your personal details accurately</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-grid">
+                            <!-- First Name -->
+                            <div class="form-group">
+                                <label for="id_first_name" class="required">First Name</label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                <div class="error-text">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ form.first_name.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Last Name -->
+                            <div class="form-group">
+                                <label for="id_last_name" class="required">Last Name</label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                <div class="error-text">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ form.last_name.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Email -->
+                            <div class="form-group">
+                                <label for="id_email" class="required">Email Address</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                <div class="error-text">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ form.email.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Phone -->
+                            <div class="form-group">
+                                <label for="id_phone" class="required">Phone Number</label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                <div class="error-text">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ form.phone.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- ID Number -->
+                            <div class="form-group">
+                                <label for="id_id_number" class="required">National ID / Passport Number</label>
+                                {{ form.id_number }}
+                                {% if form.id_number.errors %}
+                                <div class="error-text">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ form.id_number.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Position -->
+                            <div class="form-group">
+                                <label for="id_position" class="required">Position Applying For</label>
+                                {{ form.position }}
+                                {% if form.position.errors %}
+                                <div class="error-text">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ form.position.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Address -->
+                            <div class="form-group full-width">
+                                <label for="id_address">Residential Address</label>
+                                {{ form.address }}
+                            </div>
+                            
+                            <!-- Experience -->
+                            <div class="form-group full-width">
+                                <label for="id_experience">Previous Work Experience</label>
+                                {{ form.experience }}
+                                <small style="display: block; margin-top: 6px; color: var(--gray-500);">
+                                    Include company names, positions held, duration, and key responsibilities
+                                </small>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <!-- Step 2: Document Uploads -->
+                    <section class="form-section" id="documentUploads">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-file-upload"></i>
+                            </div>
+                            <div>
+                                <h2 class="section-title">Required Documents</h2>
+                                <p class="section-subtitle">Upload clear photos of your documents</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-grid">
+                            <!-- Passport Photo -->
+                            <div class="form-group full-width">
+                                <label for="id_passport_photo" class="required">Passport Size Photo</label>
+                                <div class="file-upload-container" id="passportUploadContainer">
+                                    <div class="file-upload-label">
+                                        <div class="file-upload-icon">
+                                            <i class="fas fa-camera"></i>
+                                        </div>
+                                        <div>
+                                            <div class="file-upload-text">Click to upload passport photo</div>
+                                            <div class="file-upload-hint">JPG or PNG • Max 2MB • Recommended: 2x2 inches</div>
+                                        </div>
+                                    </div>
+                                    {{ form.passport_photo }}
+                                    <div class="file-preview" id="passportPreview"></div>
+                                </div>
+                                {% if form.passport_photo.errors %}
+                                <div class="error-text">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ form.passport_photo.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- ID Front -->
+                            <div class="form-group">
+                                <label for="id_id_front" class="required">ID Front Photo</label>
+                                <div class="file-upload-container" id="idFrontUploadContainer">
+                                    <div class="file-upload-label">
+                                        <div class="file-upload-icon">
+                                            <i class="fas fa-id-card"></i>
+                                        </div>
+                                        <div>
+                                            <div class="file-upload-text">Front of ID</div>
+                                            <div class="file-upload-hint">Clear image of ID front side</div>
+                                        </div>
+                                    </div>
+                                    {{ form.id_front }}
+                                    <div class="file-preview" id="idFrontPreview"></div>
+                                </div>
+                                {% if form.id_front.errors %}
+                                <div class="error-text">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ form.id_front.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- ID Back -->
+                            <div class="form-group">
+                                <label for="id_id_back" class="required">ID Back Photo</label>
+                                <div class="file-upload-container" id="idBackUploadContainer">
+                                    <div class="file-upload-label">
+                                        <div class="file-upload-icon">
+                                            <i class="fas fa-id-card"></i>
+                                        </div>
+                                        <div>
+                                            <div class="file-upload-text">Back of ID</div>
+                                            <div class="file-upload-hint">Clear image of ID back side</div>
+                                        </div>
+                                    </div>
+                                    {{ form.id_back }}
+                                    <div class="file-preview" id="idBackPreview"></div>
+                                </div>
+                                {% if form.id_back.errors %}
+                                <div class="error-text">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ form.id_back.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <!-- Step 3: Declaration -->
+                    <section class="form-section" id="declaration">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div>
+                                <h2 class="section-title">Declaration & Agreement</h2>
+                                <p class="section-subtitle">Please read and accept the terms</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Terms Acceptance -->
+                        <div class="checkbox-group">
+                            {{ form.terms_accepted }}
+                            <label for="id_terms_accepted">
+                                I hereby declare that all information provided is true and accurate to the best of my knowledge. 
+                                I understand that any false information may lead to disqualification or termination of employment. 
+                                I authorize FieldMax Store to verify the information provided and conduct background checks if necessary.
+                            </label>
+                        </div>
+                        {% if form.terms_accepted.errors %}
+                        <div class="error-text" style="margin-top: -10px; margin-bottom: 20px;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.terms_accepted.errors.0 }}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Privacy Acceptance -->
+                        <div class="checkbox-group">
+                            {{ form.privacy_accepted }}
+                            <label for="id_privacy_accepted">
+                                I have read and agree to the <a href="#" target="_blank">Privacy Policy</a> and 
+                                <a href="#" target="_blank">Terms of Service</a> of FieldMax Store. I understand how my data will be used.
+                            </label>
+                        </div>
+                        {% if form.privacy_accepted.errors %}
+                        <div class="error-text" style="margin-top: -10px; margin-bottom: 20px;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.privacy_accepted.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </section>
+                </form>
+            </div>
+            
+            <!-- Footer Section -->
+            <footer class="form-footer">
+                <div class="footer-info">
+                    <div class="info-box">
+                        <div class="info-box-title">
+                            <i class="fas fa-info-circle"></i>
+                            Application Process
+                        </div>
+                        <div class="info-box-content">
+                            Your application will be reviewed within 3-5 business days. 
+                            You will receive an email notification once processed. 
+                            Keep your application reference safe for future inquiries.
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submitBtn" form="registrationForm">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Submit Application</span>
+                </button>
+            </footer>
+            
+            <!-- Security Footer -->
+            <div class="security-footer">
+                <div class="security-info">
+                    <span class="secure-badge">
+                        <i class="fas fa-lock"></i>
+                        SSL SECURED
+                    </span>
+                    <span id="currentHost"></span>
+                </div>
+                <div class="host-info">
+                    <i class="fas fa-globe"></i> This portal is securely hosted on Render • 
+                    All data is encrypted in transit
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== Initialize =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show current host
+            document.getElementById('currentHost').textContent = window.location.host;
+            
+            // Initialize form
+            initializeForm();
+            
+            // Initialize file uploads
+            initializeFileUploads();
+            
+            // Initialize step indicator
+            initializeStepIndicator();
+        });
+        
+        // ===== Form Initialization =====
+        function initializeForm() {
+            const form = document.getElementById('registrationForm');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Style Django form inputs
+            styleFormInputs();
+            
+            // Form submission handler
+            form.addEventListener('submit', handleFormSubmit);
+            
+            // Real-time validation
+            form.addEventListener('input', debounce(validateField, 300));
+        }
+        
+        // ===== File Upload Initialization =====
+        function initializeFileUploads() {
+            const fileConfigs = [
+                { inputId: 'id_passport_photo', containerId: 'passportUploadContainer', previewId: 'passportPreview' },
+                { inputId: 'id_id_front', containerId: 'idFrontUploadContainer', previewId: 'idFrontPreview' },
+                { inputId: 'id_id_back', containerId: 'idBackUploadContainer', previewId: 'idBackPreview' }
+            ];
+            
+            fileConfigs.forEach(config => setupFileUpload(config));
+        }
+        
+        function setupFileUpload({ inputId, containerId, previewId }) {
+            const input = document.getElementById(inputId);
+            const container = document.getElementById(containerId);
+            const preview = document.getElementById(previewId);
+            
+            // Hide default file input
+            if (input) {
+                input.classList.add('file-input');
+                
+                // Click container to trigger file input
+                container.addEventListener('click', (e) => {
+                    if (!e.target.closest('.file-remove-btn')) {
+                        input.click();
+                    }
+                });
+                
+                // Handle file selection
+                input.addEventListener('change', () => handleFileSelection(input, preview));
+                
+                // Drag and drop
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    container.addEventListener(eventName, preventDefaults, false);
+                });
+                
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    container.addEventListener(eventName, () => container.classList.add('dragover'), false);
+                });
+                
+                ['dragleave', 'drop'].forEach(eventName => {
+                    container.addEventListener(eventName, () => container.classList.remove('dragover'), false);
+                });
+                
+                container.addEventListener('drop', (e) => {
+                    const files = e.dataTransfer.files;
+                    input.files = files;
+                    handleFileSelection(input, preview);
+                });
+            }
+        }
+        
+        function handleFileSelection(input, preview) {
+            preview.innerHTML = '';
+            
+            if (input.files.length > 0) {
+                Array.from(input.files).forEach(file => {
+                    if (validateFile(file)) {
+                        createFilePreview(file, preview, input);
+                    }
+                });
+            }
+        }
+        
+        function validateFile(file) {
+            const maxSize = 2 * 1024 * 1024; // 2MB
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            
+            if (file.size > maxSize) {
+                showMessage(`File "${file.name}" exceeds 2MB limit`, 'error');
+                return false;
+            }
+            
+            if (!allowedTypes.includes(file.type)) {
+                showMessage(`File "${file.name}" must be an image (JPG, PNG, GIF)`, 'error');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        function createFilePreview(file, preview, input) {
+            const previewItem = document.createElement('div');
+            previewItem.className = 'file-preview-item';
+            
+            const fileSize = formatFileSize(file.size);
+            const fileName = file.name.length > 25 ? file.name.substring(0, 25) + '...' : file.name;
+            
+            previewItem.innerHTML = `
+                <i class="fas fa-file-image file-preview-icon"></i>
+                <div class="file-preview-info">
+                    <div class="file-preview-name">${fileName}</div>
+                    <div class="file-preview-size">${fileSize}</div>
+                </div>
+                <button type="button" class="file-remove-btn" title="Remove file">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            // Remove button handler
+            const removeBtn = previewItem.querySelector('.file-remove-btn');
+            removeBtn.addEventListener('click', () => {
+                previewItem.remove();
+                input.value = '';
+                if (preview.children.length === 0) {
+                    preview.innerHTML = '';
+                }
+            });
+            
+            preview.appendChild(previewItem);
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+        
+        // ===== Step Indicator =====
+        function initializeStepIndicator() {
+            window.addEventListener('scroll', updateStepIndicator);
+            updateStepIndicator(); // Initial update
+        }
+        
+        function updateStepIndicator() {
+            const sections = document.querySelectorAll('.form-section');
+            const scrollPosition = window.scrollY + 100;
+            
+            let activeStep = 1;
+            
+            sections.forEach((section, index) => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                
+                if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                    activeStep = index + 1;
+                }
+            });
+            
+            // Update steps
+            document.querySelectorAll('.step').forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                if (index + 1 < activeStep) {
+                    step.classList.add('completed');
+                } else if (index + 1 === activeStep) {
+                    step.classList.add('active');
+                }
+            });
+        }
+        
+        // ===== Form Submission =====
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const submitBtn = document.getElementById('submitBtn');
+            const originalContent = submitBtn.innerHTML;
+            
+            // Validate required files
+            if (!validateRequiredFiles()) {
+                showMessage('Please upload all required documents.', 'error');
+                return;
+            }
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Processing...</span>';
+            
+            try {
+                // Show progress
+                showUploadProgress();
+                
+                // Submit form
+                const formData = new FormData(form);
+                const response = await fetch('', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                // Update progress to 100%
+                updateProgressBar(100);
+                
+                // Handle response
+                setTimeout(() => {
+                    if (response.ok && result.success) {
+                        handleSuccess(result);
+                    } else {
+                        handleError(result);
+                    }
+                }, 500);
+                
+            } catch (error) {
+                handleNetworkError(error);
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalContent;
+            }
+        }
+        
+        function validateRequiredFiles() {
+            const requiredFiles = ['id_passport_photo', 'id_id_front', 'id_id_back'];
+            return requiredFiles.every(id => {
+                const input = document.getElementById(id);
+                return input && input.files.length > 0;
+            });
+        }
+        
+        function showUploadProgress() {
+            const messageDiv = document.getElementById('message');
+            messageDiv.style.display = 'block';
+            messageDiv.className = 'message info';
+            messageDiv.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 500; margin-bottom: 5px;">Uploading your application...</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="uploadProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Simulate progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 90) {
+                    clearInterval(interval);
+                    progress = 90;
+                }
+                updateProgressBar(progress);
+            }, 200);
+        }
+        
+        function updateProgressBar(percent) {
+            const progressBar = document.getElementById('uploadProgress');
+            if (progressBar) {
+                progressBar.style.width = percent + '%';
+            }
+        }
+        
+        function handleSuccess(result) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = 'message success';
+            messageDiv.innerHTML = `
+                <div style="display: flex; align-items: flex-start; gap: 20px;">
+                    <i class="fas fa-check-circle" style="font-size: 32px; margin-top: 4px;"></i>
+                    <div style="flex: 1;">
+                        <h3 style="margin-bottom: 10px; color: inherit;">✅ Application Submitted Successfully!</h3>
+                        <p style="margin-bottom: 8px;">${result.message}</p>
+                        <div style="background: rgba(255, 255, 255, 0.5); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                <div><strong>Application ID:</strong> ${result.application_id}</div>
+                                <div><strong>Name:</strong> ${result.data.name}</div>
+                                <div><strong>Position:</strong> ${result.data.position}</div>
+                                <div><strong>Date:</strong> ${result.data.application_date}</div>
+                            </div>
+                        </div>
+                        <p style="margin-top: 15px; font-size: 14px; opacity: 0.9;">${result.instructions}</p>
+                    </div>
+                </div>
+            `;
+            
+            // Clear form
+            document.getElementById('registrationForm').reset();
+            document.querySelectorAll('.file-preview').forEach(preview => preview.innerHTML = '');
+            
+            // Mark all steps as completed
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+                step.classList.add('completed');
+            });
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        function handleError(result) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = 'message error';
+            
+            let errorHTML = `
+                <div style="display: flex; align-items: flex-start; gap: 20px;">
+                    <i class="fas fa-exclamation-circle" style="font-size: 32px; margin-top: 4px;"></i>
+                    <div style="flex: 1;">
+                        <h3 style="margin-bottom: 10px; color: inherit;">❌ ${result.error || 'Submission Failed'}</h3>
+            `;
+            
+            if (result.errors) {
+                errorHTML += '<ul style="margin-top: 10px; padding-left: 20px;">';
+                for (const [field, error] of Object.entries(result.errors)) {
+                    const fieldName = field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    errorHTML += `<li><strong>${fieldName}:</strong> ${error}</li>`;
+                    
+                    // Highlight problematic field
+                    const fieldElement = document.getElementById(`id_${field}`);
+                    if (fieldElement) {
+                        fieldElement.classList.add('error');
+                        fieldElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+                errorHTML += '</ul>';
+            }
+            
+            errorHTML += `</div></div>`;
+            messageDiv.innerHTML = errorHTML;
+            
+            // Scroll to error message
+            messageDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function handleNetworkError(error) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = 'message error';
+            messageDiv.innerHTML = `
+                <div style="display: flex; align-items: flex-start; gap: 20px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 32px; margin-top: 4px;"></i>
+                    <div style="flex: 1;">
+                        <h3 style="margin-bottom: 10px; color: inherit;">❌ Network Error</h3>
+                        <p style="margin-bottom: 8px;">Please check your internet connection and try again.</p>
+                        <p style="font-size: 14px; opacity: 0.8;"><strong>Details:</strong> ${error.message}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ===== Form Styling =====
+        function styleFormInputs() {
+            // Add placeholders to Django form inputs
+            const inputs = document.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                // Add focus effect
+                input.addEventListener('focus', () => {
+                    input.parentElement.classList.add('focused');
+                });
+                
+                input.addEventListener('blur', () => {
+                    input.parentElement.classList.remove('focused');
+                });
+                
+                // Real-time validation styling
+                input.addEventListener('input', function() {
+                    if (this.hasAttribute('required') && !this.value.trim()) {
+                        this.classList.add('error');
+                    } else {
+                        this.classList.remove('error');
+                    }
+                });
+            });
+        }
+        
+        function validateField(e) {
+            const field = e.target;
+            if (field.hasAttribute('required') && !field.value.trim()) {
+                field.classList.add('error');
+                showError(field, 'This field is required');
+            } else {
+                field.classList.remove('error');
+                removeError(field);
+            }
+            
+            // Email validation
+            if (field.type === 'email' && field.value) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(field.value)) {
+                    field.classList.add('error');
+                    showError(field, 'Please enter a valid email address');
+                }
+            }
+            
+            // Phone validation (Kenyan format)
+            if (field.id === 'id_phone' && field.value) {
+                const phoneRegex = /^(\+254|0)[17]\d{8}$/;
+                if (!phoneRegex.test(field.value.replace(/\s/g, ''))) {
+                    field.classList.add('error');
+                    showError(field, 'Please enter a valid Kenyan phone number');
+                }
+            }
+        }
+        
+        function showError(field, message) {
+            let errorElement = field.parentElement.querySelector('.field-error');
+            if (!errorElement) {
+                errorElement = document.createElement('div');
+                errorElement.className = 'error-text field-error';
+                field.parentElement.appendChild(errorElement);
+            }
+            errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i>${message}`;
+        }
+        
+        function removeError(field) {
+            const errorElement = field.parentElement.querySelector('.field-error');
+            if (errorElement) {
+                errorElement.remove();
+            }
+        }
+        
+        function showMessage(text, type = 'info', duration = 5000) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.style.display = 'block';
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = text;
+            
+            if (type !== 'error' && duration > 0) {
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, duration);
+            }
+        }
+        
+        // ===== Utility Functions =====
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // Smooth scroll to sections
+        document.querySelectorAll('.step').forEach(step => {
+            step.addEventListener('click', function() {
+                const stepNum = this.querySelector('.step-icon').textContent;
+                const sectionId = ['personalInfo', 'documentUploads', 'declaration'][stepNum - 1];
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

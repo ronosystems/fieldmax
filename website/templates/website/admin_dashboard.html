@@ -2874,6 +2874,225 @@ strong[style*="background-color"] {
   padding: 0.35rem 0.65rem;
 }
 
+  /* Quick Actions Grid */
+  .quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .quick-action-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .quick-action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border-color: #3b82f6;
+  }
+
+  .action-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  .action-content h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #1f2937;
+  }
+
+  .action-content p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  /* Content Subsections */
+  .content-subsection {
+    display: none;
+  }
+
+  .content-subsection.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Processing Stats */
+  .processing-stats {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .processing-stat .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .processing-stat .stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+  }
+
+
+
+/* Staff Onboarding Styles */
+.staff-tabs {
+  display: flex;
+  gap: 1px;
+  background: #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.staff-tab {
+  flex: 1;
+  padding: 1rem;
+  background: white;
+  border: none;
+  border-bottom: 3px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.staff-tab:hover {
+  background: #f9fafb;
+  color: #374151;
+}
+
+.staff-tab.active {
+  background: white;
+  border-bottom-color: #3b82f6;
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.staff-tab .badge {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  margin-left: 4px;
+}
+
+.staff-section {
+  display: none;
+}
+
+.staff-section.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+.filter-bar {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Staff Table Actions */
+.staff-action-btn {
+  padding: 4px 8px;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 2px;
+}
+
+/* Photo Preview Thumbnail */
+.photo-thumbnail {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  border: 2px solid #e5e7eb;
+}
+
+.photo-thumbnail:hover {
+  transform: scale(1.1);
+  border-color: #3b82f6;
+}
+
+/* Quick Actions */
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.quick-action-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.quick-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: #3b82f6;
+}
+
+.quick-action-card .action-icon {
+  font-size: 2rem;
+  color: #3b82f6;
+  margin-bottom: 1rem;
+}
+
+.quick-action-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: #374151;
+}
+
+.quick-action-card p {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+
+
 
 </style>
 
@@ -3034,7 +3253,13 @@ strong[style*="background-color"] {
         <i class="bi bi-person-plus"></i>
         <span>Add User</span>
       </a>
-      
+
+      <!-- staff onboarding -->
+      <a href="#staff-onboarding" class="nav-item" data-section="staff-onboarding">
+        <i class="bi bi-person-check"></i>
+        <span>Staff Onboarding</span>
+      </a>
+
       <!-- Roles & Permissions -->
       <a href="#roles-permissions" class="nav-item" data-section="roles-permissions">
         <i class="bi bi-shield-check"></i>
@@ -5805,6 +6030,703 @@ strong[style*="background-color"] {
 </div>
 
 
+<!-- ======================================== -->
+<!-- ========== STAFF ONBOARDING ========== -->
+<!-- ======================================== -->
+<section id="staff-onboarding" class="content-section">
+  
+  <!-- Section Header -->
+  <div class="content-header">
+    <button class="mobile-sidebar-toggle" id="staffMobileSidebarToggle">
+      <i class="bi bi-list"></i>
+    </button>
+    <h1 class="page-title">Staff Onboarding Management</h1>
+    <div class="header-actions">
+      <button class="btn-action" onclick="refreshStaffData()">
+        <i class="bi bi-arrow-clockwise"></i>
+        <span>Refresh</span>
+      </button>
+      <a href="https://staff.fieldmaxstore.onrender.com" target="_blank" class="btn-action btn-primary">
+        <i class="bi bi-link-45deg"></i>
+        <span>Registration Portal</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="staff-tabs">
+    <button class="staff-tab active" onclick="showStaffSection('pending')">
+      <i class="bi bi-hourglass-split"></i>
+      <span>Pending</span>
+      <span class="badge bg-warning" id="pendingBadge">{{ pending_applications.count }}</span>
+    </button>
+    <button class="staff-tab" onclick="showStaffSection('approved')">
+      <i class="bi bi-check-circle"></i>
+      <span>Approved</span>
+      <span class="badge bg-success" id="approvedBadge">{{ approved_applications.count }}</span>
+    </button>
+    <button class="staff-tab" onclick="showStaffSection('rejected')">
+      <i class="bi bi-x-circle"></i>
+      <span>Rejected</span>
+      <span class="badge bg-danger" id="rejectedBadge">{{ rejected_applications.count }}</span>
+    </button>
+    <button class="staff-tab" onclick="showStaffSection('all')">
+      <i class="bi bi-people"></i>
+      <span>All Applications</span>
+      <span class="badge bg-info" id="allBadge">{{ all_applications.count }}</span>
+    </button>
+  </div>
+
+  <!-- Staff Onboarding Statistics -->
+  <div class="stats-grid">
+    <!-- Pending Applications -->
+    <div class="stat-card stat-card-warning" onclick="showStaffSection('pending')">
+      <div class="stat-icon">
+        <i class="bi bi-hourglass-split"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Pending Applications</span>
+        <h1 class="stat-value" id="pendingCount">{{ pending_applications.count }}</h1>
+        <div class="stat-dropdown">
+          <span class="stat-subtitle">Today: <span id="pendingToday">{{ pending_today.count }}</span></span>
+          <span class="stat-subtitle">This Week: <span id="pendingWeek">{{ pending_week.count }}</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Approved Staff -->
+    <div class="stat-card stat-card-success" onclick="showStaffSection('approved')">
+      <div class="stat-icon">
+        <i class="bi bi-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Approved Staff</span>
+        <h1 class="stat-value" id="approvedCount">{{ approved_applications.count }}</h1>
+        <div class="stat-dropdown">
+          <span class="stat-subtitle">Sales Assistants: <span id="salesCount">{{ sales_assistants.count }}</span></span>
+          <span class="stat-subtitle">Cashiers: <span id="cashierCount">{{ cashiers.count }}</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rejected Applications -->
+    <div class="stat-card stat-card-danger" onclick="showStaffSection('rejected')">
+      <div class="stat-icon">
+        <i class="bi bi-x-circle"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Rejected</span>
+        <h1 class="stat-value" id="rejectedCount">{{ rejected_applications.count }}</h1>
+        <div class="stat-dropdown">
+          <span class="stat-subtitle">This Month: <span id="rejectedMonth">{{ rejected_month.count }}</span></span>
+          <span class="stat-subtitle">Under Review: <span id="underReviewCount">{{ under_review.count }}</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Applications -->
+    <div class="stat-card stat-card-info">
+      <div class="stat-icon">
+        <i class="bi bi-people"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Total Applications</span>
+        <h1 class="stat-value" id="totalApplications">{{ all_applications.count }}</h1>
+        <div class="stat-dropdown">
+          <span class="stat-subtitle">Conversion Rate: <span id="conversionRate">{{ conversion_rate|floatformat:1 }}%</span></span>
+          <span class="stat-subtitle">Avg Time: <span id="avgProcessTime">{{ avg_process_time|floatformat:1 }} days</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search and Filter Bar -->
+  <div class="filter-bar mb-4">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" id="staffSearch" class="form-control" placeholder="Search by name, email, or ID..." onkeyup="searchStaff()">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select id="positionFilter" class="form-select" onchange="filterStaff()">
+          <option value="all">All Positions</option>
+          {% for value, label in position_choices %}
+          <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select id="dateFilter" class="form-select" onchange="filterStaff()">
+          <option value="all">All Time</option>
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-primary w-100" onclick="exportStaffData()">
+          <i class="bi bi-download"></i> Export
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
+  <!-- ======= PENDING APPLICATIONS ========= -->
+  <!-- ======================================== -->
+  <div id="pending-staff-section" class="staff-section active">
+    <div class="section-header">
+      <h2 class="section-title">
+        <i class="bi bi-hourglass-split"></i> Pending Applications
+        <span class="badge bg-warning ms-2" id="pendingCountDisplay">{{ pending_applications.count }}</span>
+      </h2>
+      <div class="section-actions">
+        <button class="btn btn-sm btn-outline-success" onclick="approveSelected()">
+          <i class="bi bi-check2-all"></i> Approve Selected
+        </button>
+      </div>
+    </div>
+
+    <!-- Pending Applications Table -->
+    <div class="data-card">
+      <div class="table-wrapper">
+        <table class="data-table" id="pendingTable">
+          <thead>
+            <tr>
+              <th style="width: 50px;">
+                <input type="checkbox" id="selectAllPending" class="form-check-input" onclick="toggleAllPending(this)">
+              </th>
+              <th><strong>APPLICANT</strong></th>
+              <th><strong>POSITION</strong></th>
+              <th><strong>CONTACT</strong></th>
+              <th><strong>APPLIED DATE</strong></th>
+              <th><strong>DOCUMENTS</strong></th>
+              <th><strong>STATUS</strong></th>
+              <th><strong>ACTIONS</strong></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for application in pending_applications %}
+            <tr>
+              <td>
+                <input type="checkbox" class="form-check-input staff-checkbox" value="{{ application.id }}">
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  {% if application.passport_photo %}
+                    <img src="{{ application.passport_photo.url }}" 
+                         alt="{{ application.full_name }}" 
+                         class="photo-thumbnail"
+                         onclick="viewImage('{{ application.passport_photo.url }}', '{{ application.full_name }}')">
+                  {% else %}
+                    <div class="photo-thumbnail bg-light d-flex align-items-center justify-content-center">
+                      <i class="bi bi-person text-muted"></i>
+                    </div>
+                  {% endif %}
+                  <div>
+                    <strong>{{ application.full_name }}</strong>
+                    <div class="text-muted small">{{ application.email }}</div>
+                  </div>
+                </div>
+              </td>
+              
+              <td>
+                <span class="badge bg-secondary">{{ application.get_position_display }}</span>
+              </td>
+              
+              <td>
+                <div class="text-nowrap">
+                  <i class="bi bi-telephone"></i> {{ application.phone }}<br>
+                  <small class="text-muted">ID: {{ application.id_number }}</small>
+                </div>
+              </td>
+              
+              <td>{{ application.application_date|date:"M d, Y H:i" }}</td>
+              
+              <td>
+                <div class="document-badges">
+                  {% if application.id_front %}
+                    <span class="badge bg-success" title="ID Front">
+                      <i class="bi bi-card-image"></i> ID-F
+                    </span>
+                  {% endif %}
+                  {% if application.id_back %}
+                    <span class="badge bg-success" title="ID Back">
+                      <i class="bi bi-card-image"></i> ID-B
+                    </span>
+                  {% endif %}
+                  <span class="badge bg-info" title="Passport">
+                    <i class="bi bi-image"></i> PP
+                  </span>
+                </div>
+              </td>
+              
+              <td>
+                <span class="badge bg-warning">{{ application.get_status_display }}</span>
+              </td>
+              
+              <td>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-primary staff-action-btn" 
+                          onclick="viewApplicationDetails('{{ application.id }}')">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-success staff-action-btn" 
+                          onclick="approveApplication('{{ application.id }}')">
+                    <i class="bi bi-check"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger staff-action-btn" 
+                          onclick="rejectApplication('{{ application.id }}')">
+                    <i class="bi bi-x"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">
+                <i class="bi bi-people" style="font-size: 3rem;"></i>
+                <p>No pending applications found</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
+  <!-- ========== APPROVED STAFF ============= -->
+  <!-- ======================================== -->
+  <div id="approved-staff-section" class="staff-section">
+    <div class="section-header">
+      <h2 class="section-title">
+        <i class="bi bi-check-circle"></i> Approved Staff
+        <span class="badge bg-success ms-2" id="approvedCountDisplay">{{ approved_applications.count }}</span>
+      </h2>
+    </div>
+
+    <!-- Approved Staff Table -->
+    <div class="data-card">
+      <div class="table-wrapper">
+        <table class="data-table" id="approvedTable">
+          <thead>
+            <tr>
+              <th><strong>APPLICANT</strong></th>
+              <th><strong>POSITION</strong></th>
+              <th><strong>CONTACT</strong></th>
+              <th><strong>APPROVED DATE</strong></th>
+              <th><strong>REVIEWED BY</strong></th>
+              <th><strong>STATUS</strong></th>
+              <th><strong>ACTIONS</strong></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for application in approved_applications %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  {% if application.passport_photo %}
+                    <img src="{{ application.passport_photo.url }}" 
+                         alt="{{ application.full_name }}" 
+                         class="photo-thumbnail"
+                         onclick="viewImage('{{ application.passport_photo.url }}', '{{ application.full_name }}')">
+                  {% else %}
+                    <div class="photo-thumbnail bg-light d-flex align-items-center justify-content-center">
+                      <i class="bi bi-person text-muted"></i>
+                    </div>
+                  {% endif %}
+                  <div>
+                    <strong>{{ application.full_name }}</strong>
+                    <div class="text-muted small">{{ application.email }}</div>
+                  </div>
+                </div>
+              </td>
+              
+              <td>
+                <span class="badge bg-secondary">{{ application.get_position_display }}</span>
+              </td>
+              
+              <td>
+                <div class="text-nowrap">
+                  <i class="bi bi-telephone"></i> {{ application.phone }}<br>
+                  <small class="text-muted">ID: {{ application.id_number }}</small>
+                </div>
+              </td>
+              
+              <td>
+                {% if application.review_date %}
+                  {{ application.review_date|date:"M d, Y" }}
+                {% else %}
+                  <span class="text-muted">Not reviewed</span>
+                {% endif %}
+              </td>
+              
+              <td>
+                {% if application.reviewed_by %}
+                  {{ application.reviewed_by.get_full_name|default:application.reviewed_by.username }}
+                {% else %}
+                  <span class="text-muted">Not assigned</span>
+                {% endif %}
+              </td>
+              
+              <td>
+                <span class="badge bg-success">{{ application.get_status_display }}</span>
+              </td>
+              
+              <td>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-primary staff-action-btn" 
+                          onclick="viewApplicationDetails('{{ application.id }}')">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-warning staff-action-btn" 
+                          onclick="undoApproval('{{ application.id }}')">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                  </button>
+                  {% if not application.created_user %}
+                  <button class="btn btn-sm btn-outline-info staff-action-btn" 
+                          onclick="assignRoleToApproved('{{ application.id }}')"
+                          title="Assign Role & Create User Account">
+                      <i class="bi bi-person-plus"></i>
+                  </button>
+                  {% endif %}
+                  {% if application.created_user %}
+                  <a href="/admin/auth/user/{{ application.created_user.id }}/change/" 
+                      class="btn btn-sm btn-outline-success staff-action-btn"
+                      target="_blank"
+                      title="Edit User Account">
+                       <i class="bi bi-pencil"></i>
+                  </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-5 text-muted">
+                <i class="bi bi-people" style="font-size: 3rem;"></i>
+                <p>No approved staff found</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
+  <!-- ======= REJECTED APPLICATIONS ========= -->
+  <!-- ======================================== -->
+  <div id="rejected-staff-section" class="staff-section">
+    <div class="section-header">
+      <h2 class="section-title">
+        <i class="bi bi-x-circle"></i> Rejected Applications
+        <span class="badge bg-danger ms-2" id="rejectedCountDisplay">{{ rejected_applications.count }}</span>
+      </h2>
+    </div>
+
+    <!-- Rejected Applications Table -->
+    <div class="data-card">
+      <div class="table-wrapper">
+        <table class="data-table" id="rejectedTable">
+          <thead>
+            <tr>
+              <th><strong>APPLICANT</strong></th>
+              <th><strong>POSITION</strong></th>
+              <th><strong>APPLIED DATE</strong></th>
+              <th><strong>REJECTED DATE</strong></th>
+              <th><strong>REASON</strong></th>
+              <th><strong>ACTIONS</strong></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for application in rejected_applications %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  {% if application.passport_photo %}
+                    <img src="{{ application.passport_photo.url }}" 
+                         alt="{{ application.full_name }}" 
+                         class="photo-thumbnail"
+                         onclick="viewImage('{{ application.passport_photo.url }}', '{{ application.full_name }}')">
+                  {% else %}
+                    <div class="photo-thumbnail bg-light d-flex align-items-center justify-content-center">
+                      <i class="bi bi-person text-muted"></i>
+                    </div>
+                  {% endif %}
+                  <div>
+                    <strong>{{ application.full_name }}</strong>
+                    <div class="text-muted small">{{ application.email }}</div>
+                  </div>
+                </div>
+              </td>
+              
+              <td>
+                <span class="badge bg-secondary">{{ application.get_position_display }}</span>
+              </td>
+              
+              <td>{{ application.application_date|date:"M d, Y" }}</td>
+              
+              <td>
+                {% if application.review_date %}
+                  {{ application.review_date|date:"M d, Y" }}
+                {% else %}
+                  <span class="text-muted">Not specified</span>
+                {% endif %}
+              </td>
+              
+              <td>
+                {% if application.review_notes %}
+                  <span class="text-danger small">{{ application.review_notes|truncatechars:50 }}</span>
+                {% else %}
+                  <span class="text-muted">No reason given</span>
+                {% endif %}
+              </td>
+              
+              <td>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-primary staff-action-btn" 
+                          onclick="viewApplicationDetails('{{ application.id }}')">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-success staff-action-btn" 
+                          onclick="reconsiderApplication('{{ application.id }}')">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center py-5 text-muted">
+                <i class="bi bi-people" style="font-size: 3rem;"></i>
+                <p>No rejected applications found</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
+  <!-- ========== ALL APPLICATIONS =========== -->
+  <!-- ======================================== -->
+  <div id="all-staff-section" class="staff-section">
+    <div class="section-header">
+      <h2 class="section-title">
+        <i class="bi bi-people"></i> All Applications
+        <span class="badge bg-info ms-2" id="allCountDisplay">{{ all_applications.count }}</span>
+      </h2>
+    </div>
+
+    <!-- All Applications Table -->
+    <div class="data-card">
+      <div class="table-wrapper">
+        <table class="data-table" id="allStaffTable">
+          <thead>
+            <tr>
+              <th><strong>APPLICANT</strong></th>
+              <th><strong>POSITION</strong></th>
+              <th><strong>PHONE</strong></th>
+              <th><strong>EMAIL</strong></th>
+              <th><strong>APPLIED</strong></th>
+              <th><strong>STATUS</strong></th>
+              <th><strong>PHOTO</strong></th>
+              <th><strong>ACTIONS</strong></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for application in all_applications %}
+            <tr>
+              <td>
+                <strong>{{ application.full_name }}</strong>
+                <div class="text-muted small">ID: {{ application.id_number }}</div>
+              </td>
+              
+              <td>
+                <span class="badge bg-secondary">{{ application.get_position_display }}</span>
+              </td>
+              
+              <td>{{ application.phone }}</td>
+              
+              <td>{{ application.email }}</td>
+              
+              <td>{{ application.application_date|date:"M d, Y" }}</td>
+              
+              <td>
+                <span class="badge bg-{{ application.get_status_badge }}">
+                  {{ application.get_status_display }}
+                </span>
+              </td>
+              
+              <td>
+                {% if application.passport_photo %}
+                  <img src="{{ application.passport_photo.url }}" 
+                       alt="{{ application.full_name }}" 
+                       class="photo-thumbnail"
+                       onclick="viewImage('{{ application.passport_photo.url }}', '{{ application.full_name }}')">
+                {% else %}
+                  <div class="photo-thumbnail bg-light d-flex align-items-center justify-content-center">
+                    <i class="bi bi-person text-muted"></i>
+                  </div>
+                {% endif %}
+              </td>
+              
+              <td>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-primary staff-action-btn" 
+                          onclick="viewApplicationDetails('{{ application.id }}')">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  {% if application.status == 'pending' %}
+                    <button class="btn btn-sm btn-outline-success staff-action-btn" 
+                            onclick="approveApplication('{{ application.id }}')">
+                      <i class="bi bi-check"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger staff-action-btn" 
+                            onclick="rejectApplication('{{ application.id }}')">
+                      <i class="bi bi-x"></i>
+                    </button>
+                  {% elif application.status == 'approved' %}
+                    <button class="btn btn-sm btn-outline-warning staff-action-btn" 
+                            onclick="undoApproval('{{ application.id }}')">
+                      <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                  {% elif application.status == 'rejected' %}
+                    <button class="btn btn-sm btn-outline-success staff-action-btn" 
+                            onclick="reconsiderApplication('{{ application.id }}')">
+                      <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">
+                <i class="bi bi-people" style="font-size: 3rem;"></i>
+                <p>No applications found</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+
+
+<!-- ======================================== -->
+<!-- ============ MODALS =================== -->
+<!-- ======================================== -->
+
+<!-- Application Details Modal -->
+<div class="modal fade" id="applicationDetailsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Application Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="applicationDetailsContent">
+        <!-- Dynamic content loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imagePreviewTitle">Document Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img src="" alt="Document" class="img-fluid rounded" id="previewImage" style="max-height: 70vh; max-width: 100%;">
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn btn-primary" id="downloadImage" download>
+          <i class="bi bi-download"></i> Download
+        </a>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x"></i> Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Role Assignment Modal -->
+<div class="modal fade" id="roleAssignmentModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="roleModalTitle">Assign Role & Create User</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="roleAssignmentContent">
+          <!-- Dynamic content will be loaded here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="assignRoleBtn" onclick="assignRoleAndCreateUser()">
+          <i class="bi bi-person-plus"></i> Create User Account
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- User Created Success Modal -->
+<div class="modal fade" id="userCreatedModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-check-circle"></i> User Account Created!
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-4">
+          <i class="bi bi-person-check" style="font-size: 3rem; color: #28a745;"></i>
+        </div>
+        <div id="userCredentials" class="alert alert-info">
+          <!-- Credentials will be displayed here -->
+        </div>
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle"></i>
+          <strong>Important:</strong> User should change password on first login.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" onclick="copyCredentials()">
+          <i class="bi bi-clipboard"></i> Copy Credentials
+        </button>
+        <a href="#" id="editUserLink" class="btn btn-primary" target="_blank">
+          <i class="bi bi-pencil"></i> Edit User
+        </a>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="location.reload()">
+          Close & Refresh
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 <!-- ============================= -->
@@ -6172,7 +7094,13 @@ strong[style*="background-color"] {
  </main>
 </div>
 
+<script>
+// Make roles available globally for JavaScript
+window.roles = JSON.parse('{{ roles_json|escapejs }}');
 
+// Debug: check if roles loaded
+console.log('Roles loaded:', window.roles ? window.roles.length : 0, 'roles');
+</script>
 
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -10009,9 +10937,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-    // ============================================
-    // ORDERS MANAGEMENT SECTION 🧾🧾🧾
-    // ============================================
+
+
+// ============================================
+// ORDERS MANAGEMENT SECTION 🧾🧾🧾
+// ============================================
 // Load orders when section is shown
 document.addEventListener('DOMContentLoaded', function() {
   loadOrders();
@@ -10443,6 +11373,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
+
+
+
+
 // ========================================
 /* ========================================
    LIVE PRODUCT TABLE UPDATER FOR FIELDMAX
@@ -10581,13 +11515,15 @@ function updateProductRow(product) {
 }
 
 
-// ======================================
+
+
+
+
+
 // ======================================
 /* ======================================
    UPDATE INVENTORY STATISTICS COUNTERS
    =================================== */
-// ======================================
-// ======================================
 
 function refreshInventoryCounters() {
     const rows = document.querySelectorAll(".product-row");
@@ -10610,17 +11546,6 @@ function refreshInventoryCounters() {
     document.getElementById("lowStockCount").innerText = lowstock;
     document.getElementById("outOfStockCount").innerText = outofstock;
 }
-
-/* ======================================================
-   CALL THIS AFTER SALE OR REVERSAL API RESPONDS
-   ====================================================== */
-/*
-fetch('/reverse-sale/12/', { method: 'POST' })
-    .then(r => r.json())
-    .then(data => {
-        updateProductRow(data.product);
-    });
-*/
 
 
 // ====================================
@@ -11215,15 +12140,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // DASHBOARD AUTO-RELOAD SYSTEM
 // ====================================
 // ====================================
-
-/**
- * Auto-reload system for Fieldmax Dashboard
- * Provides multiple strategies for keeping data fresh
- */
-
-// ============================================
-// STRATEGY 1: EVENT-BASED RELOAD
-// ============================================
 const DashboardReloader = {
   // Track last update time
   lastUpdate: Date.now(),
@@ -11572,7 +12488,7 @@ const DashboardReloader = {
   },
   
   // Get user role badge
-  getUserRoleBadge: function(role) {
+  getUserRoleBadge: function(role) {        
     const badges = {
       'Admin': '<span class="badge" style="background: #ef4444; color: white;"><i class="bi bi-shield-fill"></i> Admin</span>',
       'Manager': '<span class="badge" style="background: #3b82f6; color: white;"><i class="bi bi-person-badge"></i> Manager</span>',
@@ -11586,7 +12502,6 @@ const DashboardReloader = {
 // ============================================
 // STRATEGY 2: AUTO-RELOAD AFTER OPERATIONS
 // ============================================
-
 // Extend existing form submission handlers
 function enhanceFormSubmissions() {
   // Product form
@@ -12624,6 +13539,605 @@ function preparePrintData() {
     
     console.log('✅ Print Module Ready - Individual quantities in table only');
 });
+
+
+
+
+
+
+
+
+
+
+
+// ====================================
+// STAFF ONBOARDING MODULE
+// ====================================
+
+// Show different sections
+function showStaffSection(section) {
+    // Hide all sections
+    document.querySelectorAll('.staff-section').forEach(sec => {
+        sec.classList.remove('active');
+    });
+    
+    // Remove active class from tabs
+    document.querySelectorAll('.staff-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Show selected section
+    const sectionId = `${section}-staff-section`;
+    const sectionElement = document.getElementById(sectionId);
+    if (sectionElement) {
+        sectionElement.classList.add('active');
+    }
+    
+    // Activate corresponding tab
+    event.target.closest('.staff-tab').classList.add('active');
+}
+
+// View application details
+function viewApplicationDetails(applicationId) {
+    fetch(`/staff/application/${applicationId}/details/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+            
+            // Build modal content
+            const content = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Personal Information</h6>
+                        <table class="table table-sm">
+                            <tr><th>Full Name:</th><td>${data.full_name}</td></tr>
+                            <tr><th>Email:</th><td>${data.email}</td></tr>
+                            <tr><th>Phone:</th><td>${data.phone}</td></tr>
+                            <tr><th>ID Number:</th><td>${data.id_number}</td></tr>
+                            <tr><th>Address:</th><td>${data.address || 'N/A'}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Application Details</h6>
+                        <table class="table table-sm">
+                            <tr><th>Position:</th><td>${data.position}</td></tr>
+                            <tr><th>Applied:</th><td>${data.application_date}</td></tr>
+                            <tr><th>Status:</th><td><span class="badge bg-${data.status_badge}">${data.status_display}</span></td></tr>
+                            ${data.reviewed_by ? `<tr><th>Reviewed By:</th><td>${data.reviewed_by}</td></tr>` : ''}
+                        </table>
+                    </div>
+                </div>
+                
+                ${data.experience ? `
+                <div class="mt-3">
+                    <h6 class="text-muted">Experience</h6>
+                    <p>${data.experience}</p>
+                </div>
+                ` : ''}
+                
+                ${data.review_notes ? `
+                <div class="mt-3">
+                    <h6 class="text-muted">Review Notes</h6>
+                    <p>${data.review_notes}</p>
+                </div>
+                ` : ''}
+                
+                <div class="mt-3">
+                    <h6 class="text-muted">Documents</h6>
+                    <div class="d-flex gap-2">
+                        ${data.passport_photo ? `
+                            <img src="${data.passport_photo}" alt="Passport" class="img-thumbnail" style="max-width: 150px; cursor: pointer;" 
+                                 onclick="viewImage('${data.passport_photo}', 'Passport Photo')">
+                        ` : '<span class="text-muted">No passport photo</span>'}
+                        
+                        ${data.id_front ? `
+                            <img src="${data.id_front}" alt="ID Front" class="img-thumbnail" style="max-width: 150px; cursor: pointer;" 
+                                 onclick="viewImage('${data.id_front}', 'ID Front')">
+                        ` : ''}
+                        
+                        ${data.id_back ? `
+                            <img src="${data.id_back}" alt="ID Back" class="img-thumbnail" style="max-width: 150px; cursor: pointer;" 
+                                 onclick="viewImage('${data.id_back}', 'ID Back')">
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('applicationDetailsContent').innerHTML = content;
+            const modal = new bootstrap.Modal(document.getElementById('applicationDetailsModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to load application details');
+        });
+}
+
+// View image in modal
+function viewImage(imageUrl, title) {
+    document.getElementById('imagePreviewTitle').textContent = title;
+    document.getElementById('previewImage').src = imageUrl;
+    document.getElementById('downloadImage').href = imageUrl;
+    
+    const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    modal.show();
+}
+
+// Approve application
+// Store current application data for role assignment
+let currentApplicationData = null;
+
+// Approve application
+function approveApplication(applicationId) {
+    if (!confirm('Are you sure you want to approve this application?')) {
+        return;
+    }
+    
+    fetch(`/staff/application/${applicationId}/approve/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.show_role_modal) {
+                // Show role assignment modal
+                showRoleAssignmentModal(data.application_data);
+            } else {
+                alert(data.message || 'Application approved successfully!');
+                location.reload();
+            }
+        } else {
+            alert('Error: ' + (data.error || 'Failed to approve application'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to approve application');
+    });
+}
+
+// Show role assignment modal
+function showRoleAssignmentModal(applicationData) {
+    currentApplicationData = applicationData;
+    
+    // Show loading state
+    const content = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading roles...</p>
+        </div>
+    `;
+    
+    document.getElementById('roleAssignmentContent').innerHTML = content;
+    document.getElementById('roleModalTitle').textContent = `Assign Role to ${applicationData.full_name}`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('roleAssignmentModal'));
+    modal.show();
+    
+    // Fetch roles from API
+    fetch('/staff/application/roles/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.roles && data.roles.length > 0) {
+                showRoleSelectionForm(data.roles, applicationData);
+            } else {
+                showNoRolesError(applicationData);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading roles:', error);
+            showNoRolesError(applicationData);
+        });
+}
+
+// Show role selection form
+function showRoleSelectionForm(roles, applicationData) {
+    const content = `
+        <div class="mb-3">
+            <label class="form-label"><strong>Applicant:</strong></label>
+            <div class="alert alert-light">
+                <strong>${applicationData.full_name}</strong><br>
+                <small class="text-muted">
+                    ${applicationData.email}<br>
+                    ${applicationData.phone} | ID: ${applicationData.id_number}
+                </small>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label"><strong>Position Applied:</strong></label>
+            <p class="form-control-plaintext">${applicationData.position}</p>
+        </div>
+        
+        <div class="mb-3">
+            <label for="roleSelect" class="form-label"><strong>Assign Role *</strong></label>
+            <select id="roleSelect" class="form-select" required>
+                <option value="">Select a role...</option>
+                ${roles.map(role => `
+                    <option value="${role.id}">${role.name}</option>
+                `).join('')}
+            </select>
+            <div class="form-text">This will create a user account with default credentials.</div>
+        </div>
+        
+        <div class="alert alert-warning small">
+            <i class="bi bi-info-circle"></i>
+            <strong>Default credentials:</strong><br>
+            • Username: ${applicationData.phone.replace(/\D/g, '')}<br>
+            • Password: ${applicationData.id_number}<br>
+            • User will be prompted to change password on first login.
+        </div>
+    `;
+    
+    document.getElementById('roleAssignmentContent').innerHTML = content;
+    document.getElementById('assignRoleBtn').style.display = 'block';
+}
+
+// Show error when no roles found
+function showNoRolesError(applicationData) {
+    const content = `
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>No roles found in system!</strong><br>
+            Please create roles first in the admin panel.
+        </div>
+        <div class="alert alert-info">
+            <strong>Suggested credentials for manual creation:</strong><br>
+            • Username: ${applicationData.phone.replace(/\D/g, '')}<br>
+            • Password: ${applicationData.id_number}<br>
+            • Email: ${applicationData.email}
+        </div>
+        <div class="text-center mt-3">
+            <a href="/admin/users/role/add/" class="btn btn-primary" target="_blank">
+                <i class="bi bi-plus-circle"></i> Create New Role
+            </a>
+        </div>
+    `;
+    
+    document.getElementById('roleAssignmentContent').innerHTML = content;
+    document.getElementById('assignRoleBtn').style.display = 'none';
+}
+
+// Assign role to already approved application
+function assignRoleToApproved(applicationId) {
+    // First, get application details
+    fetch(`/staff/application/${applicationId}/details/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+            
+            // Show role assignment modal with application data
+            showRoleAssignmentModal({
+                id: applicationId,
+                full_name: data.full_name,
+                email: data.email,
+                phone: data.phone,
+                id_number: data.id_number,
+                position: data.position
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to load application details');
+        });
+}
+
+// Assign role and create user
+function assignRoleAndCreateUser() {
+    const roleSelect = document.getElementById('roleSelect');
+    const roleId = roleSelect ? roleSelect.value : null;
+    
+    if (!roleId) {
+        alert('Please select a role first.');
+        roleSelect.focus();
+        return;
+    }
+    
+    const btn = document.getElementById('assignRoleBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Creating User...';
+    btn.disabled = true;
+    
+    fetch('/staff/application/assign-role/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            application_id: currentApplicationData.id,
+            role_id: roleId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close role assignment modal
+            const roleModal = bootstrap.Modal.getInstance(document.getElementById('roleAssignmentModal'));
+            roleModal.hide();
+            
+            // Show success modal with credentials
+            showUserCreatedModal(data.credentials, data.user_id);
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create user account'));
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to create user account');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+// Show user created success modal
+function showUserCreatedModal(credentials, userId) {
+    const credentialsHtml = `
+        <h6>Login Credentials:</h6>
+        <div class="credentials-box">
+            <div class="mb-2">
+                <strong>Username:</strong>
+                <code class="d-block bg-light p-2 rounded">${credentials.username}</code>
+            </div>
+            <div class="mb-2">
+                <strong>Password:</strong>
+                <code class="d-block bg-light p-2 rounded">${credentials.password}</code>
+            </div>
+            <div class="mb-2">
+                <strong>Email:</strong>
+                <code class="d-block bg-light p-2 rounded">${credentials.email}</code>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('userCredentials').innerHTML = credentialsHtml;
+    document.getElementById('editUserLink').href = `/admin/auth/user/${userId}/change/`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('userCreatedModal'));
+    modal.show();
+}
+
+// Copy credentials to clipboard
+function copyCredentials() {
+    const username = document.querySelector('#userCredentials code:nth-child(1)').textContent;
+    const password = document.querySelector('#userCredentials code:nth-child(2)').textContent;
+    const email = document.querySelector('#userCredentials code:nth-child(3)').textContent;
+    
+    const text = `Username: ${username}\nPassword: ${password}\nEmail: ${email}`;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Credentials copied to clipboard!');
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+        alert('Failed to copy credentials. Please copy manually.');
+    });
+}
+
+// Get roles endpoint (add to your views.py)
+function getRolesForModal() {
+    // This would need a corresponding Django view
+    return [];
+}
+
+// Reject application
+function rejectApplication(applicationId) {
+    const reason = prompt('Please enter the reason for rejection:');
+    
+    if (!reason) {
+        return;
+    }
+    
+    fetch(`/staff/application/${applicationId}/reject/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ reason: reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'Application rejected');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to reject application'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to reject application');
+    });
+}
+
+// Undo approval
+function undoApproval(applicationId) {
+    if (!confirm('Are you sure you want to undo this approval?')) {
+        return;
+    }
+    
+    fetch(`/staff/application/${applicationId}/undo-approval/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'Approval undone');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to undo approval'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to undo approval');
+    });
+}
+
+// Reconsider rejected application
+function reconsiderApplication(applicationId) {
+    if (!confirm('Move this application back to pending for reconsideration?')) {
+        return;
+    }
+    
+    fetch(`/staff/application/${applicationId}/reconsider/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'Application moved to pending');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to reconsider application'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to reconsider application');
+    });
+}
+
+// Toggle all checkboxes in pending section
+function toggleAllPending(checkbox) {
+    const checkboxes = document.querySelectorAll('#pendingTable .staff-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+    });
+}
+
+// Approve selected applications
+function approveSelected() {
+    const selectedCheckboxes = document.querySelectorAll('#pendingTable .staff-checkbox:checked');
+    const applicationIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+    
+    if (applicationIds.length === 0) {
+        alert('Please select at least one application to approve');
+        return;
+    }
+    
+    if (!confirm(`Approve ${applicationIds.length} application(s)?`)) {
+        return;
+    }
+    
+    fetch('/staff/applications/batch-approve/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ application_ids: applicationIds })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || `${data.approved_count} application(s) approved`);
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to approve applications'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to approve applications');
+    });
+}
+
+// Search staff
+function searchStaff() {
+    const searchTerm = document.getElementById('staffSearch').value.toLowerCase();
+    const tables = ['pendingTable', 'approvedTable', 'rejectedTable', 'allStaffTable'];
+    
+    tables.forEach(tableId => {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+        
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    });
+}
+
+// Filter staff by position and date
+function filterStaff() {
+    const positionFilter = document.getElementById('positionFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    
+    // This would need more complex implementation
+    // For now, just reload the page with filters as query params
+    const params = new URLSearchParams();
+    if (positionFilter !== 'all') params.append('position', positionFilter);
+    if (dateFilter !== 'all') params.append('date_range', dateFilter);
+    
+    if (params.toString()) {
+        window.location.search = params.toString();
+    }
+}
+
+// Refresh data
+function refreshStaffData() {
+    location.reload();
+}
+
+// Export staff data
+function exportStaffData() {
+    alert('Export functionality coming soon!');
+    // TODO: Implement CSV export
+}
+
+// Get CSRF token from cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Staff onboarding page loaded');
+    
+    // Add any initialization code here
+    // For example, auto-refresh every 5 minutes
+    // setInterval(refreshStaffData, 300000);
+});
+
+
+
+
+
 
 </script>
 

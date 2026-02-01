@@ -25,6 +25,8 @@ from django.views.decorators.cache import cache_page
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from django.utils.timesince import timesince
+from staff_registration.models import StaffApplication  # ⭐ ADD THIS LINE
+from datetime import timedelta  # ⭐ ADD THIS IF NOT ALREADY IMPORTED
 
 
 
@@ -1451,6 +1453,12 @@ def approve_order(request, order_id):
             'message': f'Failed to approve order: {str(e)}'
         }, status=500)
 
+
+
+
+
+
+
 # ============================================
 # ETR GENERATION HELPER
 # ============================================
@@ -2150,6 +2158,512 @@ def get_sales_chart_data(request):
         }
     }
 
+
+
+
+from django.shortcuts import render, redirect
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+from datetime import timedelta
+from .forms import StaffApplicationForm
+import json
+
+
+def is_staff_subdomain(request):
+    """Check if request is coming from staff subdomain"""
+    host = request.get_host()
+    return 'staff.fieldmaxstore' in host
+
+
+@csrf_exempt
+def staff_registration_view(request):
+    """Handle staff registration with file uploads"""
+    
+    # Check domain for production
+    host = request.get_host()
+    is_staff_domain = 'staff.fieldmaxstore.onrender.com' in host
+    is_local = '127.0.0.1' in host or 'localhost' in host
+    
+    # For local testing, allow access
+    if not (is_staff_domain or is_local):
+        return render(request, 'staff_registration/wrong_domain.html')
+    
+    if request.method == 'POST':
+        try:
+            # Handle multipart form data (file uploads)
+            if request.content_type == 'multipart/form-data':
+                form = StaffApplicationForm(request.POST, request.FILES)
+                
+                if form.is_valid():
+                    # Save application
+                    application = form.save(commit=False)
+                    
+                    # Add metadata
+                    application.ip_address = get_client_ip(request)
+                    application.user_agent = request.META.get('HTTP_USER_AGENT', '')
+                    
+                    # Save to database
+                    application.save()
+                    
+                    # Generate application ID
+                    application_id = f"APP{application.id:06d}"
+                    
+                    # Prepare success response
+                    response_data = {
+                        'success': True,
+                        'message': 'Application submitted successfully!',
+                        'application_id': application_id,
+                        'data': {
+                            'name': f"{application.first_name} {application.last_name}",
+                            'email': application.email,
+                            'position': application.get_position_display(),
+                            'application_date': application.application_date.strftime('%Y-%m-%d %H:%M:%S'),
+                            'status': application.get_status_display(),
+                        },
+                        'instructions': 'Your application is under review. You will be notified via email within 3-5 business days.'
+                    }
+                    
+                    # TODO: Send confirmation email
+                    # send_confirmation_email(application)
+                    
+                    return JsonResponse(response_data)
+                else:
+                    # Return form errors
+                    errors = {}
+                    for field, error_list in form.errors.items():
+                        errors[field] = error_list[0] if error_list else 'Invalid value'
+                    
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Please correct the errors below.',
+                        'errors': errors
+                    }, status=400)
+            
+            # Handle JSON data (for testing)
+            else:
+                data = json.loads(request.body) if request.body else {}
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Application received (JSON mode)',
+                    'data': data,
+                    'note': 'In production, use multipart/form-data for file uploads.'
+                })
+                
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"Registration error: {e}\n{error_details}")
+            
+            return JsonResponse({
+                'success': False,
+                'error': f'Server error: {str(e)}'
+            }, status=500)
+    
+    # GET request - show the form
+    form = StaffApplicationForm()
+    context = {
+        'form': form,
+        'current_host': host,
+        'is_production': is_staff_domain,
+    }
+    return render(request, 'staff_registration/form.html', context)
+
+
+def get_client_ip(request):
+    """Get client IP address"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
+def check_application_status(request, reference_id):
+    """Check application status"""
+    try:
+        # Extract ID from reference (APP000001)
+        app_id = int(reference_id.replace('APP', ''))
+        application = StaffApplication.objects.get(id=app_id)
+        
+        return JsonResponse({
+            'status': application.status,
+            'status_display': application.get_status_display(),
+            'name': application.full_name(),
+            'position': application.get_position_display(),
+            'application_date': application.application_date.strftime('%Y-%m-%d'),
+            'review_date': application.review_date.strftime('%Y-%m-%d') if application.review_date else None,
+            'review_notes': application.review_notes,
+        })
+    except (ValueError, StaffApplication.DoesNotExist):
+        return JsonResponse({
+            'error': 'Application not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'error': str(e)
+        }, status=500)
+
+
+
+
+@login_required
+def staff_onboarding_view(request):
+    """Main staff onboarding dashboard view"""
+    
+    # Get all applications
+    all_applications = StaffApplication.objects.all()
+    
+    # Filter by status
+    pending_applications = StaffApplication.objects.filter(status='pending')
+    approved_applications = StaffApplication.objects.filter(status='approved')
+    rejected_applications = StaffApplication.objects.filter(status='rejected')
+    under_review = StaffApplication.objects.filter(status='under_review')
+    
+    # Today's date
+    today = timezone.now().date()
+    
+    # Statistics
+    pending_today = pending_applications.filter(application_date__date=today)
+    pending_week = pending_applications.filter(
+        application_date__gte=today - timedelta(days=7)
+    )
+    
+    rejected_month = rejected_applications.filter(
+        review_date__month=today.month,
+        review_date__year=today.year
+    )
+    
+    # Position counts
+    sales_assistants = approved_applications.filter(position='sales_assistant')
+    cashiers = approved_applications.filter(position='cashier')
+    
+    # Calculate conversion rate
+    total_applications = all_applications.count()
+    approved_count = approved_applications.count()
+    conversion_rate = (approved_count / total_applications * 100) if total_applications > 0 else 0
+    
+    # Calculate average processing time
+    avg_process_time = 2.5
+    
+    context = {
+        # Applications
+        'all_applications': all_applications,
+        'pending_applications': pending_applications,
+        'approved_applications': approved_applications,
+        'rejected_applications': rejected_applications,
+        'under_review': under_review,
+        
+        # Statistics
+        'pending_today': pending_today,
+        'pending_week': pending_week,
+        'rejected_month': rejected_month,
+        'sales_assistants': sales_assistants,
+        'cashiers': cashiers,
+        'conversion_rate': conversion_rate,
+        'avg_process_time': avg_process_time,
+        
+        # Choices for dropdown
+        'position_choices': StaffApplication.POSITION_CHOICES,
+    }
+    
+    # ⭐ CORRECTED - render the admin dashboard template
+    return render(request, 'website/admin_dashboard.html', context)
+
+
+
+
+@login_required
+def application_details(request, pk):
+    """Get application details as JSON"""
+    try:
+        application = StaffApplication.objects.get(pk=pk)
+        data = {
+            'full_name': application.full_name(),
+            'email': application.email,
+            'phone': application.phone,
+            'id_number': application.id_number,
+            'address': application.address,
+            'position': application.get_position_display(),
+            'experience': application.experience,
+            'application_date': application.application_date.strftime('%Y-%m-%d %H:%M'),
+            'status_display': application.get_status_display(),
+            'status_badge': application.get_status_badge(),
+            'reviewed_by': application.reviewed_by.get_full_name() if application.reviewed_by else None,
+            'review_notes': application.review_notes,
+            'passport_photo': application.passport_photo.url if application.passport_photo else '',
+            'id_front': application.id_front.url if application.id_front else '',
+            'id_back': application.id_back.url if application.id_back else '',
+        }
+        return JsonResponse(data)
+    except StaffApplication.DoesNotExist:
+        return JsonResponse({'error': 'Application not found'}, status=404)
+
+
+@login_required
+@require_POST
+def approve_application(request, pk):
+    """Approve application but don't create user yet - wait for role assignment"""
+    try:
+        application = StaffApplication.objects.get(pk=pk)
+        
+        # Check if user already exists
+        user_exists = User.objects.filter(email=application.email).exists()
+        if user_exists:
+            return JsonResponse({
+                'success': False,
+                'error': f'A user with email {application.email} already exists.'
+            }, status=400)
+        
+        # Just update application status for now
+        application.status = 'approved'
+        application.reviewed_by = request.user
+        application.review_date = timezone.now()
+        application.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Application approved! Now assign a role to create user account.',
+            'application_id': application.id,
+            'application_data': {
+                'id': application.id,
+                'full_name': application.full_name(),
+                'email': application.email,
+                'phone': application.phone,
+                'id_number': application.id_number,
+                'position': application.get_position_display(),
+            },
+            'show_role_modal': True  # Signal to show role assignment modal
+        })
+        
+    except StaffApplication.DoesNotExist:
+        return JsonResponse({'error': 'Application not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def reject_application(request, pk):
+    """Reject a staff application"""
+    try:
+        data = json.loads(request.body)
+        reason = data.get('reason', 'No reason provided')
+        
+        application = StaffApplication.objects.get(pk=pk)
+        application.status = 'rejected'
+        application.reviewed_by = request.user
+        application.review_date = timezone.now()
+        application.review_notes = reason
+        application.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Application for {application.full_name()} rejected.'
+        })
+    except StaffApplication.DoesNotExist:
+        return JsonResponse({'error': 'Application not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def undo_approval(request, pk):
+    """Undo approval and set back to pending"""
+    try:
+        application = StaffApplication.objects.get(pk=pk)
+        application.status = 'pending'
+        application.reviewed_by = None
+        application.review_date = None
+        application.review_notes = ''
+        application.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Approval for {application.full_name()} has been undone.'
+        })
+    except StaffApplication.DoesNotExist:
+        return JsonResponse({'error': 'Application not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def reconsider_application(request, pk):
+    """Reconsider a rejected application"""
+    try:
+        application = StaffApplication.objects.get(pk=pk)
+        application.status = 'pending'
+        application.reviewed_by = None
+        application.review_date = None
+        application.review_notes = ''
+        application.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Application for {application.full_name()} moved back to pending for reconsideration.'
+        })
+    except StaffApplication.DoesNotExist:
+        return JsonResponse({'error': 'Application not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def batch_approve(request):
+    """Batch approve multiple applications"""
+    try:
+        data = json.loads(request.body)
+        application_ids = data.get('application_ids', [])
+        
+        if not application_ids:
+            return JsonResponse({'error': 'No applications selected'}, status=400)
+        
+        applications = StaffApplication.objects.filter(id__in=application_ids, status='pending')
+        approved_count = 0
+        
+        for application in applications:
+            application.status = 'approved'
+            application.reviewed_by = request.user
+            application.review_date = timezone.now()
+            application.save()
+            approved_count += 1
+        
+        return JsonResponse({
+            'success': True,
+            'approved_count': approved_count,
+            'message': f'{approved_count} application(s) approved successfully!'
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+
+@login_required
+@require_GET
+def get_roles(request):
+    """Get all roles for role assignment modal"""
+    from users.models import Role
+    
+    roles = Role.objects.all().values('id', 'name')
+    
+    return JsonResponse({
+        'success': True,
+        'roles': list(roles)
+    })
+
+
+@login_required
+@require_POST
+def assign_role_create_user(request):
+    """Assign role and create user account for approved application"""
+    try:
+        data = json.loads(request.body)
+        application_id = data.get('application_id')
+        role_id = data.get('role_id')
+        
+        application = StaffApplication.objects.get(id=application_id)
+        
+        # Check if application is approved
+        if application.status != 'approved':
+            return JsonResponse({
+                'success': False,
+                'error': 'Application must be approved before creating user account.'
+            }, status=400)
+        
+        # Check if user already exists for this application
+        if application.created_user:
+            return JsonResponse({
+                'success': False,
+                'error': 'User account already exists for this application.'
+            }, status=400)
+        
+        # Get role
+        from users.models import Role
+        role = Role.objects.get(id=role_id) if role_id else None
+        
+        # Generate username from phone number - DIGITS ONLY
+        # Remove all non-digit characters
+        phone_username = ''.join(filter(str.isdigit, application.phone))
+        
+        # Ensure we have at least 10 digits (standard phone number length)
+        if len(phone_username) < 10:
+            # Pad with zeros or use as is
+            phone_username = phone_username.zfill(10)
+        
+        # Take last 10 digits (in case of country codes like +254722000000)
+        username = phone_username[-10:]  # Just the phone number digits
+        
+        # Check if username exists, add counter if needed
+        base_username = username
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"  # Append counter to phone number
+            counter += 1
+        
+        # Default password: ID number (or phone if no ID)
+        default_password = application.id_number or phone_username
+        
+        with transaction.atomic():
+            # Create user
+            user = User.objects.create_user(
+                username=username,  # Just phone number like "0722000000"
+                email=application.email,
+                first_name=application.first_name,
+                last_name=application.last_name,
+                password=default_password,
+                is_staff=True,  # Make them staff
+                is_active=True
+            )
+            
+            # Create/update profile with role
+            profile, created = Profile.objects.get_or_create(user=user)
+            profile.role = role
+            profile.phone_number = application.phone
+            profile.id_number = application.id_number
+            
+            # If there's a passport photo, copy it
+            if application.passport_photo:
+                profile.passport_image = application.passport_photo
+                
+            profile.save()
+            
+            # Link application to created user
+            application.created_user = user
+            application.save()
+        
+        # Prepare login credentials for display
+        credentials = {
+            'username': username,
+            'password': default_password,
+            'email': application.email,
+            'role': role.name if role else 'No role assigned'
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'User account created for {application.full_name()}!',
+            'credentials': credentials,
+            'user_id': user.id,
+        })
+        
+    except StaffApplication.DoesNotExist:
+        return JsonResponse({'error': 'Application not found'}, status=404)
+    except Role.DoesNotExist:
+        return JsonResponse({'error': 'Role not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+
+
 # ============================================
 # ROLE BASED LOGIN VIEW
 # ============================================
@@ -2537,6 +3051,64 @@ def admin_dashboard(request):
     context["stockentries"] = StockEntry.objects.select_related(
         "product", "created_by"
     ).order_by("-created_at")[:50]
+
+
+
+
+
+    # ============================================
+    # STAFF ONBOARDING DATA
+    # ============================================
+    # Get all staff applications
+    all_applications = StaffApplication.objects.all()
+    pending_applications = StaffApplication.objects.filter(status='pending')
+    approved_applications = StaffApplication.objects.filter(status='approved')
+    rejected_applications = StaffApplication.objects.filter(status='rejected')
+    under_review = StaffApplication.objects.filter(status='under_review')
+    
+    # Time-based statistics
+    today = timezone.now().date()
+    pending_today = pending_applications.filter(application_date__date=today)
+    pending_week = pending_applications.filter(
+        application_date__gte=today - timedelta(days=7)
+    )
+    rejected_month = rejected_applications.filter(
+        review_date__isnull=False,
+        review_date__month=today.month,
+        review_date__year=today.year
+    )
+    
+    # Position counts
+    sales_assistants = approved_applications.filter(position='sales_assistant')
+    cashiers = approved_applications.filter(position='cashier')
+    
+    # Calculate metrics
+    total_applications = all_applications.count()
+    approved_count = approved_applications.count()
+    conversion_rate = (approved_count / total_applications * 100) if total_applications > 0 else 0
+    avg_process_time = 2.5
+    
+    # Add to context
+    context.update({
+        'all_applications': all_applications,
+        'pending_applications': pending_applications,
+        'approved_applications': approved_applications,
+        'rejected_applications': rejected_applications,
+        'under_review': under_review,
+        'pending_today': pending_today,
+        'pending_week': pending_week,
+        'rejected_month': rejected_month,
+        'sales_assistants': sales_assistants,
+        'cashiers': cashiers,
+        'conversion_rate': conversion_rate,
+        'avg_process_time': avg_process_time,
+        'position_choices': StaffApplication.POSITION_CHOICES,
+    })
+    
+    logger.info(f"✅ Admin Dashboard loaded with {total_applications} staff applications")
+
+
+
 
     # ============================================
     # ROLE CHOICES FOR USER FORM

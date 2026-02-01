@@ -141,6 +141,7 @@ INSTALLED_APPS = [
     'website.apps.WebsiteConfig',
     'inventory.apps.InventoryConfig',
     'sales.apps.SalesConfig',
+    'staff_registration',
 ]
 
 # ============================================
@@ -148,7 +149,7 @@ INSTALLED_APPS = [
 # ============================================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ WhiteNoise for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

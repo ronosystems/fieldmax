@@ -8,7 +8,26 @@ from django.views.generic import TemplateView
 from website.api_views.offline_sync import sync_offline_queue, get_offline_data
 from django.http import HttpResponse
 import json
+import re
 
+
+
+class SubdomainMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.staff_subdomain_pattern = re.compile(r'^staff\.')
+        
+    def __call__(self, request):
+        host = request.get_host().split(':')[0]  # Remove port
+        
+        # Check if this is a staff subdomain request
+        if self.staff_subdomain_pattern.match(host):
+            request.is_staff_subdomain = True
+        else:
+            request.is_staff_subdomain = False
+            
+        response = self.get_response(request)
+        return response
 
 def serve_manifest(request):
     manifest_data = {
@@ -59,6 +78,8 @@ urlpatterns = [
     # ============================================
     path('inventory/', include('inventory.urls')),
     path('sales/', include('sales.urls')),
+    path('staff/', include('staff_registration.urls')),  
+    path('api/staff/', include('staff_registration.api_urls')),
     path('users/', include('users.urls')),
     path('', include('website.urls')),
 
