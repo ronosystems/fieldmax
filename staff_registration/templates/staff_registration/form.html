@@ -163,13 +163,25 @@
             z-index: 1;
         }
         
+        .progress-fill-line {
+            position: absolute;
+            top: 59px;
+            left: 50px;
+            height: 3px;
+            background: var(--primary);
+            z-index: 2;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        
         .step {
             display: flex;
             flex-direction: column;
             align-items: center;
             position: relative;
-            z-index: 2;
+            z-index: 3;
             flex: 1;
+            cursor: pointer;
         }
         
         .step-icon {
@@ -219,6 +231,18 @@
             color: var(--success);
         }
         
+        /* Progress percentage */
+        .step-progress {
+            font-size: 12px;
+            color: var(--gray-400);
+            margin-top: 5px;
+            font-weight: 500;
+        }
+        
+        .step.completed .step-progress {
+            color: var(--success);
+        }
+        
         /* ===== Form Container ===== */
         .form-container {
             padding: 40px;
@@ -258,21 +282,21 @@
         
         /* ===== Form Sections ===== */
         .form-section {
-            margin-bottom: 50px;
-            padding-bottom: 40px;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
             border-bottom: 1px solid var(--gray-200);
         }
         
         .form-section:last-of-type {
             border-bottom: none;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         
         .section-header {
             display: flex;
             align-items: center;
             gap: 15px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         
         .section-icon {
@@ -304,7 +328,7 @@
         .form-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 25px;
+            gap: 20px;
         }
         
         @media (max-width: 768px) {
@@ -314,7 +338,7 @@
         }
         
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         
         .full-width {
@@ -337,7 +361,7 @@
         
         input, select, textarea {
             width: 100%;
-            padding: 14px 16px;
+            padding: 12px 16px;
             border: 2px solid var(--gray-200);
             border-radius: var(--radius);
             font-size: 16px;
@@ -372,7 +396,7 @@
         }
         
         textarea {
-            min-height: 120px;
+            min-height: 100px;
             resize: vertical;
             line-height: 1.5;
         }
@@ -386,57 +410,51 @@
             padding-right: 48px;
         }
         
-        /* ===== File Upload ===== */
-        .file-upload-container {
+        /* ===== COMPACT File Upload ===== */
+        .file-upload-compact {
             border: 2px dashed var(--gray-300);
             border-radius: var(--radius);
-            padding: 30px;
+            padding: 20px;
             text-align: center;
             transition: var(--transition);
             background: var(--gray-50);
             cursor: pointer;
             position: relative;
+            margin-bottom: 10px;
         }
         
-        .file-upload-container:hover {
+        .file-upload-compact:hover {
             border-color: var(--primary);
             background: var(--primary-light);
-            transform: translateY(-2px);
         }
         
-        .file-upload-container.dragover {
-            border-color: var(--primary);
-            background: var(--primary-light);
-            border-style: solid;
-        }
-        
-        .file-upload-label {
+        .compact-upload-label {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 16px;
+            gap: 10px;
         }
         
-        .file-upload-icon {
-            width: 70px;
-            height: 70px;
+        .compact-upload-icon {
+            width: 50px;
+            height: 50px;
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 20px;
         }
         
-        .file-upload-text {
-            font-size: 18px;
+        .compact-upload-text {
+            font-size: 16px;
             font-weight: 600;
             color: var(--gray-800);
         }
         
-        .file-upload-hint {
-            font-size: 14px;
+        .compact-upload-hint {
+            font-size: 12px;
             color: var(--gray-600);
             margin-top: 4px;
         }
@@ -448,21 +466,21 @@
             opacity: 0;
         }
         
-        .file-preview {
-            margin-top: 20px;
+        .file-preview-compact {
+            margin-top: 15px;
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 8px;
         }
         
         .file-preview-item {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             background: white;
-            padding: 10px 16px;
+            padding: 8px 12px;
             border-radius: var(--radius);
-            font-size: 14px;
+            font-size: 13px;
             border: 1px solid var(--gray-200);
             max-width: 100%;
             box-shadow: var(--shadow-sm);
@@ -476,7 +494,7 @@
         
         .file-preview-icon {
             color: var(--primary);
-            font-size: 16px;
+            font-size: 14px;
         }
         
         .file-preview-info {
@@ -490,10 +508,11 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            max-width: 150px;
         }
         
         .file-preview-size {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--gray-500);
             margin-top: 2px;
         }
@@ -518,8 +537,8 @@
             display: flex;
             align-items: flex-start;
             gap: 12px;
-            margin-bottom: 20px;
-            padding: 15px;
+            margin-bottom: 15px;
+            padding: 12px;
             background: var(--gray-50);
             border-radius: var(--radius);
             border: 1px solid var(--gray-200);
@@ -530,8 +549,8 @@
         }
         
         .checkbox-group input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             margin-top: 2px;
             accent-color: var(--primary);
         }
@@ -542,7 +561,7 @@
             font-weight: normal;
             color: var(--gray-700);
             font-size: 14px;
-            line-height: 1.5;
+            line-height: 1.4;
         }
         
         .checkbox-group a {
@@ -558,7 +577,7 @@
         /* ===== Footer Section ===== */
         .form-footer {
             background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
-            padding: 30px 40px;
+            padding: 25px 40px;
             border-top: 1px solid var(--gray-200);
             display: flex;
             justify-content: space-between;
@@ -574,7 +593,7 @@
         
         .info-box {
             background: white;
-            padding: 20px;
+            padding: 18px;
             border-radius: var(--radius);
             border-left: 4px solid var(--primary);
             box-shadow: var(--shadow);
@@ -587,12 +606,13 @@
             font-weight: 600;
             color: var(--gray-800);
             margin-bottom: 8px;
+            font-size: 15px;
         }
         
         .info-box-content {
             font-size: 14px;
             color: var(--gray-600);
-            line-height: 1.5;
+            line-height: 1.4;
         }
         
         /* ===== Submit Button ===== */
@@ -600,16 +620,16 @@
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: white;
             border: none;
-            padding: 18px 40px;
+            padding: 16px 36px;
             border-radius: var(--radius);
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
             display: flex;
             align-items: center;
-            gap: 12px;
-            min-width: 220px;
+            gap: 10px;
+            min-width: 200px;
             justify-content: center;
             box-shadow: var(--shadow);
             position: relative;
@@ -650,10 +670,10 @@
         /* ===== Security Footer ===== */
         .security-footer {
             text-align: center;
-            padding: 20px;
+            padding: 16px;
             background: var(--gray-50);
             border-top: 1px solid var(--gray-200);
-            font-size: 14px;
+            font-size: 13px;
             color: var(--gray-600);
         }
         
@@ -662,16 +682,16 @@
             align-items: center;
             justify-content: center;
             gap: 12px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             flex-wrap: wrap;
         }
         
         .secure-badge {
             background: var(--success);
             color: white;
-            padding: 4px 12px;
+            padding: 3px 10px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
@@ -679,17 +699,17 @@
         }
         
         .host-info {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--gray-500);
         }
         
         /* ===== Progress Bar ===== */
         .progress-bar {
-            height: 6px;
+            height: 5px;
             background: var(--gray-200);
             border-radius: 3px;
             overflow: hidden;
-            margin-top: 12px;
+            margin-top: 10px;
         }
         
         .progress-fill {
@@ -739,6 +759,7 @@
             
             .submit-btn {
                 min-width: 100%;
+                padding: 14px 20px;
             }
         }
         
@@ -765,6 +786,15 @@
                 text-align: center;
                 gap: 10px;
             }
+            
+            .section-title {
+                font-size: 20px;
+            }
+            
+            .form-section {
+                margin-bottom: 30px;
+                padding-bottom: 20px;
+            }
         }
     </style>
 </head>
@@ -789,19 +819,23 @@
                 </div>
             </header>
             
-            <!-- Progress Steps -->
+            <!-- Progress Steps with Live Progress Fill -->
             <div class="progress-steps">
-                <div class="step active" id="step1">
+                <div class="progress-fill-line" id="progressFill"></div>
+                <div class="step active" id="step1" data-step="1">
                     <div class="step-icon">1</div>
                     <div class="step-label">Personal Info</div>
+                    <div class="step-progress" id="step1Progress">0%</div>
                 </div>
-                <div class="step" id="step2">
+                <div class="step" id="step2" data-step="2">
                     <div class="step-icon">2</div>
                     <div class="step-label">Documents</div>
+                    <div class="step-progress" id="step2Progress">0%</div>
                 </div>
-                <div class="step" id="step3">
+                <div class="step" id="step3" data-step="3">
                     <div class="step-icon">3</div>
                     <div class="step-label">Review & Submit</div>
+                    <div class="step-progress" id="step3Progress">0%</div>
                 </div>
             </div>
             
@@ -877,7 +911,7 @@
                             
                             <!-- ID Number -->
                             <div class="form-group">
-                                <label for="id_id_number" class="required">National ID / Passport Number</label>
+                                <label for="id_id_number" class="required">National ID / Passport</label>
                                 {{ form.id_number }}
                                 {% if form.id_number.errors %}
                                 <div class="error-text">
@@ -889,7 +923,7 @@
                             
                             <!-- Position -->
                             <div class="form-group">
-                                <label for="id_position" class="required">Position Applying For</label>
+                                <label for="id_position" class="required">Position</label>
                                 {{ form.position }}
                                 {% if form.position.errors %}
                                 <div class="error-text">
@@ -907,16 +941,16 @@
                             
                             <!-- Experience -->
                             <div class="form-group full-width">
-                                <label for="id_experience">Previous Work Experience</label>
+                                <label for="id_experience">Work Experience</label>
                                 {{ form.experience }}
-                                <small style="display: block; margin-top: 6px; color: var(--gray-500);">
-                                    Include company names, positions held, duration, and key responsibilities
+                                <small style="display: block; margin-top: 6px; color: var(--gray-500); font-size: 13px;">
+                                    Include company, position, duration, and responsibilities
                                 </small>
                             </div>
                         </div>
                     </section>
                     
-                    <!-- Step 2: Document Uploads -->
+                    <!-- Step 2: Document Uploads - COMPACT VERSION -->
                     <section class="form-section" id="documentUploads">
                         <div class="section-header">
                             <div class="section-icon">
@@ -931,73 +965,50 @@
                         <div class="form-grid">
                             <!-- Passport Photo -->
                             <div class="form-group full-width">
-                                <label for="id_passport_photo" class="required">Passport Size Photo</label>
-                                <div class="file-upload-container" id="passportUploadContainer">
-                                    <div class="file-upload-label">
-                                        <div class="file-upload-icon">
-                                            <i class="fas fa-camera"></i>
-                                        </div>
-                                        <div>
-                                            <div class="file-upload-text">Click to upload passport photo</div>
-                                            <div class="file-upload-hint">JPG or PNG • Max 2MB • Recommended: 2x2 inches</div>
-                                        </div>
+                                <label for="id_passport_photo" class="required">Passport Photo</label>
+                                <div class="file-upload-compact" id="passportUploadContainer">
+                                    <div class="compact-upload-label">
+                                        <div class="compact-upload-icon"><i class="fas fa-camera"></i></div>
+                                        <div class="compact-upload-text">Upload passport photo</div>
+                                        <small class="compact-upload-hint">JPG/PNG • Max 2MB</small>
                                     </div>
                                     {{ form.passport_photo }}
-                                    <div class="file-preview" id="passportPreview"></div>
+                                    <div class="file-preview-compact" id="passportPreview"></div>
                                 </div>
                                 {% if form.passport_photo.errors %}
-                                <div class="error-text">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                    {{ form.passport_photo.errors.0 }}
-                                </div>
+                                <div class="error-text"><i class="fas fa-exclamation-circle"></i>{{ form.passport_photo.errors.0 }}</div>
                                 {% endif %}
                             </div>
                             
                             <!-- ID Front -->
                             <div class="form-group">
-                                <label for="id_id_front" class="required">ID Front Photo</label>
-                                <div class="file-upload-container" id="idFrontUploadContainer">
-                                    <div class="file-upload-label">
-                                        <div class="file-upload-icon">
-                                            <i class="fas fa-id-card"></i>
-                                        </div>
-                                        <div>
-                                            <div class="file-upload-text">Front of ID</div>
-                                            <div class="file-upload-hint">Clear image of ID front side</div>
-                                        </div>
+                                <label for="id_id_front" class="required">ID Front</label>
+                                <div class="file-upload-compact" id="idFrontUploadContainer">
+                                    <div class="compact-upload-label">
+                                        <div class="compact-upload-icon"><i class="fas fa-id-card"></i></div>
+                                        <div class="compact-upload-text">ID Front Side</div>
                                     </div>
                                     {{ form.id_front }}
-                                    <div class="file-preview" id="idFrontPreview"></div>
+                                    <div class="file-preview-compact" id="idFrontPreview"></div>
                                 </div>
                                 {% if form.id_front.errors %}
-                                <div class="error-text">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                    {{ form.id_front.errors.0 }}
-                                </div>
+                                <div class="error-text"><i class="fas fa-exclamation-circle"></i>{{ form.id_front.errors.0 }}</div>
                                 {% endif %}
                             </div>
                             
                             <!-- ID Back -->
                             <div class="form-group">
-                                <label for="id_id_back" class="required">ID Back Photo</label>
-                                <div class="file-upload-container" id="idBackUploadContainer">
-                                    <div class="file-upload-label">
-                                        <div class="file-upload-icon">
-                                            <i class="fas fa-id-card"></i>
-                                        </div>
-                                        <div>
-                                            <div class="file-upload-text">Back of ID</div>
-                                            <div class="file-upload-hint">Clear image of ID back side</div>
-                                        </div>
+                                <label for="id_id_back" class="required">ID Back</label>
+                                <div class="file-upload-compact" id="idBackUploadContainer">
+                                    <div class="compact-upload-label">
+                                        <div class="compact-upload-icon"><i class="fas fa-id-card"></i></div>
+                                        <div class="compact-upload-text">ID Back Side</div>
                                     </div>
                                     {{ form.id_back }}
-                                    <div class="file-preview" id="idBackPreview"></div>
+                                    <div class="file-preview-compact" id="idBackPreview"></div>
                                 </div>
                                 {% if form.id_back.errors %}
-                                <div class="error-text">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                    {{ form.id_back.errors.0 }}
-                                </div>
+                                <div class="error-text"><i class="fas fa-exclamation-circle"></i>{{ form.id_back.errors.0 }}</div>
                                 {% endif %}
                             </div>
                         </div>
@@ -1019,15 +1030,12 @@
                         <div class="checkbox-group">
                             {{ form.terms_accepted }}
                             <label for="id_terms_accepted">
-                                I hereby declare that all information provided is true and accurate to the best of my knowledge. 
-                                I understand that any false information may lead to disqualification or termination of employment. 
-                                I authorize FieldMax Store to verify the information provided and conduct background checks if necessary.
+                                I declare all information provided is true and accurate. Any false information may lead to disqualification or termination. I authorize FieldMax to verify information and conduct background checks.
                             </label>
                         </div>
                         {% if form.terms_accepted.errors %}
-                        <div class="error-text" style="margin-top: -10px; margin-bottom: 20px;">
-                            <i class="fas fa-exclamation-circle"></i>
-                            {{ form.terms_accepted.errors.0 }}
+                        <div class="error-text" style="margin-top: -10px; margin-bottom: 15px;">
+                            <i class="fas fa-exclamation-circle"></i>{{ form.terms_accepted.errors.0 }}
                         </div>
                         {% endif %}
                         
@@ -1035,14 +1043,12 @@
                         <div class="checkbox-group">
                             {{ form.privacy_accepted }}
                             <label for="id_privacy_accepted">
-                                I have read and agree to the <a href="#" target="_blank">Privacy Policy</a> and 
-                                <a href="#" target="_blank">Terms of Service</a> of FieldMax Store. I understand how my data will be used.
+                                I agree to the <a href="#" target="_blank">Privacy Policy</a> and <a href="#" target="_blank">Terms of Service</a>. I understand how my data will be used.
                             </label>
                         </div>
                         {% if form.privacy_accepted.errors %}
-                        <div class="error-text" style="margin-top: -10px; margin-bottom: 20px;">
-                            <i class="fas fa-exclamation-circle"></i>
-                            {{ form.privacy_accepted.errors.0 }}
+                        <div class="error-text" style="margin-top: -10px; margin-bottom: 15px;">
+                            <i class="fas fa-exclamation-circle"></i>{{ form.privacy_accepted.errors.0 }}
                         </div>
                         {% endif %}
                     </section>
@@ -1054,13 +1060,10 @@
                 <div class="footer-info">
                     <div class="info-box">
                         <div class="info-box-title">
-                            <i class="fas fa-info-circle"></i>
-                            Application Process
+                            <i class="fas fa-info-circle"></i> Application Process
                         </div>
                         <div class="info-box-content">
-                            Your application will be reviewed within 3-5 business days. 
-                            You will receive an email notification once processed. 
-                            Keep your application reference safe for future inquiries.
+                            Application reviewed in 3-5 business days. Email notification sent when processed. Keep your reference number safe for inquiries.
                         </div>
                     </div>
                 </div>
@@ -1075,14 +1078,12 @@
             <div class="security-footer">
                 <div class="security-info">
                     <span class="secure-badge">
-                        <i class="fas fa-lock"></i>
-                        SSL SECURED
+                        <i class="fas fa-lock"></i> SSL SECURED
                     </span>
                     <span id="currentHost"></span>
                 </div>
                 <div class="host-info">
-                    <i class="fas fa-globe"></i> This portal is securely hosted on Render • 
-                    All data is encrypted in transit
+                    <i class="fas fa-globe"></i> Securely hosted on Render • All data encrypted in transit
                 </div>
             </div>
         </div>
@@ -1091,31 +1092,212 @@
     <script>
         // ===== Initialize =====
         document.addEventListener('DOMContentLoaded', function() {
-            // Show current host
             document.getElementById('currentHost').textContent = window.location.host;
-            
-            // Initialize form
             initializeForm();
-            
-            // Initialize file uploads
             initializeFileUploads();
-            
-            // Initialize step indicator
             initializeStepIndicator();
+            initializeProgressTracking(); // NEW: Initialize progress tracking
         });
+        
+        // ===== NEW: Progress Tracking System =====
+        function initializeProgressTracking() {
+            const form = document.getElementById('registrationForm');
+            
+            // Define required fields for each step
+            const stepRequirements = {
+                1: ['first_name', 'last_name', 'email', 'phone', 'id_number', 'position'], // Personal Info
+                2: ['passport_photo', 'id_front', 'id_back'], // Documents
+                3: ['terms_accepted', 'privacy_accepted'] // Declaration
+            };
+            
+            // Track progress for each step
+            const stepProgress = {
+                1: { completed: 0, total: stepRequirements[1].length },
+                2: { completed: 0, total: stepRequirements[2].length },
+                3: { completed: 0, total: stepRequirements[3].length }
+            };
+            
+            // Function to check if a field is filled
+            function isFieldFilled(fieldName) {
+                const field = document.getElementById(`id_${fieldName}`);
+                if (!field) return false;
+                
+                if (field.type === 'file') {
+                    return field.files && field.files.length > 0;
+                } else if (field.type === 'checkbox') {
+                    return field.checked;
+                } else {
+                    return field.value && field.value.trim() !== '';
+                }
+            }
+            
+            // Function to update step progress
+            function updateStepProgress(stepNumber) {
+                const requirements = stepRequirements[stepNumber];
+                let completed = 0;
+                
+                requirements.forEach(fieldName => {
+                    if (isFieldFilled(fieldName)) completed++;
+                });
+                
+                stepProgress[stepNumber].completed = completed;
+                const percentage = Math.round((completed / stepProgress[stepNumber].total) * 100);
+                
+                // Update progress display
+                const progressElement = document.getElementById(`step${stepNumber}Progress`);
+                if (progressElement) {
+                    progressElement.textContent = `${percentage}%`;
+                    
+                    // Update step visual state
+                    const stepElement = document.getElementById(`step${stepNumber}`);
+                    if (stepElement) {
+                        if (percentage === 100) {
+                            stepElement.classList.add('completed');
+                            stepElement.classList.remove('active');
+                        } else if (stepNumber === 1 || (stepNumber > 1 && stepProgress[stepNumber-1].completed === stepProgress[stepNumber-1].total)) {
+                            stepElement.classList.add('active');
+                            stepElement.classList.remove('completed');
+                        } else {
+                            stepElement.classList.remove('active', 'completed');
+                        }
+                    }
+                }
+                
+                return percentage;
+            }
+            
+            // Function to update overall progress line
+            function updateOverallProgress() {
+                let totalCompleted = 0;
+                let totalFields = 0;
+                
+                // Calculate overall progress
+                for (let step = 1; step <= 3; step++) {
+                    totalCompleted += stepProgress[step].completed;
+                    totalFields += stepProgress[step].total;
+                }
+                
+                const overallPercentage = Math.round((totalCompleted / totalFields) * 100);
+                
+                // Update progress line
+                const progressFill = document.getElementById('progressFill');
+                if (progressFill) {
+                    progressFill.style.width = `${overallPercentage}%`;
+                }
+                
+                // Determine active step based on progress
+                let activeStep = 1;
+                if (stepProgress[1].completed === stepProgress[1].total) {
+                    if (stepProgress[2].completed === stepProgress[2].total) {
+                        activeStep = 3;
+                    } else {
+                        activeStep = 2;
+                    }
+                }
+                
+                // Update step indicators
+                for (let step = 1; step <= 3; step++) {
+                    const stepElement = document.getElementById(`step${step}`);
+                    if (stepElement) {
+                        if (step === activeStep) {
+                            stepElement.classList.add('active');
+                        } else if (step < activeStep) {
+                            stepElement.classList.remove('active');
+                            stepElement.classList.add('completed');
+                        } else {
+                            stepElement.classList.remove('active', 'completed');
+                        }
+                    }
+                }
+                
+                return overallPercentage;
+            }
+            
+            // Function to check all fields and update progress
+            function checkAllProgress() {
+                for (let step = 1; step <= 3; step++) {
+                    updateStepProgress(step);
+                }
+                updateOverallProgress();
+            }
+            
+            // Add event listeners to all form fields
+            form.addEventListener('input', function(e) {
+                const fieldName = e.target.name.replace('id_', '');
+                
+                // Check which step this field belongs to
+                let stepNumber = 1;
+                for (const [step, fields] of Object.entries(stepRequirements)) {
+                    if (fields.includes(fieldName)) {
+                        stepNumber = parseInt(step);
+                        break;
+                    }
+                }
+                
+                // Update progress for the affected step
+                updateStepProgress(stepNumber);
+                updateOverallProgress();
+            });
+            
+            // Special handling for file inputs
+            document.querySelectorAll('input[type="file"]').forEach(fileInput => {
+                fileInput.addEventListener('change', function() {
+                    const fieldName = this.name.replace('id_', '');
+                    let stepNumber = 2; // All files are in step 2
+                    
+                    updateStepProgress(stepNumber);
+                    updateOverallProgress();
+                });
+            });
+            
+            // Special handling for checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const fieldName = this.name.replace('id_', '');
+                    let stepNumber = 3; // All checkboxes are in step 3
+                    
+                    updateStepProgress(stepNumber);
+                    updateOverallProgress();
+                });
+            });
+            
+            // Initial check
+            checkAllProgress();
+            
+            // Also check on scroll (for step indicator)
+            window.addEventListener('scroll', function() {
+                const sections = document.querySelectorAll('.form-section');
+                const scrollPosition = window.scrollY + 100;
+                
+                let visibleStep = 1;
+                sections.forEach((section, index) => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.clientHeight;
+                    
+                    if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                        visibleStep = index + 1;
+                    }
+                });
+                
+                // Update progress fill based on visible step
+                const progressFill = document.getElementById('progressFill');
+                if (progressFill) {
+                    let fillPercentage = 0;
+                    if (visibleStep === 1) fillPercentage = 33;
+                    else if (visibleStep === 2) fillPercentage = 66;
+                    else if (visibleStep === 3) fillPercentage = 100;
+                    
+                    progressFill.style.width = `${fillPercentage}%`;
+                }
+            });
+        }
         
         // ===== Form Initialization =====
         function initializeForm() {
             const form = document.getElementById('registrationForm');
             const submitBtn = document.getElementById('submitBtn');
-            
-            // Style Django form inputs
             styleFormInputs();
-            
-            // Form submission handler
             form.addEventListener('submit', handleFormSubmit);
-            
-            // Real-time validation
             form.addEventListener('input', debounce(validateField, 300));
         }
         
@@ -1126,7 +1308,6 @@
                 { inputId: 'id_id_front', containerId: 'idFrontUploadContainer', previewId: 'idFrontPreview' },
                 { inputId: 'id_id_back', containerId: 'idBackUploadContainer', previewId: 'idBackPreview' }
             ];
-            
             fileConfigs.forEach(config => setupFileUpload(config));
         }
         
@@ -1134,34 +1315,21 @@
             const input = document.getElementById(inputId);
             const container = document.getElementById(containerId);
             const preview = document.getElementById(previewId);
-            
-            // Hide default file input
             if (input) {
                 input.classList.add('file-input');
-                
-                // Click container to trigger file input
                 container.addEventListener('click', (e) => {
-                    if (!e.target.closest('.file-remove-btn')) {
-                        input.click();
-                    }
+                    if (!e.target.closest('.file-remove-btn')) input.click();
                 });
-                
-                // Handle file selection
                 input.addEventListener('change', () => handleFileSelection(input, preview));
-                
-                // Drag and drop
-                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                    container.addEventListener(eventName, preventDefaults, false);
+                ['dragenter','dragover','dragleave','drop'].forEach(evt => {
+                    container.addEventListener(evt, preventDefaults, false);
                 });
-                
-                ['dragenter', 'dragover'].forEach(eventName => {
-                    container.addEventListener(eventName, () => container.classList.add('dragover'), false);
+                ['dragenter','dragover'].forEach(evt => {
+                    container.addEventListener(evt, () => container.classList.add('dragover'), false);
                 });
-                
-                ['dragleave', 'drop'].forEach(eventName => {
-                    container.addEventListener(eventName, () => container.classList.remove('dragover'), false);
+                ['dragleave','drop'].forEach(evt => {
+                    container.addEventListener(evt, () => container.classList.remove('dragover'), false);
                 });
-                
                 container.addEventListener('drop', (e) => {
                     const files = e.dataTransfer.files;
                     input.files = files;
@@ -1172,156 +1340,123 @@
         
         function handleFileSelection(input, preview) {
             preview.innerHTML = '';
-            
             if (input.files.length > 0) {
                 Array.from(input.files).forEach(file => {
-                    if (validateFile(file)) {
-                        createFilePreview(file, preview, input);
-                    }
+                    if (validateFile(file)) createFilePreview(file, preview, input);
                 });
             }
         }
         
         function validateFile(file) {
-            const maxSize = 2 * 1024 * 1024; // 2MB
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-            
+            const maxSize = 2 * 1024 * 1024;
+            const allowedTypes = ['image/jpeg','image/jpg','image/png','image/gif'];
             if (file.size > maxSize) {
-                showMessage(`File "${file.name}" exceeds 2MB limit`, 'error');
+                showMessage(`"${file.name}" exceeds 2MB limit`,'error');
                 return false;
             }
-            
             if (!allowedTypes.includes(file.type)) {
-                showMessage(`File "${file.name}" must be an image (JPG, PNG, GIF)`, 'error');
+                showMessage(`"${file.name}" must be JPG, PNG, GIF`,'error');
                 return false;
             }
-            
             return true;
         }
         
         function createFilePreview(file, preview, input) {
             const previewItem = document.createElement('div');
             previewItem.className = 'file-preview-item';
-            
             const fileSize = formatFileSize(file.size);
-            const fileName = file.name.length > 25 ? file.name.substring(0, 25) + '...' : file.name;
-            
+            const fileName = file.name.length > 20 ? file.name.substring(0,20)+'...' : file.name;
             previewItem.innerHTML = `
                 <i class="fas fa-file-image file-preview-icon"></i>
                 <div class="file-preview-info">
                     <div class="file-preview-name">${fileName}</div>
                     <div class="file-preview-size">${fileSize}</div>
                 </div>
-                <button type="button" class="file-remove-btn" title="Remove file">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button type="button" class="file-remove-btn" title="Remove"><i class="fas fa-times"></i></button>
             `;
-            
-            // Remove button handler
             const removeBtn = previewItem.querySelector('.file-remove-btn');
             removeBtn.addEventListener('click', () => {
                 previewItem.remove();
                 input.value = '';
-                if (preview.children.length === 0) {
-                    preview.innerHTML = '';
-                }
+                if (preview.children.length === 0) preview.innerHTML = '';
             });
-            
             preview.appendChild(previewItem);
         }
         
         function formatFileSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            if (bytes < 1024) return bytes + 'B';
+            if (bytes < 1024 * 1024) return (bytes/1024).toFixed(1)+'KB';
+            return (bytes/(1024*1024)).toFixed(1)+'MB';
         }
         
         // ===== Step Indicator =====
         function initializeStepIndicator() {
             window.addEventListener('scroll', updateStepIndicator);
-            updateStepIndicator(); // Initial update
+            updateStepIndicator();
+            
+            // Add click functionality to steps
+            document.querySelectorAll('.step').forEach(step => {
+                step.addEventListener('click', function() {
+                    const stepNum = this.getAttribute('data-step');
+                    const sectionId = ['personalInfo','documentUploads','declaration'][stepNum - 1];
+                    const section = document.getElementById(sectionId);
+                    if (section) {
+                        section.scrollIntoView({behavior:'smooth', block:'start'});
+                    }
+                });
+            });
         }
         
         function updateStepIndicator() {
             const sections = document.querySelectorAll('.form-section');
             const scrollPosition = window.scrollY + 100;
-            
             let activeStep = 1;
-            
             sections.forEach((section, index) => {
                 const sectionTop = section.offsetTop;
                 const sectionHeight = section.clientHeight;
-                
                 if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
                     activeStep = index + 1;
                 }
             });
-            
-            // Update steps
             document.querySelectorAll('.step').forEach((step, index) => {
-                step.classList.remove('active', 'completed');
-                if (index + 1 < activeStep) {
-                    step.classList.add('completed');
-                } else if (index + 1 === activeStep) {
-                    step.classList.add('active');
-                }
+                step.classList.remove('active','completed');
+                if (index+1 < activeStep) step.classList.add('completed');
+                else if (index+1 === activeStep) step.classList.add('active');
             });
         }
         
         // ===== Form Submission =====
         async function handleFormSubmit(e) {
             e.preventDefault();
-            
             const form = e.target;
             const submitBtn = document.getElementById('submitBtn');
             const originalContent = submitBtn.innerHTML;
-            
-            // Validate required files
             if (!validateRequiredFiles()) {
-                showMessage('Please upload all required documents.', 'error');
+                showMessage('Please upload all required documents.','error');
                 return;
             }
-            
-            // Disable submit button
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Processing...</span>';
-            
             try {
-                // Show progress
                 showUploadProgress();
-                
-                // Submit form
                 const formData = new FormData(form);
-                const response = await fetch('', {
-                    method: 'POST',
-                    body: formData
-                });
-                
+                const response = await fetch('',{method:'POST',body:formData});
                 const result = await response.json();
-                
-                // Update progress to 100%
                 updateProgressBar(100);
-                
-                // Handle response
                 setTimeout(() => {
-                    if (response.ok && result.success) {
-                        handleSuccess(result);
-                    } else {
-                        handleError(result);
-                    }
+                    if (response.ok && result.success) handleSuccess(result);
+                    else handleError(result);
                 }, 500);
-                
             } catch (error) {
                 handleNetworkError(error);
             } finally {
-                // Re-enable submit button
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalContent;
             }
         }
         
         function validateRequiredFiles() {
-            const requiredFiles = ['id_passport_photo', 'id_id_front', 'id_id_back'];
+            const requiredFiles = ['id_passport_photo','id_id_front','id_id_back'];
             return requiredFiles.every(id => {
                 const input = document.getElementById(id);
                 return input && input.files.length > 0;
@@ -1333,116 +1468,92 @@
             messageDiv.style.display = 'block';
             messageDiv.className = 'message info';
             messageDiv.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="display:flex;align-items:center;gap:15px;">
                     <i class="fas fa-spinner fa-spin"></i>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 500; margin-bottom: 5px;">Uploading your application...</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="uploadProgress" style="width: 0%"></div>
-                        </div>
+                    <div style="flex:1;">
+                        <div style="font-weight:500;margin-bottom:5px;">Uploading...</div>
+                        <div class="progress-bar"><div class="progress-fill" id="uploadProgress" style="width:0%"></div></div>
                     </div>
                 </div>
             `;
-            
-            // Simulate progress
             let progress = 0;
             const interval = setInterval(() => {
                 progress += Math.random() * 10;
-                if (progress > 90) {
-                    clearInterval(interval);
-                    progress = 90;
-                }
+                if (progress > 90) { clearInterval(interval); progress = 90; }
                 updateProgressBar(progress);
             }, 200);
         }
         
         function updateProgressBar(percent) {
             const progressBar = document.getElementById('uploadProgress');
-            if (progressBar) {
-                progressBar.style.width = percent + '%';
-            }
+            if (progressBar) progressBar.style.width = percent + '%';
         }
         
         function handleSuccess(result) {
             const messageDiv = document.getElementById('message');
             messageDiv.className = 'message success';
             messageDiv.innerHTML = `
-                <div style="display: flex; align-items: flex-start; gap: 20px;">
-                    <i class="fas fa-check-circle" style="font-size: 32px; margin-top: 4px;"></i>
-                    <div style="flex: 1;">
-                        <h3 style="margin-bottom: 10px; color: inherit;">✅ Application Submitted Successfully!</h3>
-                        <p style="margin-bottom: 8px;">${result.message}</p>
-                        <div style="background: rgba(255, 255, 255, 0.5); padding: 15px; border-radius: 8px; margin-top: 15px;">
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                                <div><strong>Application ID:</strong> ${result.application_id}</div>
+                <div style="display:flex;align-items:flex-start;gap:20px;">
+                    <i class="fas fa-check-circle" style="font-size:32px;margin-top:4px;"></i>
+                    <div style="flex:1;">
+                        <h3 style="margin-bottom:10px;color:inherit;">✅ Submitted Successfully!</h3>
+                        <p style="margin-bottom:8px;">${result.message}</p>
+                        <div style="background:rgba(255,255,255,0.5);padding:15px;border-radius:8px;margin-top:15px;">
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
+                                <div><strong>ID:</strong> ${result.application_id}</div>
                                 <div><strong>Name:</strong> ${result.data.name}</div>
                                 <div><strong>Position:</strong> ${result.data.position}</div>
                                 <div><strong>Date:</strong> ${result.data.application_date}</div>
                             </div>
                         </div>
-                        <p style="margin-top: 15px; font-size: 14px; opacity: 0.9;">${result.instructions}</p>
+                        <p style="margin-top:15px;font-size:14px;opacity:0.9;">${result.instructions}</p>
                     </div>
                 </div>
             `;
-            
-            // Clear form
             document.getElementById('registrationForm').reset();
-            document.querySelectorAll('.file-preview').forEach(preview => preview.innerHTML = '');
-            
-            // Mark all steps as completed
+            document.querySelectorAll('.file-preview-compact').forEach(preview => preview.innerHTML = '');
             document.querySelectorAll('.step').forEach(step => {
-                step.classList.remove('active');
-                step.classList.add('completed');
+                step.classList.remove('active'); step.classList.add('completed');
             });
-            
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({top:0,behavior:'smooth'});
         }
         
         function handleError(result) {
             const messageDiv = document.getElementById('message');
             messageDiv.className = 'message error';
-            
             let errorHTML = `
-                <div style="display: flex; align-items: flex-start; gap: 20px;">
-                    <i class="fas fa-exclamation-circle" style="font-size: 32px; margin-top: 4px;"></i>
-                    <div style="flex: 1;">
-                        <h3 style="margin-bottom: 10px; color: inherit;">❌ ${result.error || 'Submission Failed'}</h3>
-            `;
-            
+                <div style="display:flex;align-items:flex-start;gap:20px;">
+                    <i class="fas fa-exclamation-circle" style="font-size:32px;margin-top:4px;"></i>
+                    <div style="flex:1;">
+                        <h3 style="margin-bottom:10px;color:inherit;">❌ ${result.error||'Submission Failed'}</h3>`;
             if (result.errors) {
-                errorHTML += '<ul style="margin-top: 10px; padding-left: 20px;">';
+                errorHTML += '<ul style="margin-top:10px;padding-left:20px;">';
                 for (const [field, error] of Object.entries(result.errors)) {
-                    const fieldName = field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    const fieldName = field.replace('_',' ').replace(/\b\w/g,l=>l.toUpperCase());
                     errorHTML += `<li><strong>${fieldName}:</strong> ${error}</li>`;
-                    
-                    // Highlight problematic field
                     const fieldElement = document.getElementById(`id_${field}`);
                     if (fieldElement) {
                         fieldElement.classList.add('error');
-                        fieldElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        fieldElement.scrollIntoView({behavior:'smooth',block:'center'});
                     }
                 }
                 errorHTML += '</ul>';
             }
-            
             errorHTML += `</div></div>`;
             messageDiv.innerHTML = errorHTML;
-            
-            // Scroll to error message
-            messageDiv.scrollIntoView({ behavior: 'smooth' });
+            messageDiv.scrollIntoView({behavior:'smooth'});
         }
         
         function handleNetworkError(error) {
             const messageDiv = document.getElementById('message');
             messageDiv.className = 'message error';
             messageDiv.innerHTML = `
-                <div style="display: flex; align-items: flex-start; gap: 20px;">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 32px; margin-top: 4px;"></i>
-                    <div style="flex: 1;">
-                        <h3 style="margin-bottom: 10px; color: inherit;">❌ Network Error</h3>
-                        <p style="margin-bottom: 8px;">Please check your internet connection and try again.</p>
-                        <p style="font-size: 14px; opacity: 0.8;"><strong>Details:</strong> ${error.message}</p>
+                <div style="display:flex;align-items:flex-start;gap:20px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size:32px;margin-top:4px;"></i>
+                    <div style="flex:1;">
+                        <h3 style="margin-bottom:10px;color:inherit;">❌ Network Error</h3>
+                        <p>Check internet connection and try again.</p>
+                        <p style="font-size:14px;opacity:0.8;"><strong>Details:</strong> ${error.message}</p>
                     </div>
                 </div>
             `;
@@ -1450,25 +1561,13 @@
         
         // ===== Form Styling =====
         function styleFormInputs() {
-            // Add placeholders to Django form inputs
-            const inputs = document.querySelectorAll('input, select, textarea');
+            const inputs = document.querySelectorAll('input,select,textarea');
             inputs.forEach(input => {
-                // Add focus effect
-                input.addEventListener('focus', () => {
-                    input.parentElement.classList.add('focused');
-                });
-                
-                input.addEventListener('blur', () => {
-                    input.parentElement.classList.remove('focused');
-                });
-                
-                // Real-time validation styling
-                input.addEventListener('input', function() {
-                    if (this.hasAttribute('required') && !this.value.trim()) {
-                        this.classList.add('error');
-                    } else {
-                        this.classList.remove('error');
-                    }
+                input.addEventListener('focus',()=>input.parentElement.classList.add('focused'));
+                input.addEventListener('blur',()=>input.parentElement.classList.remove('focused'));
+                input.addEventListener('input',function(){
+                    if(this.hasAttribute('required')&&!this.value.trim()) this.classList.add('error');
+                    else this.classList.remove('error');
                 });
             });
         }
@@ -1477,90 +1576,60 @@
             const field = e.target;
             if (field.hasAttribute('required') && !field.value.trim()) {
                 field.classList.add('error');
-                showError(field, 'This field is required');
+                showError(field,'This field is required');
             } else {
                 field.classList.remove('error');
                 removeError(field);
             }
-            
-            // Email validation
             if (field.type === 'email' && field.value) {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(field.value)) {
                     field.classList.add('error');
-                    showError(field, 'Please enter a valid email address');
+                    showError(field,'Enter valid email');
                 }
             }
-            
-            // Phone validation (Kenyan format)
             if (field.id === 'id_phone' && field.value) {
                 const phoneRegex = /^(\+254|0)[17]\d{8}$/;
-                if (!phoneRegex.test(field.value.replace(/\s/g, ''))) {
+                if (!phoneRegex.test(field.value.replace(/\s/g,''))) {
                     field.classList.add('error');
-                    showError(field, 'Please enter a valid Kenyan phone number');
+                    showError(field,'Enter valid Kenyan phone');
                 }
             }
         }
         
-        function showError(field, message) {
+        function showError(field, msg) {
             let errorElement = field.parentElement.querySelector('.field-error');
             if (!errorElement) {
                 errorElement = document.createElement('div');
                 errorElement.className = 'error-text field-error';
                 field.parentElement.appendChild(errorElement);
             }
-            errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i>${message}`;
+            errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i>${msg}`;
         }
         
         function removeError(field) {
             const errorElement = field.parentElement.querySelector('.field-error');
-            if (errorElement) {
-                errorElement.remove();
-            }
+            if (errorElement) errorElement.remove();
         }
         
-        function showMessage(text, type = 'info', duration = 5000) {
+        function showMessage(text,type='info',duration=5000) {
             const messageDiv = document.getElementById('message');
             messageDiv.style.display = 'block';
             messageDiv.className = `message ${type}`;
             messageDiv.innerHTML = text;
-            
             if (type !== 'error' && duration > 0) {
-                setTimeout(() => {
-                    messageDiv.style.display = 'none';
-                }, duration);
+                setTimeout(() => { messageDiv.style.display = 'none'; }, duration);
             }
         }
         
         // ===== Utility Functions =====
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        
+        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
         function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
+            let timeout; return function executedFunction(...args) {
+                const later = () => { clearTimeout(timeout); func(...args); };
+                clearTimeout(timeout); timeout = setTimeout(later, wait);
             };
         }
-        
-        // Smooth scroll to sections
-        document.querySelectorAll('.step').forEach(step => {
-            step.addEventListener('click', function() {
-                const stepNum = this.querySelector('.step-icon').textContent;
-                const sectionId = ['personalInfo', 'documentUploads', 'declaration'][stepNum - 1];
-                const section = document.getElementById(sectionId);
-                if (section) {
-                    section.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        });
     </script>
 </body>
 </html>
