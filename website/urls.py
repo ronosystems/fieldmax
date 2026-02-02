@@ -7,6 +7,7 @@ from .views import (
     manager_dashboard,
     agent_dashboard,
     cashier_dashboard,
+    seller_dashboard,
     home,
     shopping_cart,
     validate_cart,
@@ -88,6 +89,7 @@ urlpatterns = [
     path('manager-dashboard/', manager_dashboard, name='manager_dashboard'),
     path('agent-dashboard/', agent_dashboard, name='agent_dashboard'),
     path('cashier-dashboard/', cashier_dashboard, name='cashier_dashboard'),
+    path('seller-dashboard/', seller_dashboard, name='seller_dashboard'),
 
     path('home-stats/', views.home_stats, name='home_stats'),
     path('featured-products/', views.featured_products, name='featured_products'),

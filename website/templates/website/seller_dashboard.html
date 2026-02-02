@@ -1,0 +1,837 @@
+{% extends "website/base.html" %}
+{% block title %}Price Lookup - Fieldmax Shop{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price Lookup Dashboard - Fieldmax Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #4f4e4e;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgb(133, 143, 143);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        /* Header */
+        .header-card {
+            text-align: center;
+            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+        }
+
+        .shop-name {
+            font-size: 80px;
+            font-weight: 1000;
+            letter-spacing: 8px;
+        }
+
+        .subtitle {
+            font-size: 24px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            margin-top: 10px;
+            color: #00acfc;
+        }
+
+        /* Search Section */
+        .search-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 20px 60px 20px 20px;
+            border: 3px solid #667eea;
+            border-radius: 12px;
+            font-size: 24px;
+            text-align: center;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            transform: scale(1.02);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 32px;
+            color: #667eea;
+            pointer-events: none;
+        }
+
+        /* Product Display Grid */
+        .display-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            border: 3px solid transparent;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+        }
+
+        .info-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 28px;
+            font-weight: 900;
+            color: #000;
+            word-wrap: break-word;
+        }
+
+        .price-value {
+            color: #001eff;
+            font-size: 42px;
+        }
+
+        .best-price-value {
+            color: #059669;
+            font-size: 42px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-available {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-sold {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-lowstock {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-outofstock {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Best Price Card Styles */
+        .best-price-card {
+            cursor: pointer;
+            position: relative;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 3px solid #f59e0b;
+            transition: all 0.3s;
+        }
+
+        .best-price-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: #d97706;
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .best-price-card.revealed {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-color: #10b981;
+        }
+
+        .lock-icon,
+        .unlock-icon {
+            font-size: 16px;
+            margin-left: 5px;
+            transition: all 0.3s;
+        }
+
+        .lock-icon {
+            color: #f59e0b;
+        }
+
+        .unlock-icon {
+            color: #10b981;
+        }
+
+        .click-to-reveal {
+            color: #92400e;
+            font-size: 18px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .best-price-amount {
+            color: #059669;
+            font-size: 42px;
+            animation: revealPrice 0.5s ease-out;
+        }
+
+        @keyframes revealPrice {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .best-price-formula {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #059669;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* No Product Found */
+        .no-product {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            display: none;
+        }
+
+        .no-product.active {
+            display: block;
+        }
+
+        .no-product-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .no-product-text {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        /* Recent Lookups */
+        .recent-lookups {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .recent-header {
+            font-size: 20px;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .recent-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .recent-item {
+            padding: 12px 15px;
+            background: #f8f9ff;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .recent-item:hover {
+            background: #667eea;
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .recent-code {
+            font-weight: 700;
+        }
+
+        .recent-price {
+            font-weight: 600;
+            color: #001eff;
+        }
+
+        .recent-item:hover .recent-price {
+            color: white;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+            animation: slideDown 0.3s;
+        }
+
+        .alert.active {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            border: 2px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            border: 2px solid #ef4444;
+            color: #991b1b;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .shop-name {
+                font-size: 48px;
+                letter-spacing: 4px;
+            }
+
+            .subtitle {
+                font-size: 18px;
+            }
+
+            .search-input {
+                font-size: 18px;
+                padding: 15px 50px 15px 15px;
+            }
+
+            .display-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-value {
+                font-size: 24px;
+            }
+
+            .price-value {
+                font-size: 32px;
+            }
+
+            .best-price-amount {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% csrf_token %}
+    
+    <div class="container">
+        <!-- Header -->
+        <div class="card header-card">
+            <div>
+                <div class="shop-name">FIELDMAX LIMITED 🔍</div>
+                <div class="subtitle">Price Lookup Dashboard</div>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="alertContainer"></div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="card">
+                <div class="search-input-wrapper">
+                    <input 
+                        type="text" 
+                        id="productSearch" 
+                        class="search-input" 
+                        placeholder="Enter Product Code, SKU, IMEI, Serial Number, or Barcode"
+                        autocomplete="off"
+                        autofocus
+                    >
+                    <i class="bi bi-search search-icon"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading" id="loadingSpinner">
+            <div class="spinner"></div>
+            <div>Searching product...</div>
+        </div>
+
+        <!-- No Product Found -->
+        <div class="card no-product" id="noProduct">
+            <div class="no-product-icon">🔍</div>
+            <div class="no-product-text">Product not found</div>
+            <p style="margin-top: 10px; color: #999;">Try entering a different product code, SKU, IMEI, or barcode</p>
+        </div>
+
+        <!-- Product Display Grid -->
+        <div class="display-grid" id="displayGrid" style="display: none;">
+            <div class="info-card">
+                <div class="info-label">Product Code</div>
+                <div class="info-value" id="displayCode">---</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Product Name</div>
+                <div class="info-value" id="displayName">---</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Selling Price</div>
+                <div class="info-value price-value" id="displayPrice">KSh 0.00</div>
+            </div>
+            <div class="info-card best-price-card" id="bestPriceCard" onclick="toggleBestPrice()">
+                <div class="info-label">
+                    Best Price 
+                    <i class="bi bi-lock-fill lock-icon" id="lockIcon"></i>
+                    <i class="bi bi-unlock-fill unlock-icon" id="unlockIcon" style="display: none;"></i>
+                </div>
+                <div class="info-value best-price-value" id="displayBestPrice">
+                    <span class="click-to-reveal" id="clickReveal">Click to Reveal</span>
+                    <span class="best-price-amount" id="bestPriceAmount" style="display: none;">KSh 0.00</span>
+                </div>
+                <div class="best-price-formula" id="bestPriceFormula" style="display: none;">
+                    <!-- Formula can be shown here if needed -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Lookups -->
+        <div class="card recent-lookups" id="recentSection" style="display: none;">
+            <div class="recent-header">
+                <i class="bi bi-clock-history"></i>
+                Recent Lookups
+            </div>
+            <div class="recent-list" id="recentList">
+                <!-- Recent lookups will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // GLOBAL STATE
+        // ============================================
+        let currentProduct = null;
+        let debounceTimer = null;
+        let recentLookups = JSON.parse(localStorage.getItem('recentLookups') || '[]');
+        let bestPriceRevealed = false;
+
+        // ============================================
+        // BEST PRICE CALCULATION - SIMPLE VERSION
+        // ============================================
+        function getBestPrice(product) {
+            // ✅ SIMPLE: Just use the best_price field from Django
+            if (product.best_price) {
+                return parseFloat(product.best_price);
+            }
+            
+            // ✅ FALLBACK: Calculate if best_price not provided
+            const buying_price = parseFloat(product.buying_price || 0);
+            const selling_price = parseFloat(product.selling_price || product.unit_price || 0);
+            
+            if (buying_price === 0 || selling_price === 0) {
+                return 0;
+            }
+            
+            // Calculate: Buying Price + 50% of Profit Margin
+            const profit_margin = selling_price - buying_price;
+            const bestPrice = buying_price + (profit_margin * 0.5);
+            
+            return bestPrice;
+        }
+
+        // ============================================
+        // BEST PRICE TOGGLE - SIMPLE
+        // ============================================
+        function toggleBestPrice() {
+            if (!currentProduct) {
+                showAlert('Please search for a product first', 'warning');
+                return;
+            }
+            
+            bestPriceRevealed = !bestPriceRevealed;
+            
+            const card = document.getElementById('bestPriceCard');
+            const lockIcon = document.getElementById('lockIcon');
+            const unlockIcon = document.getElementById('unlockIcon');
+            const clickReveal = document.getElementById('clickReveal');
+            const bestPriceAmount = document.getElementById('bestPriceAmount');
+            
+            if (bestPriceRevealed) {
+                // Reveal the price
+                card.classList.add('revealed');
+                lockIcon.style.display = 'none';
+                unlockIcon.style.display = 'inline';
+                clickReveal.style.display = 'none';
+                bestPriceAmount.style.display = 'block';
+                
+                // Get and display the best price
+                const bestPrice = getBestPrice(currentProduct);
+                bestPriceAmount.textContent = `KSh ${bestPrice.toFixed(2)}`;
+                
+            } else {
+                // Hide the price
+                card.classList.remove('revealed');
+                lockIcon.style.display = 'inline';
+                unlockIcon.style.display = 'none';
+                clickReveal.style.display = 'block';
+                bestPriceAmount.style.display = 'none';
+            }
+        }
+
+        // ============================================
+        // SEARCH FUNCTIONALITY
+        // ============================================
+        document.getElementById('productSearch').addEventListener('input', function(e) {
+            clearTimeout(debounceTimer);
+            const searchTerm = e.target.value.trim().toUpperCase();
+            
+            if (searchTerm.length < 2) {
+                hideProduct();
+                return;
+            }
+            
+            // Show loading
+            showLoading();
+            
+            debounceTimer = setTimeout(() => searchProduct(searchTerm), 500);
+        });
+
+        async function searchProduct(searchTerm) {
+            try {
+                const response = await fetch(`/sales/product-lookup/?product_code=${encodeURIComponent(searchTerm)}`);
+                const data = await response.json();
+                
+                hideLoading();
+                
+                if (data.success) {
+                    currentProduct = data.product;
+                    
+                    // Debug: Check what data we received
+                    console.log('Product Data Received:', {
+                        code: data.product.code,
+                        name: data.product.name,
+                        unit_price: data.product.unit_price,
+                        selling_price: data.product.selling_price,
+                        buying_price: data.product.buying_price,
+                        best_price: data.product.best_price,
+                        profit_margin: data.product.profit_margin
+                    });
+                    
+                    displayProduct(data.product);
+                    saveToRecent(data.product);
+                    showAlert('Product found!', 'info');
+                } else {
+                    hideProduct();
+                    showNoProduct();
+                    showAlert(data.message || 'Product not found', 'error');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                hideLoading();
+                showAlert('Error searching for product', 'error');
+            }
+        }
+
+        // ============================================
+        // DISPLAY PRODUCT - SIMPLE
+        // ============================================
+        function displayProduct(product) {
+            // Reset best price reveal state
+            bestPriceRevealed = false;
+            const card = document.getElementById('bestPriceCard');
+            const lockIcon = document.getElementById('lockIcon');
+            const unlockIcon = document.getElementById('unlockIcon');
+            const clickReveal = document.getElementById('clickReveal');
+            const bestPriceAmount = document.getElementById('bestPriceAmount');
+            
+            card.classList.remove('revealed');
+            lockIcon.style.display = 'inline';
+            unlockIcon.style.display = 'none';
+            clickReveal.style.display = 'block';
+            bestPriceAmount.style.display = 'none';
+            
+            // Hide no product message
+            document.getElementById('noProduct').classList.remove('active');
+            
+            // Show display grid
+            document.getElementById('displayGrid').style.display = 'grid';
+            
+            // Update main info cards
+            document.getElementById('displayCode').textContent = product.code || '---';
+            document.getElementById('displayName').textContent = product.name || '---';
+            
+            // Display selling price
+            const sellingPrice = product.unit_price || 0;
+            document.getElementById('displayPrice').textContent = `KSh ${parseFloat(sellingPrice).toFixed(2)}`;
+            
+            // Pre-calculate and set best price (hidden initially)
+            const bestPrice = getBestPrice(product);
+            document.getElementById('bestPriceAmount').textContent = `KSh ${bestPrice.toFixed(2)}`;
+            
+            // Show recent lookups section
+            document.getElementById('recentSection').style.display = 'block';
+        }
+
+        function hideProduct() {
+            document.getElementById('displayGrid').style.display = 'none';
+            document.getElementById('noProduct').classList.remove('active');
+            document.getElementById('recentSection').style.display = 'none';
+        }
+
+        function showNoProduct() {
+            document.getElementById('noProduct').classList.add('active');
+            document.getElementById('recentSection').style.display = 'none';
+        }
+
+        // ============================================
+        // RECENT LOOKUPS
+        // ============================================
+        function saveToRecent(product) {
+            // Remove if already exists
+            recentLookups = recentLookups.filter(item => 
+                item.code !== product.code
+            );
+            
+            // Add to beginning
+            recentLookups.unshift({
+                code: product.code,
+                name: product.name,
+                price: product.unit_price,
+                bestPrice: getBestPrice(product)
+            });
+            
+            // Keep only last 10
+            recentLookups = recentLookups.slice(0, 10);
+            
+            // Save to localStorage
+            localStorage.setItem('recentLookups', JSON.stringify(recentLookups));
+            
+            // Update display
+            displayRecentLookups();
+        }
+
+        function displayRecentLookups() {
+            if (recentLookups.length === 0) {
+                document.getElementById('recentSection').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('recentSection').style.display = 'block';
+            
+            const recentList = document.getElementById('recentList');
+            recentList.innerHTML = recentLookups.map(item => `
+                <div class="recent-item" onclick="searchProduct('${item.code}')">
+                    <div>
+                        <span class="recent-code">${item.code}</span> - ${item.name}
+                    </div>
+                    <div class="recent-price">KSh ${parseFloat(item.price || 0).toFixed(2)}</div>
+                </div>
+            `).join('');
+        }
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function showLoading() {
+            document.getElementById('loadingSpinner').classList.add('active');
+            hideProduct();
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingSpinner').classList.remove('active');
+        }
+
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alertContainer');
+            const alertClass = `alert-${type}`;
+            
+            container.innerHTML = `<div class="alert ${alertClass} active">${message}</div>`;
+            
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 3000);
+        }
+
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        document.addEventListener('keydown', function(e) {
+            // Escape to clear
+            if (e.key === 'Escape') {
+                document.getElementById('productSearch').value = '';
+                hideProduct();
+                document.getElementById('productSearch').focus();
+            }
+            
+            // Ctrl/Cmd + K to focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('productSearch').focus();
+                document.getElementById('productSearch').select();
+            }
+            
+            // Spacebar to toggle best price
+            if (e.key === ' ' && currentProduct && !document.getElementById('productSearch').matches(':focus')) {
+                e.preventDefault();
+                toggleBestPrice();
+            }
+        });
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Price Lookup Dashboard initialized');
+            
+            // Check localStorage for recent lookups
+            if (recentLookups.length > 0) {
+                displayRecentLookups();
+            }
+            
+            // Focus on search input
+            document.getElementById('productSearch').focus();
+            
+            // Add sample product for testing (remove in production)
+            window.testProduct = function() {
+                const testData = {
+                    code: "FSL001",
+                    name: "Samsung Galaxy S23",
+                    unit_price: 100.00,
+                    selling_price: 100.00,
+                    buying_price: 80.00,
+                    profit_margin: 20.00,
+                    best_price: 90.00
+                };
+                
+                console.log('Testing with sample product:', testData);
+                currentProduct = testData;
+                displayProduct(testData);
+                showAlert('Test: Product loaded successfully', 'info');
+            };
+        });
+    </script>
+</body>
+</html>
+{% endblock %}

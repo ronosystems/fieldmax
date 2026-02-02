@@ -332,6 +332,41 @@ def search_products(request):
 
 
 # ============================================
+# BEST PRICE HELPER FUNCTIONS
+# ============================================
+
+def calculate_best_price(product):
+    """
+    Helper function to calculate best price for a product
+    
+    Formula: Buying Price + 50% of Profit Margin
+    
+    Args:
+        product: Product instance
+        
+    Returns:
+        Decimal: Best price rounded to 2 decimal places
+    """
+    try:
+        buying_price = Decimal(str(product.buying_price)) if product.buying_price else Decimal('0.00')
+        selling_price = Decimal(str(product.selling_price)) if product.selling_price else Decimal('0.00')
+        
+        profit_margin = selling_price - buying_price
+        best_price = buying_price + (profit_margin * Decimal('0.5'))
+        
+        return round(best_price, 2)
+    except Exception as e:
+        print(f"Error calculating best price: {e}")
+        return Decimal('0.00')
+
+
+
+
+
+
+
+
+# ============================================
 # HOME VIEW
 # ============================================
 def home(request):
@@ -2684,6 +2719,7 @@ class RoleBasedLoginView(LoginView):
                 'manager': '/manager-dashboard/',
                 'agent': '/agent-dashboard/',
                 'cashier': '/cashier-dashboard/',
+                'seller': '/seller-dashboard/',
             }
             
             url = role_urls.get(role_name, '/')
@@ -2733,6 +2769,26 @@ def cashier_dashboard(request):
     Cashier Dashboard View
     """
     return render(request, 'website/cashier_dashboard.html')
+
+
+
+
+
+
+#============================================
+#SELLER DASHBOARD
+#============================================
+@login_required
+def seller_dashboard(request):
+    """
+    Seller Dashboard View
+    """
+    return render(request, 'website/seller_dashboard.html')
+
+
+
+
+
 
 # ============================================
 # ADMIN DASHBOARD - COMPLETELY FIXED VERSION

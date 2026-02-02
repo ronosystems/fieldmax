@@ -1478,6 +1478,17 @@ def product_lookup(request):
                     'success': False,
                     'message': f'Product {product_code} is out of stock'
                 })
+    
+        # ✅ CRITICAL: Get buying price from database
+        buying_price = float(product.buying_price) if product.buying_price else 0
+        selling_price = float(product.selling_price) if product.selling_price else 0
+        
+        # Calculate profit margin
+        profit_margin = selling_price - buying_price
+        
+        # Calculate best price: Buying Price + 50% of Profit Margin
+        best_price = buying_price + (profit_margin * 0.5)
+
         
         return JsonResponse({
             'success': True,
@@ -1485,6 +1496,14 @@ def product_lookup(request):
                 'code': product.product_code,
                 'name': product.name,
                 'unit_price': float(product.selling_price),
+
+                # ✅ ADD THESE FIELDS:
+                'selling_price': selling_price,
+                'buying_price': buying_price,
+                'profit_margin': profit_margin,
+                'best_price': best_price,  # Pre-calculate on server
+                
+
                 'quantity_available': product.quantity if not product.category.is_single_item else 1,
                 'is_single_item': product.category.is_single_item,
                 'category': product.category.name
