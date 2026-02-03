@@ -123,7 +123,7 @@
     background: linear-gradient(135deg, #2563eb, #1d4ed8);
   }
 
-  /* ===== ENHANCED HERO SECTION ===== */
+  /* ===== REDESIGNED HERO SECTION - 3 COLUMNS ===== */
   .hero {
     position: relative;
     min-height: 85vh;
@@ -138,17 +138,104 @@
     background-position: center;
     background-repeat: no-repeat;
   }
+  
   .hero-content {
-    max-width: 1400px;
-    width: 100%;
+    max-width: 1600px;
+    width: 90%;
     margin: 0 auto;
   }
   
-  .hero-grid {
+  /* 3-COLUMN GRID LAYOUT */
+  .hero-grid-3col {
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
-    gap: 60px;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    gap: 40px;
     align-items: center;
+  }
+  
+  /* COLUMNS 1 & 3 - IMAGE SLIDESHOWS */
+  .hero-image-column {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    height: 100%;
+  }
+  
+  .hero-slideshow-small {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    overflow: hidden;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+  }
+  
+  .slideshow-container-small {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .slide-small {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  
+  .slide-small.active {
+    opacity: 1;
+  }
+  
+  .slide-small-title {
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.6));
+    padding: 10px 20px;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    z-index: 2;
+  }
+  
+  .slide-small img {
+    max-width: 85%;
+    max-height: 65%;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+    transition: transform 0.5s ease;
+  }
+  
+  .slide-small.active img {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  /* COLUMN 2 - MAIN CONTENT */
+  .hero-center-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 40px 30px;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(15px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
   }
   
   .hero-badge {
@@ -160,23 +247,24 @@
     border-radius: 50px;
     font-size: 16px;
     font-weight: 600;
-    margin-bottom: 25px;
+    margin-bottom: 30px;
     color: #ffffff;
     border: none;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.957);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     animation: pulse 2s infinite;
   }
   
   @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.9; }
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.02); }
   }
   
   .hero-text-slideshow {
     position: relative;
-    height: 200px;
+    height: 220px;
     overflow: hidden;
     margin-bottom: 25px;
+    width: 100%;
   }
   
   .text-slide {
@@ -193,15 +281,16 @@
   }
   
   .hero-title {
-    font-size: clamp(2.5rem, 5vw, 4rem);
-    font-weight: 800;
+    font-size: clamp(2.8rem, 5vw, 4.5rem);
+    font-weight: 900;
     line-height: 1.1;
     margin-bottom: 20px;
     color: #ffffff;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   }
   
   .hero-title .highlight {
-    background: linear-gradient(135deg, #3b82f6 0%, #4c00ff 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #ff0000 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -216,29 +305,32 @@
     left: 0;
     width: 100%;
     height: 3px;
-    background: linear-gradient(135deg, #3b82f6, #4c00ff);
+    background: linear-gradient(135deg, #3b82f6, #ff0000);
     border-radius: 2px;
   }
   
   .hero-subtitle {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     line-height: 1.7;
     color: #ffdd00;
-    max-width: 550px;
-    margin-bottom: 25px;
+    max-width: 600px;
+    margin: 0 auto 25px;
+    font-weight: 500;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
   
   .text-slideshow-nav {
     display: flex;
     gap: 10px;
-    margin: 20px 0 30px;
+    margin: 25px auto 35px;
+    justify-content: center;
   }
   
   .text-nav-dot {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    background: #cbd5e1;
+    background: rgba(255, 255, 255, 0.5);
     cursor: pointer;
     transition: all 0.3s ease;
     border: 2px solid transparent;
@@ -252,185 +344,90 @@
   .text-nav-dot.active {
     background: #3b82f6;
     transform: scale(1.3);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.953);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
   }
   
   .hero-buttons {
     display: flex;
-    gap: 15px;
+    gap: 20px;
     flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
   }
   
   .btn {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 16px 32px;
+    gap: 12px;
+    padding: 18px 35px;
     border-radius: 50px;
-    font-weight: 600;
-    font-size: 15px;
+    font-weight: 700;
+    font-size: 16px;
     text-decoration: none;
     transition: all 0.3s ease;
     border: 2px solid transparent;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
   }
   
   .btn-primary {
-    background: linear-gradient(135deg, #3b82f6 0%, #00fffb 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #ff0000 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.95);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
   }
   
   .btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.96);
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
   }
   
   .btn-secondary {
-    background: #ffffff;
-    border: 2px solid #3b82f6;
-    color: #3b82f6;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.986);
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
   }
   
   .btn-secondary:hover {
-    background: #3b82f6;
-    color: white;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
-  }
-
-  /* ===== IMPROVED IMAGE SLIDESHOW ===== */
-  .hero-slideshow {
-    position: relative;
-    width: 100%;
-    height: 450px;
-    overflow: hidden;
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    border: 2px solid #e2e8f0;
-    background: #ffffff;
+    background: rgba(59, 130, 246, 0.8);
+    border-color: #3b82f6;
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(59, 130, 246, 0.3);
   }
   
-  .slideshow-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-  }
-  
-  .slide {
+  /* Image slideshow navigation for side columns */
+  .slideshow-nav-small {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    transition: opacity 1s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 25px;
-  }
-  
-  .slide.active {
-    opacity: 1;
-  }
-  
-  .slide-title {
-    color: #ffffff;
-    font-size: 1.4rem;
-    font-weight: 700;
-    text-align: center;
-    margin-bottom: 20px;
-    background: linear-gradient(135deg, #000000, #000000);
-    padding: 12px 30px;
-    border-radius: 50px;
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  
-  .slide img {
-    max-width: 80%;
-    max-height: 70%;
-    object-fit: contain;
-    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
-    transition: transform 0.5s ease;
-  }
-  
-  .slide.active img {
-    animation: float 3s ease-in-out infinite;
-  }
-  
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-  }
-  
-  .slideshow-nav {
-    position: absolute;
-    bottom: 25px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 12px;
+    gap: 10px;
     z-index: 10;
   }
   
-  .nav-dot {
-    width: 14px;
-    height: 14px;
+  .nav-dot-small {
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    background: #cbd5e1;
+    background: rgba(255, 255, 255, 0.5);
     cursor: pointer;
     transition: all 0.3s ease;
-    border: 2px solid transparent;
+    border: 1px solid transparent;
   }
   
-  .nav-dot:hover {
+  .nav-dot-small:hover {
     background: #3b82f6;
     transform: scale(1.2);
   }
   
-  .nav-dot.active {
+  .nav-dot-small.active {
     background: #3b82f6;
     transform: scale(1.3);
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
   }
   
-  .slideshow-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid #e2e8f0;
-    color: #3b82f6;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 22px;
-    transition: all 0.3s ease;
-    z-index: 10;
-    backdrop-filter: blur(5px);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .slideshow-arrow:hover {
-    background: #3b82f6;
-    border-color: #3b82f6;
-    color: white;
-    transform: translateY(-50%) scale(1.1);
-  }
-  
-  .slideshow-arrow.prev { left: 20px; }
-  .slideshow-arrow.next { right: 20px; }
-
   /* ===== ENHANCED MARQUEE ===== */
   .marquee-container {
     position: absolute;
@@ -906,8 +903,12 @@
   }
   
   @media (max-width: 1400px) {
-    .hero-grid {
-      gap: 40px;
+    .hero-grid-3col {
+      gap: 30px;
+    }
+    
+    .hero-slideshow-small {
+      height: 280px;
     }
     
     .best-selling-grid {
@@ -916,8 +917,16 @@
   }
   
   @media (max-width: 1200px) {
-    .hero-grid {
-      gap: 40px;
+    .hero-grid-3col {
+      gap: 25px;
+    }
+    
+    .hero-slideshow-small {
+      height: 250px;
+    }
+    
+    .hero-center-column {
+      padding: 30px 20px;
     }
     
     .best-selling-grid {
@@ -930,17 +939,28 @@
   }
   
   @media (max-width: 992px) {
-    .hero-grid {
+    .hero-grid-3col {
       grid-template-columns: 1fr;
-      text-align: center;
-      gap: 50px;
+      gap: 40px;
     }
     
-    .hero-slideshow {
+    .hero-image-column {
+      flex-direction: row;
+      gap: 20px;
+    }
+    
+    .hero-slideshow-small {
+      height: 200px;
+      flex: 1;
+    }
+    
+    .hero-center-column {
       order: -1;
-      height: 400px;
-      max-width: 600px;
-      margin: 0 auto;
+      padding: 30px;
+    }
+    
+    .hero-title {
+      font-size: 2.5rem;
     }
     
     .hero-text-slideshow {
@@ -962,12 +982,20 @@
       padding: 40px 5% 60px;
     }
     
+    .hero-image-column {
+      flex-direction: column;
+    }
+    
+    .hero-slideshow-small {
+      height: 220px;
+    }
+    
     .hero-title {
       font-size: 2.2rem;
     }
     
-    .hero-slideshow {
-      height: 350px;
+    .hero-center-column {
+      padding: 25px 20px;
     }
     
     .best-selling-grid {
@@ -999,6 +1027,17 @@
       grid-template-columns: 1fr;
       max-width: 300px;
     }
+    
+    .hero-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .btn {
+      width: 100%;
+      max-width: 300px;
+      justify-content: center;
+    }
   }
   
   @media (max-width: 576px) {
@@ -1014,17 +1053,13 @@
       font-size: 1.8rem;
     }
     
-    .hero-buttons {
-      flex-direction: column;
-    }
-    
-    .btn {
-      width: 100%;
-      justify-content: center;
-    }
-    
     .features-grid {
       grid-template-columns: 1fr;
+    }
+    
+    .hero-badge {
+      font-size: 14px;
+      padding: 10px 20px;
     }
   }
 </style>
@@ -1059,11 +1094,59 @@
     </form>
   </section>
 
-  <!-- Hero Section - UNCHANGED -->
+  <!-- Hero Section - REDESIGNED WITH 3 COLUMNS -->
   <section class="hero" id="home">
     <div class="hero-content">
-      <div class="hero-grid">
-        <div class="hero-text">
+      <div class="hero-grid-3col">
+        <!-- COLUMN 1 - LEFT IMAGE SLIDESHOW -->
+        <div class="hero-image-column">
+          <div class="hero-slideshow-small" id="leftSlideshow">
+            <div class="slideshow-container-small">
+              <div class="slide-small active" data-slide-index="0">
+                <div class="slide-small-title">EXPERT PHONE REPAIRS</div>
+                <img src="{% static 'images/REPAIRS.png' %}" alt="Professional Phone Repairs" loading="lazy">
+              </div>
+              <div class="slide-small" data-slide-index="1">
+                <div class="slide-small-title">PREMIUM AUDIO GEAR</div>
+                <img src="{% static 'images/EARPODS.png' %}" alt="High-Quality Earpods" loading="lazy">
+              </div>
+              <div class="slide-small" data-slide-index="2">
+                <div class="slide-small-title">ACCESSORIES GALORE</div>
+                <img src="{% static 'images/PHANTOM.png' %}" alt="Phone Accessories" loading="lazy">
+              </div>
+            </div>
+            <div class="slideshow-nav-small">
+              <span class="nav-dot-small active" onclick="goToLeftSlide(0)"></span>
+              <span class="nav-dot-small" onclick="goToLeftSlide(1)"></span>
+              <span class="nav-dot-small" onclick="goToLeftSlide(2)"></span>
+            </div>
+          </div>
+          
+          <div class="hero-slideshow-small" id="leftSlideshow2">
+            <div class="slideshow-container-small">
+              <div class="slide-small active" data-slide-index="0">
+                <div class="slide-small-title">POWER BANKS</div>
+                <img src="{% static 'images/POWERBANK.webp' %}" alt="Power Banks" loading="lazy">
+              </div>
+              <div class="slide-small" data-slide-index="1">
+                <div class="slide-small-title">CHARGING SOLUTIONS</div>
+                <img src="{% static 'images/CHARGER.webp' %}" alt="Chargers" loading="lazy">
+              </div>
+              <div class="slide-small" data-slide-index="2">
+                <div class="slide-small-title">SMART GADGETS</div>
+                <img src="{% static 'images/PHANTOM.png' %}" alt="Smart Gadgets" loading="lazy">
+              </div>
+            </div>
+            <div class="slideshow-nav-small">
+              <span class="nav-dot-small active" onclick="goToLeftSlide2(0)"></span>
+              <span class="nav-dot-small" onclick="goToLeftSlide2(1)"></span>
+              <span class="nav-dot-small" onclick="goToLeftSlide2(2)"></span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- COLUMN 2 - CENTER MAIN CONTENT -->
+        <div class="hero-center-column">
           <div class="hero-badge">
             <span>⚡</span>
             <span>PREMIUM TECH • UNBEATABLE PRICES</span>
@@ -1076,7 +1159,7 @@
                 <span class="highlight">TECHNOLOGY</span>
               </h1>
               <p class="hero-subtitle">
-                New arrivals  to all  our products. Quality meets affordability.
+                New arrivals to all our products. Quality meets affordability.
               </p>
             </div>
             
@@ -1086,7 +1169,7 @@
                 <span class="highlight">INNOVATION</span>
               </h1>
               <p class="hero-subtitle">
-                Latest innovations in mobile technology.
+                Latest innovations in mobile technology at your fingertips.
               </p>
             </div>
             
@@ -1096,7 +1179,7 @@
                 <span class="highlight">QUALITY</span>
               </h1>
               <p class="hero-subtitle">
-                Every product is handpicked for quality and performance.
+                Every product is handpicked for exceptional quality and performance.
               </p>
             </div>
           </div>
@@ -1119,32 +1202,56 @@
           </div>
         </div>
         
-        <div class="hero-slideshow">
-          <div class="slideshow-container" id="slideshow">
-            <div class="slide active">
-              <div class="slide-title">EXPERT PHONE REPAIRS</div>
-              <img src="{% static 'images/REPAIRS.png' %}" alt="Professional Phone Repairs" loading="lazy">
+        <!-- COLUMN 3 - RIGHT IMAGE SLIDESHOW -->
+        <div class="hero-image-column">
+          <div class="hero-slideshow-small" id="rightSlideshow">
+            <div class="slideshow-container-small">
+              <div class="slide-small active" data-slide-index="0">
+                <div class="slide-small-title">TECNO SERIES</div>
+                <img src="{% static 'images/NT1.png' %}" alt="Tecno  Premium Featurephone" loading="lazy">
+              </div>
+              <div class="slide-small" data-slide-index="1">
+                <div class="slide-small-title">FLAGSHIP DEVICES</div>
+                <img src="{% static 'images/NO1.png' %}" alt="Flagship Oking Featurephone" loading="lazy">
+              </div>
+              <div class="slide-small" data-slide-index="2">
+                <div class="slide-small-title">SAMSUNG GALAXY</div>
+                <img src="{% static 'images/SAMSUNG.png' %}" alt="Samsung Galaxy Smartphones" loading="lazy">
+              </div>
             </div>
-            <div class="slide">
-              <div class="slide-title">TECNO PHANTOM SERIES</div>
-              <img src="{% static 'images/PHANTOM.png' %}" alt="Tecno Phantom Premium Smartphones" loading="lazy">
-            </div>
-            <div class="slide">
-              <div class="slide-title">PREMIUM AUDIO GEAR</div>
-              <img src="{% static 'images/EARPODS.png' %}" alt="High-Quality Earpods" loading="lazy">
+            <div class="slideshow-nav-small">
+              <span class="nav-dot-small active" onclick="goToRightSlide(0)"></span>
+              <span class="nav-dot-small" onclick="goToRightSlide(1)"></span>
+              <span class="nav-dot-small" onclick="goToRightSlide(2)"></span>
             </div>
           </div>
-          <div class="slideshow-arrow prev" onclick="changeSlide(-1)">❮</div>
-          <div class="slideshow-arrow next" onclick="changeSlide(1)">❯</div>
-          <div class="slideshow-nav">
-            <span class="nav-dot active" onclick="goToSlide(0)"></span>
-            <span class="nav-dot" onclick="goToSlide(1)"></span>
-            <span class="nav-dot" onclick="goToSlide(2)"></span>
+          
+          <div class="hero-slideshow-small" id="rightSlideshow2">
+            <div class="slideshow-container-small">
+              <div class="slide-small active" data-slide-index="0">
+                <div class="slide-small-title">SMART WATCHES</div>
+                <img src="{% static 'images/WATCH.jpg' %}" alt="Smart Watches" loading="lazy">
+              </div>
+              <div class="slide-small" data-slide-index="1">
+                <div class="slide-small-title">FITNESS TRACKERS</div>
+                <img src="{% static 'images/TRACKER.png' %}" alt="Fitness Trackers" loading="lazy">
+              </div>
+              <div class="slide-small" data-slide-index="2">
+                <div class="slide-small-title">TABLETS</div>
+                <img src="{% static 'images/TAB.jpg' %}" alt="Galaxy Tablets" loading="lazy">
+              </div>
+            </div>
+            <div class="slideshow-nav-small">
+              <span class="nav-dot-small active" onclick="goToRightSlide2(0)"></span>
+              <span class="nav-dot-small" onclick="goToRightSlide2(1)"></span>
+              <span class="nav-dot-small" onclick="goToRightSlide2(2)"></span>
+            </div>
           </div>
         </div>
       </div>
     </div>
     
+    <!-- Marquee Section -->
     <div class="marquee-container">
       <div class="marquee">
         <div class="marquee-content">
@@ -1558,31 +1665,49 @@
     }, 3000);
   }
 
-  // Slideshow functions
-  window.changeSlide = function(n) {
-    const slides = document.querySelectorAll('.slide');
-    const dots = document.querySelectorAll('.nav-dot');
-    let currentSlide = parseInt(document.querySelector('.slide.active').dataset.slideIndex || 0);
+  // Slideshow functions for 4 independent slideshows
+  function initSlideshow(containerId, slideIntervalTime = 4000) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
     
-    slides[currentSlide].classList.remove('active');
-    dots[currentSlide].classList.remove('active');
-    currentSlide = (currentSlide + n + slides.length) % slides.length;
-    slides[currentSlide].classList.add('active');
-    dots[currentSlide].classList.add('active');
-  };
-
-  window.goToSlide = function(n) {
-    const slides = document.querySelectorAll('.slide');
-    const dots = document.querySelectorAll('.nav-dot');
-    let currentSlide = parseInt(document.querySelector('.slide.active').dataset.slideIndex || 0);
+    const slides = container.querySelectorAll('.slide-small');
+    const dots = container.querySelectorAll('.nav-dot-small');
+    let currentSlide = 0;
+    let interval;
     
-    slides[currentSlide].classList.remove('active');
-    dots[currentSlide].classList.remove('active');
-    currentSlide = n;
-    slides[currentSlide].classList.add('active');
-    dots[currentSlide].classList.add('active');
-  };
+    function showSlide(n) {
+      slides[currentSlide].classList.remove('active');
+      dots[currentSlide].classList.remove('active');
+      currentSlide = (n + slides.length) % slides.length;
+      slides[currentSlide].classList.add('active');
+      dots[currentSlide].classList.add('active');
+    }
+    
+    function startSlideShow() {
+      interval = setInterval(() => {
+        showSlide(currentSlide + 1);
+      }, slideIntervalTime);
+    }
+    
+    function stopSlideShow() {
+      clearInterval(interval);
+    }
+    
+    // Initialize slide indices
+    slides.forEach((slide, index) => {
+      slide.dataset.slideIndex = index;
+    });
+    
+    startSlideShow();
+    
+    // Add hover pause
+    container.addEventListener('mouseenter', stopSlideShow);
+    container.addEventListener('mouseleave', startSlideShow);
+    
+    return { showSlide, currentSlide };
+  }
 
+  // Text slideshow functions
   window.goToTextSlide = function(n) {
     const textSlides = document.querySelectorAll('.text-slide');
     const textDots = document.querySelectorAll('.text-nav-dot');
@@ -1595,37 +1720,71 @@
     textDots[currentTextSlide].classList.add('active');
   };
 
-  document.addEventListener('DOMContentLoaded', function() {
-    // Initialize slide indices
-    document.querySelectorAll('.slide').forEach((slide, index) => {
-      slide.dataset.slideIndex = index;
-    });
+  // Left slideshow navigation functions
+  window.goToLeftSlide = function(n) {
+    const leftSlideshow = document.getElementById('leftSlideshow');
+    const slides = leftSlideshow.querySelectorAll('.slide-small');
+    const dots = leftSlideshow.querySelectorAll('.nav-dot-small');
+    let currentSlide = parseInt(leftSlideshow.querySelector('.slide-small.active').dataset.slideIndex || 0);
     
+    slides[currentSlide].classList.remove('active');
+    dots[currentSlide].classList.remove('active');
+    currentSlide = n;
+    slides[currentSlide].classList.add('active');
+    dots[currentSlide].classList.add('active');
+  };
+
+  window.goToLeftSlide2 = function(n) {
+    const leftSlideshow2 = document.getElementById('leftSlideshow2');
+    const slides = leftSlideshow2.querySelectorAll('.slide-small');
+    const dots = leftSlideshow2.querySelectorAll('.nav-dot-small');
+    let currentSlide = parseInt(leftSlideshow2.querySelector('.slide-small.active').dataset.slideIndex || 0);
+    
+    slides[currentSlide].classList.remove('active');
+    dots[currentSlide].classList.remove('active');
+    currentSlide = n;
+    slides[currentSlide].classList.add('active');
+    dots[currentSlide].classList.add('active');
+  };
+
+  // Right slideshow navigation functions
+  window.goToRightSlide = function(n) {
+    const rightSlideshow = document.getElementById('rightSlideshow');
+    const slides = rightSlideshow.querySelectorAll('.slide-small');
+    const dots = rightSlideshow.querySelectorAll('.nav-dot-small');
+    let currentSlide = parseInt(rightSlideshow.querySelector('.slide-small.active').dataset.slideIndex || 0);
+    
+    slides[currentSlide].classList.remove('active');
+    dots[currentSlide].classList.remove('active');
+    currentSlide = n;
+    slides[currentSlide].classList.add('active');
+    dots[currentSlide].classList.add('active');
+  };
+
+  window.goToRightSlide2 = function(n) {
+    const rightSlideshow2 = document.getElementById('rightSlideshow2');
+    const slides = rightSlideshow2.querySelectorAll('.slide-small');
+    const dots = rightSlideshow2.querySelectorAll('.nav-dot-small');
+    let currentSlide = parseInt(rightSlideshow2.querySelector('.slide-small.active').dataset.slideIndex || 0);
+    
+    slides[currentSlide].classList.remove('active');
+    dots[currentSlide].classList.remove('active');
+    currentSlide = n;
+    slides[currentSlide].classList.add('active');
+    dots[currentSlide].classList.add('active');
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize slide indices for text slideshow
     document.querySelectorAll('.text-slide').forEach((slide, index) => {
       slide.dataset.slideIndex = index;
     });
     
-    // Image Slideshow
-    const slides = document.querySelectorAll('.slide');
-    const dots = document.querySelectorAll('.nav-dot');
-    let currentSlide = 0;
-    let slideInterval;
-    
-    function showSlide(n) {
-      slides[currentSlide].classList.remove('active');
-      dots[currentSlide].classList.remove('active');
-      currentSlide = (n + slides.length) % slides.length;
-      slides[currentSlide].classList.add('active');
-      dots[currentSlide].classList.add('active');
-    }
-    
-    function startSlideShow() {
-      slideInterval = setInterval(() => {
-        showSlide(currentSlide + 1);
-      }, 5000);
-    }
-    
-    startSlideShow();
+    // Initialize all 4 image slideshows
+    initSlideshow('leftSlideshow', 3500);
+    initSlideshow('leftSlideshow2', 4000);
+    initSlideshow('rightSlideshow', 3800);
+    initSlideshow('rightSlideshow2', 4200);
     
     // Text Slideshow
     const textSlides = document.querySelectorAll('.text-slide');
@@ -1644,7 +1803,7 @@
     function startTextSlideShow() {
       textSlideInterval = setInterval(() => {
         showTextSlide(currentTextSlide + 1);
-      }, 4000);
+      }, 4500);
     }
     
     startTextSlideShow();
