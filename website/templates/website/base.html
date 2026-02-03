@@ -1252,13 +1252,13 @@ body {
     <!-- Authenticated User -->
     <button class="user-btn" id="userToggle">
       <i class="bi bi-person-circle"></i>
-      <span>{{ user.username|upper }}</span>
+      <span>{{ user.first_name|upper }}</span>
     </button>
     
     <div class="user-dropdown" id="userDropdown">
       <div class="user-dropdown-header">
         <i class="bi bi-person-circle"></i>
-        <h3 class="user-dropdown-title">{{ user.username|upper }}</h3>
+        <h3 class="user-dropdown-title">{{ user.first_name|upper }}</h3>
       </div>
       
       <div class="user-info">
