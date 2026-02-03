@@ -4953,9 +4953,6 @@ strong[style*="background-color"] {
 
 
 
-
-
-
 <!-- ============================= -->
 <!--  PRINT BARCODE/SKU SECTION    -->
 <!-- ============================= -->
@@ -5355,9 +5352,6 @@ strong[style*="background-color"] {
     </div>
   </div>
 </div>
-
-
-
 
 
 
@@ -6077,69 +6071,6 @@ strong[style*="background-color"] {
     </button>
   </div>
 
-  <!-- Staff Onboarding Statistics -->
-  <div class="stats-grid">
-    <!-- Pending Applications -->
-    <div class="stat-card stat-card-warning" onclick="showStaffSection('pending')">
-      <div class="stat-icon">
-        <i class="bi bi-hourglass-split"></i>
-      </div>
-      <div class="stat-content">
-        <span class="stat-label">Pending Applications</span>
-        <h1 class="stat-value" id="pendingCount">{{ pending_applications.count }}</h1>
-        <div class="stat-dropdown">
-          <span class="stat-subtitle">Today: <span id="pendingToday">{{ pending_today.count }}</span></span>
-          <span class="stat-subtitle">This Week: <span id="pendingWeek">{{ pending_week.count }}</span></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Approved Staff -->
-    <div class="stat-card stat-card-success" onclick="showStaffSection('approved')">
-      <div class="stat-icon">
-        <i class="bi bi-check-circle"></i>
-      </div>
-      <div class="stat-content">
-        <span class="stat-label">Approved Staff</span>
-        <h1 class="stat-value" id="approvedCount">{{ approved_applications.count }}</h1>
-        <div class="stat-dropdown">
-          <span class="stat-subtitle">Sales Assistants: <span id="salesCount">{{ sales_assistants.count }}</span></span>
-          <span class="stat-subtitle">Cashiers: <span id="cashierCount">{{ cashiers.count }}</span></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Rejected Applications -->
-    <div class="stat-card stat-card-danger" onclick="showStaffSection('rejected')">
-      <div class="stat-icon">
-        <i class="bi bi-x-circle"></i>
-      </div>
-      <div class="stat-content">
-        <span class="stat-label">Rejected</span>
-        <h1 class="stat-value" id="rejectedCount">{{ rejected_applications.count }}</h1>
-        <div class="stat-dropdown">
-          <span class="stat-subtitle">This Month: <span id="rejectedMonth">{{ rejected_month.count }}</span></span>
-          <span class="stat-subtitle">Under Review: <span id="underReviewCount">{{ under_review.count }}</span></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Total Applications -->
-    <div class="stat-card stat-card-info">
-      <div class="stat-icon">
-        <i class="bi bi-people"></i>
-      </div>
-      <div class="stat-content">
-        <span class="stat-label">Total Applications</span>
-        <h1 class="stat-value" id="totalApplications">{{ all_applications.count }}</h1>
-        <div class="stat-dropdown">
-          <span class="stat-subtitle">Conversion Rate: <span id="conversionRate">{{ conversion_rate|floatformat:1 }}%</span></span>
-          <span class="stat-subtitle">Avg Time: <span id="avgProcessTime">{{ avg_process_time|floatformat:1 }} days</span></span>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Search and Filter Bar -->
   <div class="filter-bar mb-4">
     <div class="row g-3">
@@ -6727,6 +6658,9 @@ strong[style*="background-color"] {
     </div>
   </div>
 </div>
+
+
+
 
 
 <!-- ============================= -->

@@ -1362,11 +1362,38 @@ body {
       {% if user.is_authenticated %}
         <!-- Authenticated User Links (Staff) -->
         
-        <!-- Dashboard -->
-        <a href="{{ dashboard_url }}" class="nav-link">
-          <i class="bi bi-speedometer2"></i>
-          <span>DASHBOARD</span>
-        </a>
+        <!-- Dashboard - FIXED VERSION -->
+        {% if user.is_superuser or user.profile.role.name == 'admin' %}
+          <a href="{% url 'admin_dashboard' %}" class="nav-link">
+            <i class="bi bi-speedometer2"></i>
+            <span>DASHBOARD</span>
+          </a>
+        {% elif user.profile.role.name == 'manager' %}
+          <a href="{% url 'manager_dashboard' %}" class="nav-link">
+            <i class="bi bi-speedometer2"></i>
+            <span>DASHBOARD</span>
+          </a>
+        {% elif user.profile.role.name == 'agent' %}
+          <a href="{% url 'agent_dashboard' %}" class="nav-link">
+            <i class="bi bi-speedometer2"></i>
+            <span>DASHBOARD</span>
+          </a>
+        {% elif user.profile.role.name == 'cashier' %}
+          <a href="{% url 'cashier_dashboard' %}" class="nav-link">
+            <i class="bi bi-speedometer2"></i>
+            <span>DASHBOARD</span>
+          </a>
+        {% elif user.profile.role.name == 'seller' %}
+          <a href="{% url 'seller_dashboard' %}" class="nav-link">
+            <i class="bi bi-speedometer2"></i>
+            <span>DASHBOARD</span>
+          </a>
+        {% else %}
+          <a href="#" class="nav-link">
+            <i class="bi bi-speedometer2"></i>
+            <span>DASHBOARD</span>
+          </a>
+        {% endif %}
         
 <!-- Pending Orders -->
 <a href="{% url 'pending-orders-list' %}" class="nav-link cart-link" id="pendingOrdersLink">

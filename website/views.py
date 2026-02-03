@@ -1,37 +1,47 @@
 from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.views import LoginView
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.cache import cache_page
+from rest_framework.decorators import api_view, permission_classes
+from django.utils.timesince import timesince
 from django.shortcuts import redirect
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth.views import LoginView
 from django.views.generic import TemplateView, ListView
 from django.contrib.auth.models import User
 from sales.models import Sale, SaleItem
 from users.models import Profile
 from django.utils import timezone
-from django.urls import reverse
 from django.db.models import Sum, Q, F, DecimalField, Count
 from inventory.models import Product, Category, StockEntry
 from decimal import Decimal
 import logging
-from datetime import timedelta
 from django.http import JsonResponse
 import json
 from django.db import transaction
 from .models import PendingOrder, PendingOrderItem, Order, Customer
 from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST, require_GET
-from django.views.decorators.cache import cache_page
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
-from django.utils.timesince import timesince
-from staff_registration.models import StaffApplication  # ⭐ ADD THIS LINE
-from datetime import timedelta  # ⭐ ADD THIS IF NOT ALREADY IMPORTED
+from staff_registration.models import StaffApplication
+from datetime import timedelta 
+from django.http import JsonResponse, HttpResponse
+from django.contrib import messages
+from django.utils import timezone
+from .forms import StaffApplicationForm
+from django.db.models import Q
+from difflib import SequenceMatcher
+
 
 
 
 
 logger = logging.getLogger(__name__)
+
+
+
+
 
 # ============================================
 #  CATEGORIES LIST PUBLIC
@@ -82,6 +92,12 @@ def categories_list_public(request):
             'message': str(e),
             'categories': []
         }, status=500)
+
+
+
+
+
+
 
 # ============================================
 # API GET CATEGORIES
@@ -162,6 +178,11 @@ def api_get_categories(request):
             'categories': []
         }, status=500)
 
+
+
+
+
+
 # ============================================
 # API CATEGORY DETAILS
 # ============================================
@@ -228,9 +249,6 @@ def api_category_details(request, category_id):
 
 
 
-
-from django.db.models import Q
-from difflib import SequenceMatcher
 
 @require_http_methods(["GET"])
 def search_products(request):
@@ -369,28 +387,11 @@ def calculate_best_price(product):
 # ============================================
 # HOME VIEW
 # ============================================
+
 def home(request):
     """
     Home page with top 12 most frequently sold products
     """
-    # Dashboard URL logic
-    dashboard_url = '#'
-    if request.user.is_authenticated:
-        if hasattr(request.user, 'profile') and request.user.profile:
-            role = request.user.profile.role
-            if role:
-                role_name = role.name.lower()
-                if role_name == 'admin':
-                    dashboard_url = '/admin-dashboard/'
-                elif role_name == 'manager':
-                    dashboard_url = '/manager-dashboard/'
-                elif role_name == 'agent':
-                    dashboard_url = '/agent-dashboard/'
-                elif role_name == 'cashier':
-                    dashboard_url = '/cashier-dashboard/'
-        elif request.user.is_superuser:
-            dashboard_url = '/admin-dashboard/'
-    
     # Get top 12 best-selling items - with category safety check
     best_sellers = []
     
@@ -446,7 +447,7 @@ def home(request):
             is_active=True
         ).order_by('-created_at')[:12]
     
-    # ✅ NEW: Get all active categories that have products for filtering
+    # Get all active categories that have products for filtering
     try:
         categories = Category.objects.filter(
             products__is_active=True,
@@ -461,12 +462,20 @@ def home(request):
     
     context = {
         'page_title': 'Home - Fieldmax | Premium Tech at Unbeatable Prices',
-        'dashboard_url': dashboard_url,
         'featured_products': best_sellers,
-        'categories': categories,  # ✅ Added for category filters
+        'categories': categories,
     }
     
     return render(request, 'website/home.html', context)
+
+
+
+
+
+
+
+
+
 
 # ============================================
 # HOME STATS
@@ -516,9 +525,15 @@ def home_stats(request):
             }
         }, status=500)
 
+
+
+
+
+
 # ============================================
 # FEATURED PRODUCTS
 # ============================================
+
 @require_http_methods(["GET"])
 def featured_products(request):
     """
@@ -568,6 +583,11 @@ def featured_products(request):
             'error': str(e),
             'products': []
         }, status=500)
+
+
+
+
+
 
 # ============================================
 # PRODUCT EMOJI HELPER
@@ -641,6 +661,9 @@ def product_detail(request, pk):
 
 
 
+
+
+
 # ============================================
 # TRENDING STATS
 # ============================================
@@ -686,6 +709,14 @@ def trending_stats(request):
             'error': str(e)
         }, status=500)
 
+
+
+
+
+
+
+
+
 # ============================================
 # PRODUCT VIEW INCREMENT
 # ============================================
@@ -718,31 +749,62 @@ def increment_product_view(request, product_id):
             'error': str(e)
         }, status=500)
 
+
+
+
+
+
+
+
 # ============================================
 # DASHBOARD URL CONTEXT PROCESSOR
 # ============================================
+
 def dashboard_url(request):
     """Make dashboard URL available globally in all templates"""
-    url = '#'
+    url = '#'  # Default fallback
     
     if request.user.is_authenticated:
-        if hasattr(request.user, 'profile') and request.user.profile:
-            role = request.user.profile.role
-            if role:
-                role_name = role.name.lower()
+        user = request.user
+        print(f"[DEBUG] User authenticated: {user.username}")
+        print(f"[DEBUG] User has profile: {hasattr(user, 'profile')}")
+        
+        if hasattr(user, 'profile') and user.profile:
+            profile = user.profile
+            print(f"[DEBUG] Profile exists, role: {getattr(profile, 'role', None)}")
+            
+            if profile.role:
+                role_name = profile.role.name.lower()
+                print(f"[DEBUG] Role name: {role_name}")
                 
-                if role_name == 'admin':
-                    url = '/admin-dashboard/'
-                elif role_name == 'manager':
-                    url = '/manager-dashboard/'
-                elif role_name == 'agent':
-                    url = '/agent-dashboard/'
-                elif role_name == 'cashier':
-                    url = '/cashier-dashboard/'
-        elif request.user.is_superuser:
+                # Map role names to dashboard URLs
+                role_urls = {
+                    'admin': '/admin-dashboard/',
+                    'manager': '/manager-dashboard/',
+                    'agent': '/agent-dashboard/',
+                    'cashier': '/cashier-dashboard/',
+                    'seller': '/seller-dashboard/',
+                }
+                
+                url = role_urls.get(role_name, '#')
+            else:
+                print(f"[DEBUG] Profile exists but no role assigned")
+        elif user.is_superuser:
+            print(f"[DEBUG] User is superuser")
             url = '/admin-dashboard/'
+        else:
+            print(f"[DEBUG] User authenticated but no profile or superuser")
     
+    print(f"[DEBUG] Final dashboard_url: {url}")
     return {'dashboard_url': url}
+
+
+
+
+
+
+
+
 
 # ============================================
 # PRODUCTS PAGE
@@ -764,6 +826,13 @@ def products_page(request):
     }
     
     return render(request, 'website/products.html', context)
+
+
+
+
+
+
+
 
 # ============================================
 # API FEATURED PRODUCTS
@@ -837,6 +906,13 @@ def api_featured_products(request):
             'products': []
         }, status=500)
 
+
+
+
+
+
+
+
 # ============================================
 # API HOME STATS
 # ============================================
@@ -893,6 +969,12 @@ def api_home_stats(request):
             }
         })
 
+
+
+
+
+
+
 # ============================================
 # API PRODUCTS BY CATEGORY
 # ============================================
@@ -929,6 +1011,12 @@ def api_product_categories(request):
             'message': str(e),
             'categories': []
         }, status=500)
+
+
+
+
+
+
 
 # ============================================
 # API QUICK SEARCH
@@ -990,6 +1078,12 @@ def api_quick_search(request):
             'products': []
         }, status=500)
 
+
+
+
+
+
+
 # ============================================
 # SHOPPING CART
 # ============================================
@@ -998,6 +1092,13 @@ def shopping_cart(request):
     return render(request, 'website/cart.html', {
         'page_title': 'Shopping Cart - Fieldmax'
     })
+
+
+
+
+
+
+
 
 # ============================================
 # VALIDATE CART
@@ -1086,6 +1187,11 @@ def validate_cart(request):
             'message': str(e)
         }, status=500)
 
+
+
+
+
+
 # ============================================
 # CHECKOUT
 # ============================================
@@ -1138,6 +1244,13 @@ def checkout(request):
             'success': False,
             'message': f'Checkout failed: {str(e)}'
         }, status=500)
+
+
+
+
+
+
+
 
 # ============================================
 # CREATE PENDING ORDER
@@ -1270,6 +1383,12 @@ def pending_orders_list(request):
 
     return render(request, 'website/pending_orders.html', context)
 
+
+
+
+
+
+
 # ============================================
 # API: GET PENDING ORDERS COUNT
 # ============================================
@@ -1296,6 +1415,10 @@ def pending_orders_count(request):
             'error': str(e)
         })
     
+
+
+
+
 
 @login_required
 @require_http_methods(["GET"])
@@ -1522,6 +1645,11 @@ def generate_etr_from_sale_id(sale_id):
         logger.error(f"[ETR ERROR] Failed to extract from {sale_id}: {e}")
         return "0000"
 
+
+
+
+
+
 # ============================================
 # STAFF ACTION: REJECT ORDER
 # ============================================
@@ -1574,6 +1702,11 @@ def reject_order(request, order_id):
             'success': False,
             'message': f'Failed to reject order: {str(e)}'
         }, status=500)
+
+
+
+
+
 
 # ============================================
 # PROCESS ORDER
@@ -1748,6 +1881,8 @@ def process_order(request):
 
 
 
+
+
 # ============================================
 # NOTIFICATION SYSTEM - ADD THESE FUNCTIONS
 # ============================================
@@ -1838,6 +1973,11 @@ def get_notifications(request):
         }, status=500)
 
 
+
+
+
+
+
 @login_required
 @require_http_methods(["POST"])
 def mark_notification_read(request, notification_id):
@@ -1851,6 +1991,9 @@ def mark_notification_read(request, notification_id):
         'success': True,
         'message': 'Notification marked as read'
     })
+
+
+
 
 
 @login_required
@@ -1874,6 +2017,9 @@ def approve_pending_order_notification(request, order_id):
         }, status=500)
 
 
+
+
+
 @login_required
 @require_http_methods(["POST"])
 def reject_pending_order_notification(request, order_id):
@@ -1893,6 +2039,10 @@ def reject_pending_order_notification(request, order_id):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+
+
 
 
 @login_required
@@ -1946,9 +2096,11 @@ def get_order_details_notification(request, order_id):
 
 
 
+
 # ============================================
 # ORDER SUCCESS
 # ============================================
+
 @require_http_methods(["GET"])
 def order_success(request):
     """
@@ -1957,6 +2109,11 @@ def order_success(request):
     return render(request, 'website/order_success.html', {
         'page_title': 'Order Successful - Fieldmax',
     })
+
+
+
+
+
 
 # ============================================
 # API ADD TO CART
@@ -2007,6 +2164,12 @@ def api_add_to_cart(request):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
+
+
+
+
+
+
 # ============================================
 # SHOP VIEW
 # ============================================
@@ -2044,6 +2207,10 @@ def shop_view(request):
     }
     
     return render(request, 'website/shop.html', context)
+
+
+
+
 
 # ============================================
 # SHOP LIST VIEW (CLASS-BASED)
@@ -2094,6 +2261,12 @@ class ShopListView(ListView):
         context['debug'] = settings.DEBUG
         
         return context
+
+
+
+
+
+
 
 # ============================================
 # SALES CHART DATA - FIXED VERSION
@@ -2196,22 +2369,15 @@ def get_sales_chart_data(request):
 
 
 
-from django.shortcuts import render, redirect
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.utils import timezone
-from datetime import timedelta
-from .forms import StaffApplicationForm
-import json
 
 
 def is_staff_subdomain(request):
     """Check if request is coming from staff subdomain"""
     host = request.get_host()
     return 'staff.fieldmaxstore' in host
+
+
+
 
 
 @csrf_exempt
@@ -2439,6 +2605,8 @@ def application_details(request, pk):
         return JsonResponse({'error': 'Application not found'}, status=404)
 
 
+
+
 @login_required
 @require_POST
 def approve_application(request, pk):
@@ -2481,6 +2649,9 @@ def approve_application(request, pk):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+
+
+
 @login_required
 @require_POST
 def reject_application(request, pk):
@@ -2506,6 +2677,9 @@ def reject_application(request, pk):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+
+
+
 @login_required
 @require_POST
 def undo_approval(request, pk):
@@ -2528,6 +2702,10 @@ def undo_approval(request, pk):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+
+
+
+
 @login_required
 @require_POST
 def reconsider_application(request, pk):
@@ -2548,6 +2726,10 @@ def reconsider_application(request, pk):
         return JsonResponse({'error': 'Application not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+
+
 
 
 @login_required
@@ -2581,6 +2763,8 @@ def batch_approve(request):
 
 
 
+
+
 @login_required
 @require_GET
 def get_roles(request):
@@ -2593,6 +2777,10 @@ def get_roles(request):
         'success': True,
         'roles': list(roles)
     })
+
+
+
+
 
 
 @login_required
@@ -2699,6 +2887,9 @@ def assign_role_create_user(request):
 
 
 
+
+
+
 # ============================================
 # ROLE BASED LOGIN VIEW
 # ============================================
@@ -2759,6 +2950,15 @@ def get_users_by_role_counts():
         'total_agents': all_users.filter(profile__role__name__iexact='agent').count(),
         'total_users': all_users.count(),
     }
+
+
+
+
+
+
+
+
+
 
 # ============================================
 # CASHIER DASHBOARD

@@ -266,7 +266,7 @@
     }
 
     .recent-table thead {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #00a2ff 0%, #00d5ff 100%);
         color: white;
     }
 
@@ -277,7 +277,7 @@
         font-size: 13px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        border-bottom: 2px solid #4f46e5;
+        border-bottom: 2px solid #0c00ec;
     }
 
     .recent-table th.text-center {
@@ -851,7 +851,7 @@
     // ============================================
     function saveToRecent(product) {
         // Get SKU from various possible fields
-        const sku = product.sku || product.imei || product.serial || product.barcode || 'N/A';
+        const sku = product.sku_value || product.imei || product.serial || product.barcode || 'N/A';
         
         // Get selling price
         const sellingPrice = product.unit_price || product.selling_price || 0;
