@@ -64,7 +64,31 @@ class PendingOrder(models.Model):
     
     # Link to actual Sale (once approved)
     sale_id = models.CharField(max_length=50, blank=True, null=True)
+
+
+    approved_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        related_name='approved_orders',
+        blank=True, 
+        null=True
+    )
+    approved_date = models.DateTimeField(blank=True, null=True)
     
+    rejected_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        related_name='rejected_orders',
+        blank=True, 
+        null=True
+    )
+    rejected_date = models.DateTimeField(blank=True, null=True)
+    rejection_reason = models.TextField(blank=True, null=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
     class Meta:
         db_table = 'pending_orders'
         ordering = ['-created_at']

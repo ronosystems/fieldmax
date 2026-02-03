@@ -1360,6 +1360,62 @@ def checkout_page(request):
 
 
 
+# ============================================
+# API: GET PENDING ORDERS WITH APPROVER INFO
+# ============================================
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_pending_orders(request):
+    """
+    API endpoint to get all pending orders with approver info
+    URL: /api/pending-orders/
+    """
+    try:
+        orders = PendingOrder.objects.all().order_by('-created_at')
+        
+        # Use the serializer if available, otherwise build manually
+        try:
+            from .serializers import PendingOrderSerializer
+            serializer = PendingOrderSerializer(orders, many=True)
+            orders_data = serializer.data
+        except ImportError:
+            # Fallback to manual serialization
+            orders_data = []
+            for order in orders:
+                orders_data.append({
+                    'order_id': order.order_id,
+                    'buyer_name': order.buyer_name,
+                    'buyer_phone': order.buyer_phone,
+                    'buyer_id_number': order.buyer_id_number or '',
+                    'buyer_email': order.buyer_email or '',
+                    'total_amount': float(order.total_amount),
+                    'status': order.status,
+                    'created_at': order.created_at.isoformat(),
+                    'approved_by': order.approved_by.get_full_name() if order.approved_by else None,
+                    'rejected_by': order.rejected_by.get_full_name() if order.rejected_by else None,
+                    'approved_at': order.approved_at.isoformat() if order.approved_at else None,
+                    'rejected_at': order.rejected_at.isoformat() if order.rejected_at else None,
+                    'rejection_reason': order.rejection_reason
+                })
+        
+        return JsonResponse({
+            'success': True,
+            'orders': orders_data
+        })
+        
+    except Exception as e:
+        logger.error(f"[API PENDING ORDERS ERROR] {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'orders': []
+        }, status=500)
+
+
+
+
+
+
 
 # ============================================
 # STAFF VIEW: LIST PENDING ORDERS
@@ -1572,16 +1628,18 @@ def approve_order(request, order_id):
                 f"From pending order: {order_id}"
             )
             
-            # STEP 4: UPDATE PENDING ORDER
+            # STEP 4: UPDATE PENDING ORDER WITH APPROVER INFO
             pending_order.status = 'completed'
             pending_order.sale_id = sale.sale_id
+            pending_order.approved_by = request.user  # NEW: Track who approved
+            pending_order.approved_at = timezone.now()  # NEW: Track when
             pending_order.reviewed_by = request.user
             pending_order.reviewed_at = timezone.now()
             pending_order.save()
             
             logger.info(
                 f"[ORDER APPROVED] {pending_order.order_id} → Sale {sale.sale_id} | "
-                f"Staff: {request.user.username} | "
+                f"Approved by: {request.user.username} | "
                 f"Items: {len(created_items)}/{len(cart_items)} | "
                 f"ETR: {etr_number}"
             )
@@ -1610,7 +1668,6 @@ def approve_order(request, order_id):
             'success': False,
             'message': f'Failed to approve order: {str(e)}'
         }, status=500)
-
 
 
 
@@ -1669,15 +1726,18 @@ def reject_order(request, order_id):
             status='pending'
         )
         
+        # Update with rejection info
         pending_order.status = 'rejected'
         pending_order.rejection_reason = reason
+        pending_order.rejected_by = request.user  # NEW: Track who rejected
+        pending_order.rejected_at = timezone.now()  # NEW: Track when
         pending_order.reviewed_by = request.user
         pending_order.reviewed_at = timezone.now()
         pending_order.save()
         
         logger.info(
             f"[ORDER REJECTED] {pending_order.order_id} | "
-            f"Staff: {request.user.username} | "
+            f"Rejected by: {request.user.username} | "
             f"Reason: {reason}"
         )
         
@@ -1702,7 +1762,6 @@ def reject_order(request, order_id):
             'success': False,
             'message': f'Failed to reject order: {str(e)}'
         }, status=500)
-
 
 
 
@@ -1978,6 +2037,9 @@ def get_notifications(request):
 
 
 
+# ============================================
+# MARK NOTIFICATION AS READ
+# ============================================
 @login_required
 @require_http_methods(["POST"])
 def mark_notification_read(request, notification_id):
@@ -1996,6 +2058,9 @@ def mark_notification_read(request, notification_id):
 
 
 
+# ============================================
+# APPROVE PENDING ORDER FROM NOTIFICATION
+# ============================================
 @login_required
 @require_http_methods(["POST"])
 def approve_pending_order_notification(request, order_id):
@@ -2020,6 +2085,9 @@ def approve_pending_order_notification(request, order_id):
 
 
 
+# ============================================
+# REJECT PENDING ORDER FROM NOTIFICATION
+# ============================================
 @login_required
 @require_http_methods(["POST"])
 def reject_pending_order_notification(request, order_id):
@@ -2044,7 +2112,9 @@ def reject_pending_order_notification(request, order_id):
 
 
 
-
+# ============================================
+# GET ORDER DETAILS FROM NOTIFICATION
+# ============================================
 @login_required
 @require_http_methods(["GET"])
 def get_order_details_notification(request, order_id):
@@ -2075,8 +2145,10 @@ def get_order_details_notification(request, order_id):
                 'status': order.status,
                 'cart_items': cart_items,
                 'created_at': order.created_at.isoformat(),
-                'reviewed_by': order.reviewed_by.username if order.reviewed_by else None,
-                'reviewed_at': order.reviewed_at.isoformat() if order.reviewed_at else None,
+                'approved_by': order.approved_by.username if order.approved_by else None,
+                'approved_at': order.approved_at.isoformat() if order.approved_at else None,
+                'rejected_by': order.rejected_by.username if order.rejected_by else None,
+                'rejected_at': order.rejected_at.isoformat() if order.rejected_at else None,
                 'rejection_reason': order.rejection_reason
             }
         })

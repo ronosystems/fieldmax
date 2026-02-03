@@ -47,7 +47,7 @@ urlpatterns = [
     path('checkout/', views.checkout_page, name='checkout'),
     path('api/cart/add/', views.api_add_to_cart, name='api-add-to-cart'),
 
-        # ============================================
+    # ============================================
     # ORDER SEARCH & RECEIPT
     # ============================================
     path('search-order/', search_order, name='search-order'),
@@ -58,6 +58,8 @@ urlpatterns = [
     path('api/notifications/', views.get_notifications, name='api-notifications'),
     path('api/notifications/<str:notification_id>/read/', views.mark_notification_read, name='api-notification-read'),
     path('api/pending-orders/<str:order_id>/', views.get_order_details_notification, name='api-order-details'),
+    path('api/pending-orders/', views.api_pending_orders, name='api_pending_orders'),
+    path('api/pending-orders/<str:order_id>/', views.get_order_details_notification, name='order_detail_api'),
 
     # ============================================
     # PENDING ORDERS SYSTEM
