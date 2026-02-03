@@ -764,6 +764,7 @@ def get_all_sellers_api(request):
 # =========================================
 # PRODUCT LOOKUP VIEW
 # =========================================
+
 class ProductLookupView(View):
 
     def get(self, request):
@@ -842,14 +843,35 @@ class ProductLookupView(View):
                 stock_display = f"{current_stock} available"
                 stock_status = "AVAILABLE"
 
+        # ============================================
+        # ✅ CRITICAL FIX: Add all required fields for price lookup
+        # ============================================
+        
+        # Get prices safely
+        buying_price = float(product.buying_price) if product.buying_price else 0
+        selling_price = float(product.selling_price) if product.selling_price else 0
+        
+        # Calculate profit margin
+        profit_margin = selling_price - buying_price if (buying_price and selling_price) else 0
+        
+        # Calculate best price: Buying Price + 50% of Profit Margin
+        best_price = buying_price + (profit_margin * 0.5) if profit_margin > 0 else 0
+
         return JsonResponse({
             "success": True,
             "is_sold": False,
             "product": {
+                # ✅ REQUIRED FIELDS FOR PRICE LOOKUP DASHBOARD
+                "product_code": product.product_code,        # Not "code" - important!
                 "name": product.name,
-                "product_code": product.product_code,
+                "unit_price": selling_price,                 # Keep for compatibility
+                "selling_price": selling_price,              # ✅ NEW: Explicit selling price
+                "buying_price": buying_price,                # ✅ NEW: Required for best price calculation
+                "best_price": best_price,                    # ✅ NEW: Pre-calculated best price
+                "profit_margin": profit_margin,              # ✅ NEW: Profit margin info
+                
+                # OTHER FIELDS
                 "sku_code": product.sku_value or "N/A",
-                "unit_price": float(product.selling_price or 0),
                 "quantity": current_stock,
                 "current_stock": current_stock,
                 "is_single_item": is_single_item,
@@ -861,7 +883,6 @@ class ProductLookupView(View):
                 "created_at": product.created_at.isoformat(),
             }
         })
-
 
 
 
