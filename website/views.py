@@ -1940,6 +1940,159 @@ def process_order(request):
 
 
 
+# ============================================
+# API: GET SINGLE ORDER DETAILS
+# ============================================
+@login_required
+@require_http_methods(["GET"])
+def api_single_order_details(request, order_id):
+    """
+    API endpoint to get detailed information about a specific order
+    URL: /api/pending-orders/<order_id>/
+    """
+    try:
+        order = PendingOrder.objects.get(order_id=order_id)
+        
+        # Parse cart data
+        try:
+            cart_items = json.loads(order.cart_data) if order.cart_data else []
+        except:
+            cart_items = []
+        
+        # Get user display names
+        approved_by_name = None
+        rejected_by_name = None
+        reviewed_by_name = None
+        
+        if order.approved_by:
+            approved_by_name = order.approved_by.get_full_name() or order.approved_by.username
+        if order.rejected_by:
+            rejected_by_name = order.rejected_by.get_full_name() or order.rejected_by.username
+        if order.reviewed_by:
+            reviewed_by_name = order.reviewed_by.get_full_name() or order.reviewed_by.username
+        
+        order_data = {
+            'order_id': order.order_id,
+            'buyer_name': order.buyer_name,
+            'buyer_phone': order.buyer_phone,
+            'buyer_email': order.buyer_email or '',
+            'buyer_id_number': order.buyer_id_number or '',
+            'total_amount': float(order.total_amount),
+            'payment_method': order.payment_method,
+            'notes': order.notes or '',
+            'status': order.status,
+            'cart_items': cart_items,
+            'created_at': order.created_at.isoformat() if order.created_at else None,
+            'updated_at': order.updated_at.isoformat() if order.updated_at else None,
+            'approved_date': order.approved_date.isoformat() if order.approved_date else None,
+            'rejected_date': order.rejected_date.isoformat() if order.rejected_date else None,
+            'reviewed_at': order.reviewed_at.isoformat() if order.reviewed_at else None,
+            'approved_by': approved_by_name,
+            'rejected_by': rejected_by_name,
+            'reviewed_by': reviewed_by_name,
+            'rejection_reason': order.rejection_reason,
+            'sale_id': order.sale_id
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'order': order_data
+        })
+        
+    except PendingOrder.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Order not found'
+        }, status=404)
+    except Exception as e:
+        import traceback
+        logger.error(f"[ORDER DETAILS ERROR] {str(e)}\n{traceback.format_exc()}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+
+
+
+# ============================================
+# API: GET SINGLE ORDER DETAILS FOR NOTIFICATIONS
+# ============================================
+# Add this NEW function to views.py (replace the old one)
+@login_required
+@require_http_methods(["GET"])
+def get_order_details_notification(request, order_id):
+    """
+    Get detailed information about a specific order
+    URL: /api/pending-orders/<order_id>/
+    """
+    try:
+        order = PendingOrder.objects.get(order_id=order_id)
+        
+        # Parse cart data
+        try:
+            cart_items = json.loads(order.cart_data) if order.cart_data else []
+        except:
+            cart_items = []
+        
+        # Get user display names safely
+        approved_by_name = None
+        rejected_by_name = None
+        reviewed_by_name = None
+        
+        if order.approved_by:
+            approved_by_name = order.approved_by.get_full_name() or order.approved_by.username
+        if order.rejected_by:
+            rejected_by_name = order.rejected_by.get_full_name() or order.rejected_by.username
+        if order.reviewed_by:
+            reviewed_by_name = order.reviewed_by.get_full_name() or order.reviewed_by.username
+        
+        order_data = {
+            'order_id': order.order_id,
+            'buyer_name': order.buyer_name,
+            'buyer_phone': order.buyer_phone,
+            'buyer_email': order.buyer_email or '',
+            'buyer_id_number': order.buyer_id_number or '',
+            'total_amount': float(order.total_amount),
+            'payment_method': order.payment_method,
+            'notes': order.notes or '',
+            'status': order.status,
+            'cart_items': cart_items,
+            'created_at': order.created_at.isoformat() if order.created_at else None,
+            'updated_at': order.updated_at.isoformat() if order.updated_at else None,
+            'approved_date': order.approved_date.isoformat() if order.approved_date else None,  # CORRECT FIELD NAME
+            'rejected_date': order.rejected_date.isoformat() if order.rejected_date else None,  # CORRECT FIELD NAME
+            'reviewed_at': order.reviewed_at.isoformat() if order.reviewed_at else None,
+            'approved_by': approved_by_name,
+            'rejected_by': rejected_by_name,
+            'reviewed_by': reviewed_by_name,
+            'rejection_reason': order.rejection_reason,
+            'sale_id': order.sale_id
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'order': order_data
+        })
+        
+    except PendingOrder.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Order not found'
+        }, status=404)
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        logger.error(f"[ORDER DETAILS ERROR] {str(e)}\n{error_trace}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+
+
 
 
 # ============================================
@@ -2109,61 +2262,6 @@ def reject_pending_order_notification(request, order_id):
         }, status=500)
 
 
-
-
-
-# ============================================
-# GET ORDER DETAILS FROM NOTIFICATION
-# ============================================
-@login_required
-@require_http_methods(["GET"])
-def get_order_details_notification(request, order_id):
-    """
-    Get detailed information about a specific order
-    URL: /api/pending-orders/<order_id>/
-    """
-    try:
-        order = PendingOrder.objects.get(order_id=order_id)
-        
-        # Parse cart data
-        try:
-            cart_items = json.loads(order.cart_data) if order.cart_data else []
-        except:
-            cart_items = []
-        
-        return JsonResponse({
-            'success': True,
-            'order': {
-                'order_id': order.order_id,
-                'buyer_name': order.buyer_name,
-                'buyer_phone': order.buyer_phone,
-                'buyer_email': order.buyer_email,
-                'buyer_id_number': order.buyer_id_number,
-                'total_amount': float(order.total_amount),
-                'payment_method': order.payment_method,
-                'notes': order.notes,
-                'status': order.status,
-                'cart_items': cart_items,
-                'created_at': order.created_at.isoformat(),
-                'approved_by': order.approved_by.username if order.approved_by else None,
-                'approved_at': order.approved_at.isoformat() if order.approved_at else None,
-                'rejected_by': order.rejected_by.username if order.rejected_by else None,
-                'rejected_at': order.rejected_at.isoformat() if order.rejected_at else None,
-                'rejection_reason': order.rejection_reason
-            }
-        })
-        
-    except PendingOrder.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'error': 'Order not found'
-        }, status=404)
-    except Exception as e:
-        logger.error(f"[ORDER DETAILS ERROR] {str(e)}", exc_info=True)
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
 
 
 

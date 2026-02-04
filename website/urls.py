@@ -68,6 +68,7 @@ urlpatterns = [
     path('order-success/', views.order_success, name='order-success'),
     path('api/public/create-order/', views.public_create_order, name='public-create-order'),
     path('api/pending-orders-count/', pending_orders_count, name='pending_orders_count'),
+    path('api/pending-orders/<str:order_id>/', views.get_order_details_notification, name='api-single-order-details'),
     
     # Staff views and actions
     path('staff/pending-orders/', views.pending_orders_list, name='pending-orders-list'),

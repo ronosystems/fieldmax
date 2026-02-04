@@ -4032,164 +4032,144 @@ strong[style*="background-color"] {
 
 
 <!-- ======================================== -->
-<!-- ===========ORDERS LIST SECTION ========= -->
+<!-- =========== ORDERS MANAGEMENT ========== -->
 <!-- ======================================== -->
 <section id="orders-list" class="content-section">
   <div class="section-header mb-4">
     <div class="d-flex justify-content-between align-items-center">
       <div>
-        <h2><i class="bi bi-clipboard2-check me-2"></i>All Orders</h2>
-        <p class="text-muted mb-0">View and manage all customer orders</p>
+        <h2><i class="bi bi-clipboard-check me-2"></i>Order Management</h2>
+        <p class="text-muted mb-0">Monitor and process customer orders</p>
       </div>
-      <div class="d-flex align-items-center gap-2">
-        <button class="btn btn-outline-primary btn-sm" onclick="loadOrders(true)" title="Refresh">
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm" id="refreshBtn" title="Refresh">
           <i class="bi bi-arrow-clockwise"></i>
         </button>
-        <button class="btn btn-primary btn-sm" onclick="exportOrders()" title="Export">
+        <button class="btn btn-primary btn-sm" id="exportBtn" title="Export">
           <i class="bi bi-download"></i> Export
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Main Table Card -->
+  <!-- Orders Table Container -->
   <div class="card border-0 shadow-sm">
-    <!-- Card Header with Filters -->
+    
+    <!-- Filter Controls -->
     <div class="card-header bg-white border-bottom py-3">
-      <div class="row align-items-center g-3">
-        <!-- Search -->
+      <div class="row g-3 align-items-center">
+        
+        <!-- Search Input -->
         <div class="col-lg-3 col-md-6">
           <div class="input-group input-group-sm">
             <span class="input-group-text bg-transparent border-end-0">
-              <i class="bi bi-search text-muted"></i>
+              <i class="bi bi-search"></i>
             </span>
             <input type="text" 
                    class="form-control border-start-0" 
-                   id="orderSearchInput" 
-                   placeholder="Search orders..."
-                   oninput="debouncedFilter()">
+                   id="orderSearch" 
+                   placeholder="Search orders...">
           </div>
         </div>
         
         <!-- Status Filter -->
-        <div class="col-lg-3 col-md-6">
-          <div class="d-flex align-items-center gap-2">
-            <select class="form-select form-select-sm" id="orderStatusFilter" onchange="applyFilters()">
-              <option value="">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
+        <div class="col-lg-2 col-md-6">
+          <select class="form-select form-select-sm" id="statusFilter">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+            <option value="rejected">Rejected</option>
+          </select>
         </div>
         
         <!-- Date Filter -->
         <div class="col-lg-4 col-md-6">
-          <div class="d-flex align-items-center gap-2">
+          <div class="d-flex gap-2 align-items-center">
             <div class="input-group input-group-sm">
               <span class="input-group-text bg-transparent">
-                <i class="bi bi-calendar3 text-muted"></i>
+                <i class="bi bi-calendar3"></i>
               </span>
-              <input type="date" 
-                     class="form-control" 
-                     id="orderDateFilter"
-                     onchange="applyFilters()">
-              <button class="btn btn-outline-secondary" 
-                      type="button" 
-                      onclick="clearDateFilter()">
+              <input type="date" class="form-control" id="dateFilter">
+              <button class="btn btn-outline-secondary" type="button" id="clearDateBtn">
                 <i class="bi bi-x"></i>
               </button>
             </div>
             <div class="btn-group btn-group-sm">
-              <button type="button" 
-                      class="btn btn-outline-secondary"
-                      onclick="setQuickDate('today')">
+              <button type="button" class="btn btn-outline-secondary" data-range="today">
                 Today
               </button>
-              <button type="button" 
-                      class="btn btn-outline-secondary"
-                      onclick="setQuickDate('week')">
+              <button type="button" class="btn btn-outline-secondary" data-range="week">
                 7 Days
               </button>
-              <button type="button" 
-                      class="btn btn-outline-secondary"
-                      onclick="setQuickDate('month')">
+              <button type="button" class="btn btn-outline-secondary" data-range="month">
                 30 Days
               </button>
             </div>
           </div>
         </div>
         
-        <!-- Actions -->
-        <div class="col-lg-2 col-md-6">
+        <!-- Action Buttons -->
+        <div class="col-lg-3 col-md-6">
           <div class="d-flex gap-2">
-            <button class="btn btn-primary btn-sm w-100" onclick="applyFilters()">
-              <i class="bi bi-funnel me-1"></i> Filter
+            <button class="btn btn-outline-secondary btn-sm w-50" id="resetBtn">
+              <i class="bi bi-x-circle me-1"></i> Clear
             </button>
-            <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters()">
-              <i class="bi bi-x-lg"></i>
+            <button class="btn btn-primary btn-sm w-50" id="applyBtn">
+              <i class="bi bi-funnel me-1"></i> Apply
             </button>
           </div>
         </div>
       </div>
       
-      <!-- Filter Stats -->
-      <div class="row mt-3">
-        <div class="col-12">
-          <div class="d-flex flex-wrap align-items-center gap-2">
-            <div class="text-muted small me-3">
-              <i class="bi bi-funnel me-1"></i>
-              <span id="filterStats">Showing all orders</span>
-            </div>
-            <div class="vr"></div>
-            <div class="badge bg-primary bg-opacity-10 text-primary">
-              <i class="bi bi-clipboard-check me-1"></i>
-              <span id="totalOrdersCount">0</span> total
-            </div>
-            <div class="badge bg-warning bg-opacity-10 text-warning">
-              <i class="bi bi-clock me-1"></i>
-              <span id="pendingCount">0</span> pending
-            </div>
-            <div class="badge bg-success bg-opacity-10 text-success">
-              <i class="bi bi-check-circle me-1"></i>
-              <span id="completedCount">0</span> completed
-            </div>
-            <div class="badge bg-danger bg-opacity-10 text-danger">
-              <i class="bi bi-x-circle me-1"></i>
-              <span id="rejectedCount">0</span> rejected
-            </div>
-          </div>
+      <!-- Statistics -->
+      <div class="mt-3">
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+          <small class="text-muted" id="filterInfo">Showing all orders</small>
+          <div class="vr"></div>
+          <span class="badge bg-light text-dark">
+            Total: <strong id="totalOrders">0</strong>
+          </span>
+          <span class="badge bg-warning text-dark">
+            Pending: <strong id="pendingOrders">0</strong>
+          </span>
+          <span class="badge bg-success">
+            Completed: <strong id="completedOrders">0</strong>
+          </span>
+          <span class="badge bg-danger">
+            Rejected: <strong id="rejectedOrders">0</strong>
+          </span>
         </div>
       </div>
     </div>
 
-    <!-- Card Body -->
+    <!-- Table Area -->
     <div class="card-body p-0">
-      <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
-        <table class="table table-hover align-middle mb-0" id="ordersTable">
-          <thead class="table-light sticky-top" style="top: -1px;">
+      <div class="table-responsive" style="max-height: 600px;">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light sticky-top">
             <tr>
-              <th width="120" class="border-bottom-0">
+              <th width="120">
                 <div class="d-flex align-items-center gap-1">
-                  ORDER ID
-                  <button class="btn btn-sm btn-link p-0 ms-1" onclick="sortTable('order_id')">
-                    <i class="bi bi-arrow-down-up text-muted"></i>
+                  Order ID
+                  <button class="btn btn-link p-0" data-sort="order_id">
+                    <i class="bi bi-arrow-down-up"></i>
                   </button>
                 </div>
               </th>
-              <th class="border-bottom-0">CLIENT NAME</th>
-              <th class="border-bottom-0">PHONE</th>
-              <th class="border-bottom-0">ID NUMBER</th>
-              <th class="border-bottom-0">EMAIL</th>
-              <th width="120" class="border-bottom-0">AMOUNT</th>
-              <th width="100" class="border-bottom-0">STATUS</th>
-              <th width="150" class="border-bottom-0">APPROVED BY</th>
-              <th width="100" class="border-bottom-0">DATE</th>
+              <th>Client</th>
+              <th>Contact</th>
+              <th>ID Number</th>
+              <th>Email</th>
+              <th width="100">Amount</th>
+              <th width="100">Status</th>
+              <th width="120">Approved By</th>
+              <th width="100">Date</th>
+              <th width="80">Actions</th>
             </tr>
           </thead>
-          <tbody id="ordersTableBody">
+          <tbody id="ordersBody">
             <!-- Loading State -->
-            <tr id="ordersLoading">
+            <tr id="loadingRow">
               <td colspan="10" class="text-center py-5">
                 <div class="spinner-border text-primary" role="status">
                   <span class="visually-hidden">Loading...</span>
@@ -4201,39 +4181,34 @@ strong[style*="background-color"] {
         </table>
       </div>
       
-      <!-- No Results Message -->
-      <div id="noResults" class="text-center py-5" style="display: none;">
-        <div class="py-5">
-          <i class="bi bi-inbox display-4 text-muted opacity-50"></i>
-          <h5 class="mt-3 text-muted">No orders found</h5>
-          <p class="text-muted mb-4">Try adjusting your filters or search terms</p>
-          <button class="btn btn-outline-primary" onclick="resetFilters()">
-            <i class="bi bi-arrow-clockwise me-1"></i> Reset Filters
-          </button>
-        </div>
+      <!-- Empty State -->
+      <div id="emptyState" class="text-center py-5 d-none">
+        <i class="bi bi-inboxes display-4 text-muted opacity-25"></i>
+        <h5 class="mt-3 text-muted">No orders found</h5>
+        <p class="text-muted">Adjust your search or filter criteria</p>
+        <button class="btn btn-sm btn-outline-primary" id="resetFiltersBtn">
+          Reset Filters
+        </button>
       </div>
     </div>
 
-    <!-- Card Footer -->
+    <!-- Pagination -->
     <div class="card-footer bg-white border-top py-3">
       <div class="d-flex justify-content-between align-items-center">
         <div class="text-muted small">
-          Showing <span id="showingCount" class="fw-semibold">0</span> of 
-          <span id="totalCount" class="fw-semibold">0</span> orders
+          Showing <span id="showing">0</span> of <span id="total">0</span>
         </div>
         <div class="d-flex align-items-center gap-3">
-          <div class="text-muted small">
-            <i class="bi bi-info-circle me-1"></i>
-            Last updated: <span id="lastUpdated">Just now</span>
-          </div>
+          <small class="text-muted">
+            <i class="bi bi-clock me-1"></i>
+            Updated: <span id="lastUpdate">Just now</span>
+          </small>
           <div class="btn-group btn-group-sm">
-            <button class="btn btn-outline-secondary" onclick="prevPage()" disabled id="prevBtn">
+            <button class="btn btn-outline-secondary" id="prevBtn" disabled>
               <i class="bi bi-chevron-left"></i>
             </button>
-            <button class="btn btn-outline-secondary disabled">
-              Page <span id="currentPage">1</span>
-            </button>
-            <button class="btn btn-outline-secondary" onclick="nextPage()" disabled id="nextBtn">
+            <span class="btn btn-light">Page <span id="pageNumber">1</span></span>
+            <button class="btn btn-outline-secondary" id="nextBtn" disabled>
               <i class="bi bi-chevron-right"></i>
             </button>
           </div>
@@ -4243,8 +4218,23 @@ strong[style*="background-color"] {
   </div>
 </section>
 
-
-
+<!-- Order Detail Modal -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Order Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modalContent">
+        Loading order details...
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 
@@ -11030,543 +11020,692 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================
 // ORDERS MANAGEMENT SYSTEM
 // ============================================
+/**
+ * Orders Management System
+ * Simple and working version
+ */
 
-// Global state
-let allOrders = [];
-let filteredOrders = [];
-let currentPage = 1;
-const pageSize = 20;
-let sortConfig = { key: 'created_at', direction: 'desc' };
-let debounceTimer;
-
-// Debounce function for search
-function debouncedFilter(delay = 300) {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => applyFilters(), delay);
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    loadOrders();
+const OrdersManager = {
+    // Data
+    allOrders: [],
+    filteredOrders: [],
+    currentPage: 1,
+    pageSize: 20,
     
-    // Event listeners
-    document.getElementById('orderSearchInput').addEventListener('input', () => debouncedFilter());
-    document.getElementById('orderStatusFilter').addEventListener('change', applyFilters);
-    document.getElementById('orderDateFilter').addEventListener('change', applyFilters);
+    // Config
+    sortField: 'created_at',
+    sortDirection: 'desc',
+    filters: {
+        search: '',
+        status: '',
+        date: ''
+    },
     
-    // Auto-refresh
-    setInterval(() => loadOrders(true), 30000);
+    // DOM Elements
+    elements: {},
     
-    updateLastUpdated();
-});
-
-// Load orders from API
-async function loadOrders(silent = false) {
-    try {
-        if (!silent) showLoading();
+    // Initialize
+    init: function() {
+        this.cacheElements();
+        this.bindEvents();
+        this.loadOrders();
+    },
+    
+    // Cache DOM elements
+    cacheElements: function() {
+        this.elements = {
+            ordersBody: document.getElementById('ordersBody'),
+            loadingRow: document.getElementById('loadingRow'),
+            emptyState: document.getElementById('emptyState'),
+            orderSearch: document.getElementById('orderSearch'),
+            statusFilter: document.getElementById('statusFilter'),
+            dateFilter: document.getElementById('dateFilter'),
+            filterInfo: document.getElementById('filterInfo'),
+            totalOrders: document.getElementById('totalOrders'),
+            pendingOrders: document.getElementById('pendingOrders'),
+            completedOrders: document.getElementById('completedOrders'),
+            rejectedOrders: document.getElementById('rejectedOrders'),
+            showing: document.getElementById('showing'),
+            total: document.getElementById('total'),
+            lastUpdate: document.getElementById('lastUpdate'),
+            pageNumber: document.getElementById('pageNumber'),
+            prevBtn: document.getElementById('prevBtn'),
+            nextBtn: document.getElementById('nextBtn'),
+            modalContent: document.getElementById('modalContent')
+        };
+    },
+    
+    // Bind event listeners
+    bindEvents: function() {
+        // Refresh button
+        document.getElementById('refreshBtn').addEventListener('click', () => this.loadOrders(true));
         
-        const response = await fetch('/api/pending-orders/');
+        // Export button
+        document.getElementById('exportBtn').addEventListener('click', () => this.export());
+        
+        // Search with debounce
+        let searchTimeout;
+        this.elements.orderSearch.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.filters.search = e.target.value;
+                this.applyFilters();
+            }, 300);
+        });
+        
+        // Status filter
+        this.elements.statusFilter.addEventListener('change', (e) => {
+            this.filters.status = e.target.value;
+            this.applyFilters();
+        });
+        
+        // Date filter
+        this.elements.dateFilter.addEventListener('change', (e) => {
+            this.filters.date = e.target.value;
+            this.applyFilters();
+        });
+        
+        // Clear date
+        document.getElementById('clearDateBtn').addEventListener('click', () => {
+            this.elements.dateFilter.value = '';
+            this.filters.date = '';
+            this.applyFilters();
+        });
+        
+        // Quick date buttons
+        document.querySelectorAll('[data-range]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.setDateRange(e.target.getAttribute('data-range'));
+            });
+        });
+        
+        // Apply button
+        document.getElementById('applyBtn').addEventListener('click', () => this.applyFilters());
+        
+        // Reset button
+        document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+        document.getElementById('resetFiltersBtn').addEventListener('click', () => this.reset());
+        
+        // Sort buttons
+        document.querySelectorAll('[data-sort]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.sort(e.target.getAttribute('data-sort'));
+            });
+        });
+        
+        // Pagination
+        this.elements.prevBtn.addEventListener('click', () => this.prevPage());
+        this.elements.nextBtn.addEventListener('click', () => this.nextPage());
+    },
+    
+    // Load orders from Django
+    loadOrders: async function(refresh = false) {
+        try {
+            this.showLoading();
+            
+            // Use your existing API endpoint
+            const response = await fetch('/api/pending-orders/');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Transform data to match our format
+                this.allOrders = data.orders.map(order => ({
+                    id: order.order_id,
+                    order_id: order.order_id,
+                    buyer_name: order.buyer_name,
+                    buyer_phone: order.buyer_phone,
+                    idNumber: order.buyer_id_number || '',
+                    email: order.buyer_email || '',
+                    amount: parseFloat(order.total_amount),
+                    status: order.status,
+                    approved_by: order.approved_by || '',
+                    rejected_by: order.rejected_by || '',
+                    date: order.created_at,
+                    created_at: order.created_at
+                }));
+                
+                this.applyFilters();
+                this.updateStatistics();
+                this.updateLastUpdated();
+                
+            } else {
+                throw new Error(data.error || 'Failed to load orders');
+            }
+            
+        } catch (error) {
+            console.error('Error loading orders:', error);
+            this.showError('Failed to load orders. Please check your API endpoint.');
+        }
+    },
+    
+    // Apply filters
+    applyFilters: function() {
+        this.currentPage = 1;
+        
+        this.filteredOrders = this.allOrders.filter(order => {
+            // Search filter
+            if (this.filters.search) {
+                const searchTerm = this.filters.search.toLowerCase();
+                const matches = 
+                    order.order_id.toLowerCase().includes(searchTerm) ||
+                    order.buyer_name.toLowerCase().includes(searchTerm) ||
+                    order.buyer_phone.includes(this.filters.search) ||
+                    order.email.toLowerCase().includes(searchTerm);
+                if (!matches) return false;
+            }
+            
+            // Status filter
+            if (this.filters.status && order.status !== this.filters.status) {
+                return false;
+            }
+            
+            // Date filter
+            if (this.filters.date) {
+                const orderDate = new Date(order.date).toISOString().split('T')[0];
+                if (orderDate !== this.filters.date) return false;
+            }
+            
+            return true;
+        });
+        
+        // Sort
+        this.sortData();
+        
+        // Update UI
+        this.render();
+        this.updateFilterInfo();
+        this.updatePagination();
+    },
+    
+    // Sort data
+    sortData: function() {
+        this.filteredOrders.sort((a, b) => {
+            let aVal = a[this.sortField];
+            let bVal = b[this.sortField];
+            
+            if (this.sortField === 'date' || this.sortField === 'created_at') {
+                aVal = new Date(aVal);
+                bVal = new Date(bVal);
+            }
+            
+            if (this.sortField === 'amount') {
+                aVal = parseFloat(aVal);
+                bVal = parseFloat(bVal);
+            }
+            
+            if (aVal < bVal) return this.sortDirection === 'asc' ? -1 : 1;
+            if (aVal > bVal) return this.sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    },
+    
+    // Sort by field
+    sort: function(field) {
+        if (field === this.sortField) {
+            this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.sortField = field;
+            this.sortDirection = 'asc';
+        }
+        
+        this.sortData();
+        this.render();
+    },
+    
+    // Set date range
+    setDateRange: function(range) {
+        const today = new Date();
+        let date = new Date();
+        
+        switch(range) {
+            case 'today':
+                break;
+            case 'week':
+                date.setDate(today.getDate() - 7);
+                break;
+            case 'month':
+                date.setDate(today.getDate() - 30);
+                break;
+        }
+        
+        this.elements.dateFilter.value = date.toISOString().split('T')[0];
+        this.filters.date = date.toISOString().split('T')[0];
+        this.applyFilters();
+    },
+    
+    // Clear date filter
+    clearDate: function() {
+        this.elements.dateFilter.value = '';
+        this.filters.date = '';
+        this.applyFilters();
+    },
+    
+    // Reset all filters
+    reset: function() {
+        this.elements.orderSearch.value = '';
+        this.elements.statusFilter.value = '';
+        this.elements.dateFilter.value = '';
+        
+        this.filters = {
+            search: '',
+            status: '',
+            date: ''
+        };
+        
+        this.sortField = 'created_at';
+        this.sortDirection = 'desc';
+        this.currentPage = 1;
+        
+        this.applyFilters();
+    },
+    
+    // Apply filters (alias)
+    apply: function() {
+        this.applyFilters();
+    },
+    
+    // Navigation
+    prevPage: function() {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+            this.render();
+        }
+    },
+    
+    nextPage: function() {
+        const totalPages = Math.ceil(this.filteredOrders.length / this.pageSize);
+        if (this.currentPage < totalPages) {
+            this.currentPage++;
+            this.render();
+        }
+    },
+    
+    // Render table
+    render: function() {
+        const start = (this.currentPage - 1) * this.pageSize;
+        const end = start + this.pageSize;
+        const pageOrders = this.filteredOrders.slice(start, end);
+        
+        // Show/hide empty state
+        if (this.filteredOrders.length === 0) {
+            this.elements.ordersBody.innerHTML = '';
+            this.elements.emptyState.classList.remove('d-none');
+            this.updatePagination();
+            return;
+        }
+        
+        this.elements.emptyState.classList.add('d-none');
+        
+        // Generate table rows
+        this.elements.ordersBody.innerHTML = pageOrders.map(order => `
+            <tr>
+                <td><strong>${order.order_id}</strong></td>
+                <td>${order.buyer_name}</td>
+                <td>${this.formatPhone(order.buyer_phone)}</td>
+                <td>${order.idNumber || '—'}</td>
+                <td>${order.email || '—'}</td>
+                <td>KSh ${order.amount.toLocaleString()}</td>
+                <td>${this.getStatusBadge(order.status)}</td>
+                <td>${order.approved_by || order.rejected_by || '—'}</td>
+                <td>${this.formatDate(order.date)}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" 
+                            onclick="OrdersManager.viewOrder('${order.order_id}')">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+        
+        // Update counts
+        this.elements.showing.textContent = this.filteredOrders.length;
+        this.elements.total.textContent = this.allOrders.length;
+        
+        this.updatePagination();
+    },
+    
+    // Get status badge
+    getStatusBadge: function(status) {
+        const badges = {
+            pending: '<span class="badge bg-warning">Pending</span>',
+            completed: '<span class="badge bg-success">Completed</span>',
+            rejected: '<span class="badge bg-danger">Rejected</span>'
+        };
+        return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
+    },
+    
+    // Update statistics
+    updateStatistics: function() {
+        const total = this.allOrders.length;
+        const pending = this.allOrders.filter(o => o.status === 'pending').length;
+        const completed = this.allOrders.filter(o => o.status === 'completed').length;
+        const rejected = this.allOrders.filter(o => o.status === 'rejected').length;
+        
+        this.elements.totalOrders.textContent = total;
+        this.elements.pendingOrders.textContent = pending;
+        this.elements.completedOrders.textContent = completed;
+        this.elements.rejectedOrders.textContent = rejected;
+    },
+    
+    // Update filter info
+    updateFilterInfo: function() {
+        const activeFilters = [];
+        if (this.filters.search) activeFilters.push(`search: "${this.filters.search}"`);
+        if (this.filters.status) activeFilters.push(`status: ${this.filters.status}`);
+        if (this.filters.date) activeFilters.push(`date: ${this.formatDisplayDate(this.filters.date)}`);
+        
+        this.elements.filterInfo.textContent = activeFilters.length 
+            ? `Filtered by ${activeFilters.join(', ')}` 
+            : 'Showing all orders';
+    },
+    
+    // Update pagination
+    updatePagination: function() {
+        const totalPages = Math.ceil(this.filteredOrders.length / this.pageSize);
+        
+        this.elements.pageNumber.textContent = this.currentPage;
+        this.elements.prevBtn.disabled = this.currentPage === 1;
+        this.elements.nextBtn.disabled = this.currentPage === totalPages || totalPages === 0;
+    },
+    
+    // Update last updated time
+    updateLastUpdated: function() {
+        this.elements.lastUpdate.textContent = new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    },
+    
+    // View order details (MODAL)
+viewOrder: async function(orderId) {
+    const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+    const modalContent = document.getElementById('modalContent');
+    
+    // Show loading
+    modalContent.innerHTML = `
+        <div class="text-center py-3">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+            <p class="mt-2 text-muted">Loading order details...</p>
+        </div>
+    `;
+    
+    modal.show();
+    
+    try {
+        const response = await fetch(`/api/pending-orders/${orderId}/`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
         const data = await response.json();
         
-        if (data.success && data.orders) {
-            allOrders = data.orders;
-            sortOrders();
-            updateOrderCounts(allOrders);
-            applyFilters();
-            updateLastUpdated();
+        if (data.success) {
+            const order = data.order;
+            
+            modalContent.innerHTML = `
+                <div>
+                    <!-- ORDER ID -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted mb-1">ORDER ID</label>
+                        <p class="mb-0 fw-bold">${order.order_id}</p>
+                    </div>
+                    
+                    <!-- ORDER DETAILS -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted mb-1">ORDER DETAILS</label>
+                        <p class="mb-0">Date: ${new Date(order.created_at).toLocaleDateString()}</p>
+                        <p class="mb-0">Payment: ${order.payment_method || 'Cash'}</p>
+                        <p class="mb-0">Notes: ${order.notes || 'None'}</p>
+                    </div>
+                    
+                    <!-- BUYER DETAILS -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted mb-1">BUYER DETAILS</label>
+                        <p class="mb-0">Name: ${order.buyer_name}</p>
+                        <p class="mb-0">Phone: ${order.buyer_phone}</p>
+                        <p class="mb-0">Email: ${order.buyer_email || 'Not provided'}</p>
+                        <p class="mb-0">ID: ${order.buyer_id_number || 'Not provided'}</p>
+                    </div>
+                    
+                    <!-- AMOUNT -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted mb-1">AMOUNT</label>
+                        <h4 class="text-primary">KSh ${parseFloat(order.total_amount).toLocaleString()}</h4>
+                    </div>
+                    
+                    <!-- STATUS -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted mb-1">STATUS</label>
+                        ${order.status === 'pending' ? 
+                            '<span class="badge bg-warning">Pending</span>' :
+                          order.status === 'completed' ? 
+                            '<span class="badge bg-success">Completed</span>' :
+                            '<span class="badge bg-danger">Rejected</span>'
+                        }
+                    </div>
+                    
+                    <!-- APPROVED BY -->
+                    ${order.approved_by ? `
+                        <div class="mb-3">
+                            <label class="form-label text-muted mb-1">APPROVED BY</label>
+                            <p class="mb-0">${order.approved_by}</p>
+                            <small class="text-muted">${order.approved_date ? new Date(order.approved_date).toLocaleDateString() : ''}</small>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- REJECTED BY -->
+                    ${order.rejected_by ? `
+                        <div class="mb-3">
+                            <label class="form-label text-muted mb-1">REJECTED BY</label>
+                            <p class="mb-0">${order.rejected_by}</p>
+                            <small class="text-muted">${order.rejected_date ? new Date(order.rejected_date).toLocaleDateString() : ''}</small>
+                            ${order.rejection_reason ? `<p class="mb-0 text-danger">Reason: ${order.rejection_reason}</p>` : ''}
+                        </div>
+                    ` : ''}
+                    
+                    <!-- REVIEWED BY -->
+                    ${order.reviewed_by && !order.approved_by && !order.rejected_by ? `
+                        <div class="mb-3">
+                            <label class="form-label text-muted mb-1">REVIEWED BY</label>
+                            <p class="mb-0">${order.reviewed_by}</p>
+                            <small class="text-muted">${order.reviewed_at ? new Date(order.reviewed_at).toLocaleDateString() : ''}</small>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
         } else {
-            showNoResults();
-            updateOrderCounts([]);
+            modalContent.innerHTML = `<p class="text-danger">Error: ${data.error}</p>`;
         }
     } catch (error) {
-        console.error('Error loading orders:', error);
-        showError('Failed to load orders. Please try again.');
-    }
-}
-
-// Show loading state
-function showLoading() {
-    const tbody = document.getElementById('ordersTableBody');
-    const noResults = document.getElementById('noResults');
-    
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="10" class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2 text-muted">Loading orders...</p>
-            </td>
-        </tr>
-    `;
-    noResults.style.display = 'none';
-}
-
-// Show error message
-function showError(message) {
-    const tbody = document.getElementById('ordersTableBody');
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="10" class="text-center py-5 text-danger">
-                <i class="bi bi-exclamation-triangle display-4"></i>
-                <p class="mt-3">${message}</p>
-                <button class="btn btn-outline-primary mt-2" onclick="loadOrders()">
-                    <i class="bi bi-arrow-clockwise me-1"></i> Retry
+        console.error('Error loading order details:', error);
+        modalContent.innerHTML = `
+            <div class="alert alert-danger">
+                <p><strong>Error loading order details!</strong></p>
+                <p>${error.message}</p>
+                <button class="btn btn-sm btn-primary mt-2" 
+                        onclick="OrdersManager.viewOrderSimple('${orderId}')">
+                    Show Basic Details
                 </button>
-            </td>
-        </tr>
-    `;
-}
-
-// Apply filters
-function applyFilters() {
-    const searchTerm = document.getElementById('orderSearchInput').value.toLowerCase();
-    const statusFilter = document.getElementById('orderStatusFilter').value;
-    const dateFilter = document.getElementById('orderDateFilter').value;
-    
-    filteredOrders = allOrders.filter(order => {
-        const matchesSearch = !searchTerm || 
-            order.order_id.toLowerCase().includes(searchTerm) ||
-            order.buyer_name.toLowerCase().includes(searchTerm) ||
-            order.buyer_phone.toLowerCase().includes(searchTerm) ||
-            (order.buyer_email && order.buyer_email.toLowerCase().includes(searchTerm)) ||
-            (order.buyer_id_number && order.buyer_id_number.toLowerCase().includes(searchTerm));
-        
-        const matchesStatus = !statusFilter || order.status === statusFilter;
-        
-        let matchesDate = true;
-        if (dateFilter) {
-            const orderDate = new Date(order.created_at).toISOString().split('T')[0];
-            const filterDate = new Date(dateFilter).toISOString().split('T')[0];
-            matchesDate = orderDate === filterDate;
-        }
-        
-        return matchesSearch && matchesStatus && matchesDate;
-    });
-    
-    sortOrders();
-    renderOrdersTable();
-    updateFilterStats();
-}
-
-// Sort orders
-function sortOrders() {
-    const orders = filteredOrders.length > 0 ? filteredOrders : allOrders;
-    
-    orders.sort((a, b) => {
-        let aValue, bValue;
-        
-        switch(sortConfig.key) {
-            case 'order_id':
-                aValue = a.order_id;
-                bValue = b.order_id;
-                break;
-            case 'total_amount':
-                aValue = parseFloat(a.total_amount);
-                bValue = parseFloat(b.total_amount);
-                break;
-            case 'created_at':
-                aValue = new Date(a.created_at);
-                bValue = new Date(b.created_at);
-                break;
-            case 'buyer_name':
-                aValue = a.buyer_name.toLowerCase();
-                bValue = b.buyer_name.toLowerCase();
-                break;
-            default:
-                aValue = a[sortConfig.key];
-                bValue = b[sortConfig.key];
-        }
-        
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-    });
-}
-
-// Render orders table
-function renderOrdersTable() {
-    const tbody = document.getElementById('ordersTableBody');
-    const noResults = document.getElementById('noResults');
-    const showingCount = document.getElementById('showingCount');
-    const totalCount = document.getElementById('totalCount');
-    const currentPageEl = document.getElementById('currentPage');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    
-    const ordersToShow = filteredOrders.length > 0 ? filteredOrders : allOrders;
-    const totalOrders = ordersToShow.length;
-    
-    showingCount.textContent = totalOrders;
-    totalCount.textContent = allOrders.length;
-    
-    const totalPages = Math.ceil(totalOrders / pageSize);
-    currentPage = Math.min(currentPage, totalPages || 1);
-    
-    prevBtn.disabled = currentPage <= 1;
-    nextBtn.disabled = currentPage >= totalPages;
-    currentPageEl.textContent = currentPage;
-    
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    const pageOrders = ordersToShow.slice(startIndex, endIndex);
-    
-    if (pageOrders.length > 0) {
-        tbody.innerHTML = pageOrders.map(order => createOrderRow(order)).join('');
-        noResults.style.display = 'none';
-        document.querySelector('.table-responsive').style.display = 'block';
-    } else {
-        showNoResults();
+            </div>
+        `;
     }
-}
-
-// Show no results
-function showNoResults() {
-    const tbody = document.getElementById('ordersTableBody');
-    const noResults = document.getElementById('noResults');
-    const tableContainer = document.querySelector('.table-responsive');
+},
     
-    tbody.innerHTML = '';
-    noResults.style.display = 'block';
-    if (tableContainer) tableContainer.style.display = 'none';
-}
-
-// Create order row HTML
-function createOrderRow(order) {
-    const createdDate = new Date(order.created_at);
-    const approvedDate = order.approved_at ? new Date(order.approved_at) : null;
-    const rejectedDate = order.rejected_at ? new Date(order.rejected_at) : null;
-    
-    return `
-        <tr data-order-id="${order.order_id}">
-            <td>
-                <div class="d-flex align-items-center">
-                    <span class="badge bg-light text-dark border me-2">
-                        <i class="bi bi-hash"></i>
-                    </span>
-                    <span class="fw-semibold">${order.order_id}</span>
+    // Fallback function if API endpoint doesn't exist
+    viewOrderSimple: function(orderId) {
+        const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+        const modalContent = document.getElementById('modalContent');
+        
+        // Find order from loaded data
+        const order = this.allOrders.find(o => o.order_id === orderId);
+        
+        if (!order) {
+            modalContent.innerHTML = `<p class="text-danger">Order not found</p>`;
+            modal.show();
+            return;
+        }
+        
+        modalContent.innerHTML = `
+            <div>
+                <div class="mb-3">
+                    <label class="form-label text-muted mb-1">ORDER ID</label>
+                    <p class="mb-0 fw-bold">${order.order_id}</p>
                 </div>
-            </td>
-            <td><div class="fw-medium">${order.buyer_name}</div></td>
-            <td>
-                <a href="tel:${order.buyer_phone}" class="text-decoration-none">
-                    <i class="bi bi-telephone me-1 text-muted"></i>
-                    ${order.buyer_phone}
-                </a>
-            </td>
-            <td><div class="small">${order.buyer_id_number || '<span class="text-muted">-</span>'}</div></td>
-            <td>
-                ${order.buyer_email ? `
-                    <a href="mailto:${order.buyer_email}" class="text-decoration-none small">
-                        <i class="bi bi-envelope me-1 text-muted"></i>
-                        ${order.buyer_email}
-                    </a>
-                ` : '<span class="text-muted small">-</span>'}
-            </td>
-            <td><div class="fw-bold text-primary">KSh ${parseFloat(order.total_amount).toLocaleString('en-KE', {minimumFractionDigits: 2})}</div></td>
-            <td>${getStatusBadge(order.status)}</td>
-            <td>
-                ${order.status === 'completed' && order.approved_by ? `
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="flex-shrink-0">
-                            <div class="avatar-sm">
-                                <div class="avatar-title bg-success bg-opacity-10 text-success rounded-circle">
-                                    <i class="bi bi-person-check"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 overflow-hidden">
-                            <div class="fw-medium text-truncate" title="${order.approved_by}">${order.approved_by}</div>
-                            ${approvedDate ? `<div class="text-muted x-small">${approvedDate.toLocaleDateString('en-KE')}</div>` : ''}
-                        </div>
-                    </div>
-                ` : order.status === 'rejected' && order.rejected_by ? `
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="flex-shrink-0">
-                            <div class="avatar-sm">
-                                <div class="avatar-title bg-danger bg-opacity-10 text-danger rounded-circle">
-                                    <i class="bi bi-person-x"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 overflow-hidden">
-                            <div class="fw-medium text-truncate" title="${order.rejected_by}">${order.rejected_by}</div>
-                            ${rejectedDate ? `<div class="text-muted x-small">${rejectedDate.toLocaleDateString('en-KE')}</div>` : ''}
-                        </div>
-                    </div>
-                ` : '<span class="text-muted small">-</span>'}
-            </td>
-            <td>
-                <div class="small">${createdDate.toLocaleDateString('en-KE')}</div>
-                <div class="text-muted x-small">${createdDate.toLocaleTimeString('en-KE', {hour: '2-digit', minute: '2-digit'})}</div>
-            </td>
-        </tr>
-    `;
-}
-
-// Update order counts
-function updateOrderCounts(orders) {
-    const pending = orders.filter(o => o.status === 'pending').length;
-    const completed = orders.filter(o => o.status === 'completed').length;
-    const rejected = orders.filter(o => o.status === 'rejected').length;
-    const total = orders.length;
-    
-    document.getElementById('pendingCount').textContent = pending;
-    document.getElementById('completedCount').textContent = completed;
-    document.getElementById('rejectedCount').textContent = rejected;
-    document.getElementById('totalOrdersCount').textContent = total;
-}
-
-// Update filter statistics
-function updateFilterStats() {
-    const searchTerm = document.getElementById('orderSearchInput').value;
-    const statusFilter = document.getElementById('orderStatusFilter').value;
-    const dateFilter = document.getElementById('orderDateFilter').value;
-    
-    const stats = document.getElementById('filterStats');
-    const parts = [];
-    
-    if (searchTerm) parts.push(`"${searchTerm}"`);
-    if (statusFilter) parts.push(`Status: ${statusFilter}`);
-    if (dateFilter) parts.push(`Date: ${new Date(dateFilter).toLocaleDateString('en-KE')}`);
-    
-    if (parts.length > 0) {
-        stats.textContent = `Filtered: ${parts.join(' • ')} • ${filteredOrders.length} results`;
-    } else {
-        stats.textContent = `Showing all ${allOrders.length} orders`;
-    }
-}
-
-// Quick date filters
-function setQuickDate(range) {
-    const today = new Date();
-    let targetDate = new Date();
-    
-    switch(range) {
-        case 'today':
-            break;
-        case 'week':
-            targetDate.setDate(today.getDate() - 7);
-            break;
-        case 'month':
-            targetDate.setMonth(today.getMonth() - 1);
-            break;
-    }
-    
-    const dateString = targetDate.toISOString().split('T')[0];
-    document.getElementById('orderDateFilter').value = dateString;
-    applyFilters();
-}
-
-function clearDateFilter() {
-    document.getElementById('orderDateFilter').value = '';
-    applyFilters();
-}
-
-function resetFilters() {
-    document.getElementById('orderSearchInput').value = '';
-    document.getElementById('orderStatusFilter').value = '';
-    document.getElementById('orderDateFilter').value = '';
-    currentPage = 1;
-    applyFilters();
-}
-
-// Sort table
-function sortTable(key) {
-    if (sortConfig.key === key) {
-        sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
-    } else {
-        sortConfig.key = key;
-        sortConfig.direction = 'asc';
-    }
-    sortOrders();
-    renderOrdersTable();
-}
-
-// Pagination
-function nextPage() {
-    const ordersToShow = filteredOrders.length > 0 ? filteredOrders : allOrders;
-    const totalPages = Math.ceil(ordersToShow.length / pageSize);
-    
-    if (currentPage < totalPages) {
-        currentPage++;
-        renderOrdersTable();
-    }
-}
-
-function prevPage() {
-    if (currentPage > 1) {
-        currentPage--;
-        renderOrdersTable();
-    }
-}
-
-// Update last updated time
-function updateLastUpdated() {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('en-KE', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
-    document.getElementById('lastUpdated').textContent = timeString;
-}
-
-
-// Get status badge
-function getStatusBadge(status) {
-    const badges = {
-        'pending': `<span class="badge bg-warning bg-opacity-25 text-dark border border-warning px-2 py-1 rounded-pill">
-                        <i class="bi bi-clock me-1"></i>Pending
-                    </span>`,
-        'completed': `<span class="badge bg-success bg-opacity-25 text-dark border border-success px-2 py-1 rounded-pill">
-                        <i class="bi bi-check-circle me-1"></i>Completed
-                    </span>`,
-        'rejected': `<span class="badge bg-danger bg-opacity-25 text-dark border border-danger px-2 py-1 rounded-pill">
-                        <i class="bi bi-x-circle me-1"></i>Rejected
-                    </span>`
-    };
-    return badges[status] || `<span class="badge bg-secondary bg-opacity-25 text-dark border border-secondary px-2 py-1 rounded-pill">
-                                    Unknown
-                                </span>`;
-}
-
-// Export orders to CSV
-function exportOrders() {
-    if (allOrders.length === 0) {
-        alert('No orders to export');
-        return;
-    }
-    
-    const ordersToExport = filteredOrders.length > 0 ? filteredOrders : allOrders;
-    
-    let csv = 'Order ID,Client Name,Phone,ID Number,Email,Amount,Status,Approved By,Date\n';
-    
-    ordersToExport.forEach(order => {
-        const row = [
-            `"${order.order_id}"`,
-            `"${order.buyer_name}"`,
-            `"${order.buyer_phone}"`,
-            `"${order.buyer_id_number || ''}"`,
-            `"${order.buyer_email || ''}"`,
-            `"KSh ${parseFloat(order.total_amount).toLocaleString('en-KE', {minimumFractionDigits: 2})}"`,
-            `"${order.status}"`,
-            `"${order.approved_by || order.rejected_by || ''}"`,
-            `"${new Date(order.created_at).toLocaleDateString('en-KE')}"`
-        ];
-        csv += row.join(',') + '\n';
-    });
-    
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.href = url;
-    link.download = `orders_export_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-}
-
-// Order action functions
-function viewOrderDetails(orderId) {
-    fetch(`/api/pending-orders/${orderId}/`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const order = data.order;
-                let details = `📋 ORDER DETAILS\n`;
-                details += `──────────────\n`;
-                details += `Order ID: ${order.order_id}\n`;
-                details += `Client: ${order.buyer_name}\n`;
-                details += `Phone: ${order.buyer_phone}\n`;
-                details += `ID: ${order.buyer_id_number || 'N/A'}\n`;
-                details += `Email: ${order.buyer_email || 'N/A'}\n`;
-                details += `Amount: KSh ${parseFloat(order.total_amount).toLocaleString()}\n`;
-                details += `Status: ${order.status.toUpperCase()}\n`;
-                details += `Date: ${new Date(order.created_at).toLocaleString('en-KE')}\n`;
                 
-                if (order.approved_by) {
-                    details += `\n✅ APPROVAL INFO\n`;
-                    details += `Approved by: ${order.approved_by}\n`;
-                    if (order.approved_at) details += `Approved at: ${new Date(order.approved_at).toLocaleString('en-KE')}\n`;
-                } else if (order.rejected_by) {
-                    details += `\n❌ REJECTION INFO\n`;
-                    details += `Rejected by: ${order.rejected_by}\n`;
-                    if (order.rejected_at) details += `Rejected at: ${new Date(order.rejected_at).toLocaleString('en-KE')}\n`;
-                    if (order.rejection_reason) details += `Reason: ${order.rejection_reason}\n`;
-                }
+                <div class="mb-3">
+                    <label class="form-label text-muted mb-1">BUYER DETAILS</label>
+                    <p class="mb-0">Name: ${order.buyer_name}</p>
+                    <p class="mb-0">Phone: ${order.buyer_phone}</p>
+                    <p class="mb-0">Email: ${order.email || 'Not provided'}</p>
+                    <p class="mb-0">ID: ${order.idNumber || 'Not provided'}</p>
+                </div>
                 
-                alert(details);
-            }
-        })
-        .catch(error => console.error('Error:', error));
-}
-
-function approveOrder(orderId) {
-    if (!confirm('Are you sure you want to approve this order?')) return;
+                <div class="mb-3">
+                    <label class="form-label text-muted mb-1">AMOUNT</label>
+                    <h4 class="text-primary">KSh ${order.amount.toLocaleString()}</h4>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted mb-1">STATUS</label>
+                    ${this.getStatusBadge(order.status)}
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted mb-1">${order.status === 'completed' ? 'APPROVED BY' : 'REJECTED BY'}</label>
+                    <p class="mb-0">${order.approved_by || order.rejected_by || '—'}</p>
+                </div>
+            </div>
+        `;
+        
+        modal.show();
+    },
     
-    fetch(`/staff/approve-order/${orderId}/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json'
+    // Export orders
+    export: function() {
+        if (this.filteredOrders.length === 0) {
+            alert('No orders to export');
+            return;
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('✅ Order approved successfully!');
-            loadOrders(true);
-        } else {
-            alert('❌ Error: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('❌ Failed to approve order');
-    });
-}
-
-function rejectOrder(orderId) {
-    const reason = prompt('Please enter rejection reason:');
-    if (!reason) return;
+        
+        const headers = ['Order ID', 'Customer Name', 'Phone', 'ID Number', 'Email', 'Amount', 'Status', 'Approved By', 'Date'];
+        const rows = this.filteredOrders.map(order => [
+            order.order_id,
+            order.buyer_name,
+            order.buyer_phone,
+            order.idNumber,
+            order.email,
+            order.amount,
+            order.status,
+            order.approved_by || order.rejected_by || '',
+            this.formatDate(order.date)
+        ]);
+        
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${cell || ''}"`).join(','))
+        ].join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `orders_${new Date().toISOString().slice(0,10)}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    },
     
-    fetch(`/staff/reject-order/${orderId}/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ reason: reason })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('✅ Order rejected successfully!');
-            loadOrders(true);
-        } else {
-            alert('❌ Error: ' + data.message);
+    // Refresh orders
+    refresh: function() {
+        this.loadOrders(true);
+    },
+    
+    // Search function
+    search: function(term) {
+        this.filters.search = term;
+        this.applyFilters();
+    },
+    
+    // Filter function
+    filter: function() {
+        this.filters.status = this.elements.statusFilter.value;
+        this.filters.date = this.elements.dateFilter.value;
+        this.applyFilters();
+    },
+    
+    // Formatting utilities
+    formatDate: function(dateString) {
+        if (!dateString) return '—';
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    },
+    
+    formatDisplayDate: function(dateString) {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    },
+    
+    formatPhone: function(phone) {
+        if (!phone) return '—';
+        const cleaned = phone.replace(/\D/g, '');
+        if (cleaned.length === 10) {
+            return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('❌ Failed to reject order');
-    });
-}
-
-// CSRF Token helper
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
+        return phone;
+    },
+    
+    // Show loading
+    showLoading: function() {
+        this.elements.ordersBody.innerHTML = `
+            <tr id="loadingRow">
+                <td colspan="10" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading orders...</p>
+                </td>
+            </tr>
+        `;
+    },
+    
+    // Show error
+    showError: function(message) {
+        this.elements.ordersBody.innerHTML = `
+            <tr>
+                <td colspan="10" class="text-center py-5">
+                    <div class="text-danger">
+                        <i class="bi bi-exclamation-triangle display-4"></i>
+                        <h5 class="mt-3">Unable to Load Orders</h5>
+                        <p class="text-muted">${message}</p>
+                        <button class="btn btn-primary mt-2" onclick="OrdersManager.loadOrders(true)">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Retry
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
     }
-    return cookieValue;
-}
+};
 
-
-
-
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    OrdersManager.init();
+});
 
 
 
