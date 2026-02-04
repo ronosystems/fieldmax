@@ -22,15 +22,15 @@ class StaffApplication(models.Model):
     ]
     
     POSITION_CHOICES = [
-        ('sales_assistant', 'Sales Assistant'),
-        ('cashier', 'Cashier'),
+        ('sales_assistant', 'Sales Officer'),
+        ('cashier', 'Cashier Desk'),
         ('store_manager', 'Store Manager'),
         ('inventory_clerk', 'Inventory Clerk'),
-        ('customer_service', 'Customer Service Representative'),
+        ('customer_service', 'Customer Care Service '),
         ('supervisor', 'Supervisor'),
-        ('assistant_manager', 'Assistant Manager'),
+        ('assistant_manager', 'Sales Manager'),
         ('security', 'Security Officer'),
-        ('cleaner', 'Cleaner'),
+        ('cleaner', 'Office Cleaner'),
     ]
     
     # Personal Information

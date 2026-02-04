@@ -120,6 +120,14 @@
             justify-content: center;
             font-size: 28px;
             backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+        
+        .company-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: var(--radius-md);
         }
         
         .company-name {
@@ -830,7 +838,8 @@
                 <div class="header-content">
                     <div class="company-brand">
                         <div class="company-logo">
-                            <i class="fas fa-store-alt"></i>
+                            <!-- LOGO IMAGE ADDED HERE -->
+                            <img src="/static/images/LOGO.jpg" alt="FieldMax Logo">
                         </div>
                         <div class="company-name">FieldMax Suppliers Limited</div>
                     </div>
