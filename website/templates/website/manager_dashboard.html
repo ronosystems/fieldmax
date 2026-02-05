@@ -554,6 +554,24 @@
   border-color: #0dcaf0;
 }
 
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    backdrop-filter: blur(4px);
+}
+
+.sidebar-overlay.active {
+    display: block;
+}
+
+
 /* Stats Grid */
 .stats-grid {
   display: grid;
@@ -2103,6 +2121,8 @@ video {
 
 <!-- Sidebar Overlay for Mobile -->
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+
 
 <!-- ======================================== -->
 <!-- ============ ENHANCED SIDEBAR ========== -->
@@ -4511,66 +4531,88 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 
+
+
+
+
+
+
+
+
+
 // ====================================
 // ====================================
-// ======================
-// MOBILE SIDEBAR TOGGLE
-// ======================
 // ====================================
-// Mobile sidebar toggle functionality
+// MOBILE SIDEBAR TOGGLE - FIXED VERSION
+// ====================================
+// ====================================
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 Initializing mobile sidebar...');
+    
     const mobileToggle = document.getElementById('mobileSidebarToggle');
     const sidebar = document.getElementById('dashboardSidebar');
     const overlay = document.getElementById('sidebarOverlay');
     
-    if (mobileToggle && sidebar) {
-        mobileToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
+    // Check if elements exist
+    if (!mobileToggle || !sidebar || !overlay) {
+        console.error('❌ Mobile sidebar elements not found:', {
+            toggle: !!mobileToggle,
+            sidebar: !!sidebar,
+            overlay: !!overlay
         });
-        
-        overlay.addEventListener('click', function() {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        });
+        return;
     }
     
-    // Menu item click handling
+    console.log('✅ Mobile sidebar elements found');
+    
+    // Toggle sidebar on button click
+    mobileToggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        console.log('📱 Mobile toggle clicked');
+        
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+        
+        console.log('Sidebar active:', sidebar.classList.contains('active'));
+    });
+    
+    // Close sidebar when clicking overlay
+    overlay.addEventListener('click', function() {
+        console.log('🔒 Overlay clicked - closing sidebar');
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+    });
+    
+    // Close sidebar when clicking menu items on mobile
     const menuItems = document.querySelectorAll('.menu-item[data-section]');
     menuItems.forEach(item => {
-        item.addEventListener('click', function(e) {
-            // Remove active class from all menu items
-            menuItems.forEach(i => i.classList.remove('active'));
-            // Add active class to clicked item
-            this.classList.add('active');
-            
-            // On mobile, close sidebar after clicking
+        item.addEventListener('click', function() {
             if (window.innerWidth <= 992) {
+                console.log('📱 Menu item clicked on mobile - closing sidebar');
                 sidebar.classList.remove('active');
                 overlay.classList.remove('active');
             }
         });
     });
     
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', function(e) {
-        if (window.innerWidth <= 992 && 
-            !sidebar.contains(e.target) && 
-            !mobileToggle.contains(e.target) && 
-            sidebar.classList.contains('active')) {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        }
-    });
-    
-    // Handle window resize
+    // Close sidebar on window resize if going to desktop
     window.addEventListener('resize', function() {
         if (window.innerWidth > 992) {
             sidebar.classList.remove('active');
             overlay.classList.remove('active');
         }
     });
+    
+    console.log('✅ Mobile sidebar initialized successfully');
 });
+
+
+
+
+
+
+
+
 
 
 
