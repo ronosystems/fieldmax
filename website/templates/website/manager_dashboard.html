@@ -10,7 +10,7 @@
 .dashboard-wrapper {
   display: flex;
   min-height: calc(100vh - 160px);
-  background-color: #5bb7b5;
+  background-color: #f8fafc; /* CHANGED: Was #5bb7b5 causing blue background */
   position: relative;
 }
 
@@ -18,17 +18,23 @@
 /* ============ ENHANCED SIDEBAR STYLES === */
 /* ======================================== */
 .dashboard-sidebar {
-  width: 280px;
+  width: 300px;
   background: linear-gradient(180deg, #1a1f2e 0%, #2d3748 100%);
   padding: 0;
-  position: sticky;
+  position: fixed; /* CHANGED: Was sticky, now fixed for mobile */
   top: 0;
+  left: 0; /* ADDED */
   height: 100vh;
   overflow-y: auto;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
-  z-index: 100;
+  z-index: 1000; /* INCREASED: For mobile overlay */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(-100%); /* ADDED: Hide by default on mobile */
+}
+
+.dashboard-sidebar.active {
+  transform: translateX(0); /* ADDED: Show when active */
 }
 
 .sidebar-header {
@@ -267,6 +273,8 @@
   padding: 2rem;
   overflow-x: hidden;
   background: #f8fafc;
+  margin-left: 0; /* ADDED: No margin by default */
+  transition: margin-left 0.3s ease; /* ADDED: Smooth transition */
 }
 
 .content-section {
@@ -298,13 +306,13 @@
   }
 }
 
-/* Mobile Sidebar Toggle */
+/* Mobile Sidebar Toggle - SINGLE INSTANCE */
 .mobile-sidebar-toggle {
   display: none;
   position: fixed;
   top: 1rem;
   left: 1rem;
-  z-index: 1000;
+  z-index: 1001; /* INCREASED: Above sidebar */
   background: linear-gradient(135deg, #0dcaf0 0%, #3b82f6 100%);
   color: white;
   border: none;
@@ -315,6 +323,8 @@
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(13, 202, 240, 0.3);
   transition: all 0.3s ease;
+  align-items: center;
+  justify-content: center;
 }
 
 .mobile-sidebar-toggle:hover {
@@ -323,9 +333,18 @@
 }
 
 /* Responsive Design */
-@media (max-width: 1200px) {
+@media (min-width: 993px) {
   .dashboard-sidebar {
-    width: 240px;
+    transform: translateX(0); /* Always visible on desktop */
+    position: sticky; /* Sticky on desktop */
+  }
+  
+  .dashboard-content {
+    margin-left: 280px; /* Add margin for sidebar */
+  }
+  
+  .mobile-sidebar-toggle {
+    display: none !important; /* Hide on desktop */
   }
 }
 
@@ -334,26 +353,10 @@
     flex-direction: column;
   }
 
-  .dashboard-sidebar {
-    position: fixed;
-    left: -280px;
-    top: 0;
-    height: 100vh;
-    z-index: 1000;
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .dashboard-sidebar.active {
-    left: 0;
-    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.3);
-  }
-
   .mobile-sidebar-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; /* Show on mobile */
   }
-
+  
   .dashboard-content {
     padding: 1.5rem;
     margin-top: 0;
@@ -509,17 +512,6 @@
   animation: fadeIn 0.3s ease-in;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .content-header {
   display: flex;
   align-items: center;
@@ -534,24 +526,6 @@
   font-weight: 500;
   color: #1a1f2e;
   margin: 0;
-}
-
-.mobile-sidebar-toggle {
-  display: none;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  color: #1a1f2e;
-  font-size: 1.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.mobile-sidebar-toggle:hover {
-  background: #0dcaf0;
-  color: #ffffff;
-  border-color: #0dcaf0;
 }
 
 
@@ -746,7 +720,7 @@
 
 /* Data Card & Table */
 .data-card {
-  background: #00bfff;
+  background: #ffffff; /* CHANGED: Was #00bfff */
   border-radius: 0.75rem;
   border: 1px solid #e5e7eb;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -763,7 +737,7 @@
 }
 
 .data-table thead {
-  background: #00bfe6;
+  background: #f8f9fa; /* CHANGED: Was #00bfe6 */
 }
 
 .data-table th {
@@ -1566,7 +1540,7 @@
 }
 
 .sale-row[data-status="reversed"]:hover {
-  background-color: #0d10d4 !important;
+  background-color: #fde68a !important;
 }
 
 /* Filter animations */
@@ -2083,13 +2057,14 @@ video {
 
 <div class="dashboard-wrapper">
 
-<!-- Mobile Sidebar Toggle -->
-<button class="mobile-sidebar-toggle sidebar-toggle-btn">
+<!-- Mobile Sidebar Toggle - SINGLE INSTANCE -->
+<button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
   <i class="bi bi-list"></i>
 </button>
 
 <!-- Sidebar Overlay for Mobile -->
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
 
 
 
