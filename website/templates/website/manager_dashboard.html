@@ -2115,7 +2115,7 @@ video {
 <div class="dashboard-wrapper">
 
 <!-- Mobile Sidebar Toggle -->
-<button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
+<button class="mobile-sidebar-toggle sidebar-toggle-btn">
   <i class="bi bi-list"></i>
 </button>
 
@@ -2246,7 +2246,7 @@ video {
     <div id="dashboard" class="content-section active">
       <!-- Content Header -->
       <div class="content-header">
-        <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
+        <button class="mobile-sidebar-toggle sidebar-toggle-btn">
           <i class="bi bi-list"></i>
         </button>
         <h1 class="page-title">Dashboard Overview</h1>
@@ -4549,7 +4549,7 @@ window.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 Initializing mobile sidebar...');
     
-    const mobileToggle = document.getElementById('mobileSidebarToggle');
+    const mobileToggles = document.querySelectorAll('.sidebar-toggle-btn');
     const sidebar = document.getElementById('dashboardSidebar');
     const overlay = document.getElementById('sidebarOverlay');
     
@@ -4566,14 +4566,16 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ Mobile sidebar elements found');
     
     // Toggle sidebar on button click
-    mobileToggle.addEventListener('click', function(e) {
-        e.stopPropagation();
-        console.log('📱 Mobile toggle clicked');
-        
-        sidebar.classList.toggle('active');
-        overlay.classList.toggle('active');
+    mobileToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            console.log('📱 Mobile toggle clicked');
+            
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
         
         console.log('Sidebar active:', sidebar.classList.contains('active'));
+        });
     });
     
     // Close sidebar when clicking overlay
