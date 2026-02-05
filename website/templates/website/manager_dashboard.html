@@ -300,10 +300,11 @@
 
 /* Mobile Sidebar Toggle */
 .mobile-sidebar-toggle {
+  display: none;
   position: fixed;
   top: 1rem;
   left: 1rem;
-  z-index: 1001;
+  z-index: 1000;
   background: linear-gradient(135deg, #0dcaf0 0%, #3b82f6 100%);
   color: white;
   border: none;
@@ -314,15 +315,11 @@
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(13, 202, 240, 0.3);
   transition: all 0.3s ease;
-  display: none;
-  align-items: center;
-  justify-content: center;
 }
 
-@media (max-width: 992px) {
-  .mobile-sidebar-toggle {
-    display: flex !important;
-  }
+.mobile-sidebar-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(13, 202, 240, 0.4);
 }
 
 /* Responsive Design */
@@ -539,7 +536,23 @@
   margin: 0;
 }
 
+.mobile-sidebar-toggle {
+  display: none;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #1a1f2e;
+  font-size: 1.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
 
+.mobile-sidebar-toggle:hover {
+  background: #0dcaf0;
+  color: #ffffff;
+  border-color: #0dcaf0;
+}
 
 /* Stats Grid */
 .stats-grid {
@@ -1006,6 +1019,37 @@
   background: #fee2e2;
   border: 1px solid #ef4444;
   color: #991b1b;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .dashboard-wrapper {
+    flex-direction: column;
+  }
+
+  .dashboard-sidebar {
+    position: fixed;
+    left: -260px;
+    top: 76px;
+    z-index: 998;
+    transition: left 0.3s ease;
+  }
+
+  .dashboard-sidebar.active {
+    left: 0;
+  }
+
+  .mobile-sidebar-toggle {
+    display: block;
+  }
+
+  .dashboard-content {
+    padding: 1.5rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -2053,14 +2097,12 @@ video {
 <div class="dashboard-wrapper">
 
 <!-- Mobile Sidebar Toggle -->
-<button class="mobile-sidebar-toggle sidebar-toggle-btn">
+<button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
   <i class="bi bi-list"></i>
 </button>
 
 <!-- Sidebar Overlay for Mobile -->
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-
 
 <!-- ======================================== -->
 <!-- ============ ENHANCED SIDEBAR ========== -->
@@ -2181,15 +2223,14 @@ video {
 <!-- ======================================= -->
   <main class="dashboard-content">
     
+    <div id="dashboard" class="content-section active">
       <!-- Content Header -->
       <div class="content-header">
-        <button class="mobile-sidebar-toggle sidebar-toggle-btn">
+        <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
           <i class="bi bi-list"></i>
         </button>
         <h1 class="page-title">Dashboard Overview</h1>
       </div>
-
-    <div id="dashboard" class="content-section active">
 
       <!-- Stats Cards -->
       <div class="stats-grid">
@@ -4469,6 +4510,128 @@ window.addEventListener('DOMContentLoaded', () => {
   console.log('✅ Navigation ready');
 });
 
+
+// ====================================
+// ====================================
+// ======================
+// MOBILE SIDEBAR TOGGLE
+// ======================
+// ====================================
+// ====================================
+
+const sidebar = document.getElementById('dashboardSidebar');
+
+// Handle all mobile sidebar toggle buttons
+document.querySelectorAll('[id^="mobileSidebarToggle"]').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    sidebar.classList.toggle('active');
+    
+    // Add/remove overlay
+    toggleSidebarOverlay();
+  });
+});
+
+// Create and toggle overlay
+function toggleSidebarOverlay() {
+  let overlay = document.getElementById('sidebarOverlay');
+  
+  if (sidebar.classList.contains('active')) {
+    // Create overlay if it doesn't exist
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'sidebarOverlay';
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 997;
+        display: block;
+      `;
+      document.body.appendChild(overlay);
+      
+      // Close sidebar when clicking overlay
+      overlay.addEventListener('click', () => {
+        sidebar.classList.remove('active');
+        overlay.remove();
+      });
+    }
+  } else {
+    // Remove overlay
+    if (overlay) {
+      overlay.remove();
+    }
+  }
+}
+
+// Close sidebar when clicking outside on mobile
+document.addEventListener('click', (e) => {
+  if (window.innerWidth <= 992) {
+    if (!sidebar.contains(e.target) && 
+        !e.target.closest('[id^="mobileSidebarToggle"]')) {
+      sidebar.classList.remove('active');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (overlay) overlay.remove();
+    }
+  }
+});
+
+// Close sidebar when window is resized to desktop
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 992) {
+    sidebar.classList.remove('active');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (overlay) overlay.remove();
+  }
+});
+
+// ===================
+// SWIPE TO CLOSE SIDEBAR (MOBILE)
+// ===================
+let touchStartX = 0;
+let touchEndX = 0;
+
+sidebar.addEventListener('touchstart', (e) => {
+  touchStartX = e.changedTouches[0].screenX;
+}, { passive: true });
+
+sidebar.addEventListener('touchend', (e) => {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipeGesture();
+}, { passive: true });
+
+function handleSwipeGesture() {
+  // Swipe left to close (threshold: 50px)
+  if (touchStartX - touchEndX > 50) {
+    if (sidebar.classList.contains('active')) {
+      sidebar.classList.remove('active');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (overlay) overlay.remove();
+    }
+  }
+}
+
+// ===================
+// PREVENT BODY SCROLL WHEN SIDEBAR IS OPEN (MOBILE)
+// ===================
+const observer = new MutationObserver((mutations) => {
+  mutations.forEach((mutation) => {
+    if (mutation.attributeName === 'class') {
+      if (window.innerWidth <= 992) {
+        if (sidebar.classList.contains('active')) {
+          document.body.style.overflow = 'hidden';
+        } else {
+          document.body.style.overflow = '';
+        }
+      }
+    }
+  });
+});
+
+observer.observe(sidebar, { attributes: true });
 
 
 
