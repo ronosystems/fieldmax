@@ -300,11 +300,10 @@
 
 /* Mobile Sidebar Toggle */
 .mobile-sidebar-toggle {
-  display: none;
   position: fixed;
   top: 1rem;
   left: 1rem;
-  z-index: 1000;
+  z-index: 1001;
   background: linear-gradient(135deg, #0dcaf0 0%, #3b82f6 100%);
   color: white;
   border: none;
@@ -315,11 +314,15 @@
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(13, 202, 240, 0.3);
   transition: all 0.3s ease;
+  display: none;
+  align-items: center;
+  justify-content: center;
 }
 
-.mobile-sidebar-toggle:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(13, 202, 240, 0.4);
+@media (max-width: 992px) {
+  .mobile-sidebar-toggle {
+    display: flex !important;
+  }
 }
 
 /* Responsive Design */
@@ -536,40 +539,6 @@
   margin: 0;
 }
 
-.mobile-sidebar-toggle {
-  display: none;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  color: #1a1f2e;
-  font-size: 1.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.mobile-sidebar-toggle:hover {
-  background: #0dcaf0;
-  color: #ffffff;
-  border-color: #0dcaf0;
-}
-
-
-.sidebar-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-    backdrop-filter: blur(4px);
-}
-
-.sidebar-overlay.active {
-    display: block;
-}
 
 
 /* Stats Grid */
