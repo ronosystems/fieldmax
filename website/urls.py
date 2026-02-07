@@ -16,8 +16,7 @@ from .views import (
 from . import views
 from django.contrib.auth.views import LogoutView
 from django.views.generic import RedirectView
-
-
+from .views import check_session_status
 
 
 
@@ -29,6 +28,7 @@ urlpatterns = [
     path('products/', views.products_page, name='products_page'),
     path('product/<int:pk>/', views.product_detail, name='product_detail'),
     path('search/', views.search_products, name='search'),
+    path('api/check-session/', check_session_status, name='check-session'),
 
     # ============================================
     # API ENDPOINTS FOR HOME PAGE

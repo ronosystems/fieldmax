@@ -4002,3 +4002,71 @@ def agent_dashboard(request):
         'out_of_stock_count': out_of_stock_count,
         'user': user,
     })
+
+
+
+
+
+
+
+# ============================================
+# SESSION CHECK API
+# ============================================
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
+from django.utils import timezone
+
+@login_required
+@require_http_methods(["GET"])
+def check_session_status(request):
+    """
+    API endpoint to check session status and time remaining
+    URL: /api/check-session/
+    
+    Returns:
+    - authenticated: bool
+    - minutes_remaining: int
+    - session_expires_soon: bool (true if < 5 minutes remaining)
+    """
+    try:
+        last_activity = request.session.get('last_activity')
+        
+        if not last_activity:
+            # No activity tracked yet - session is fresh
+            return JsonResponse({
+                'authenticated': True,
+                'minutes_remaining': 30,
+                'session_expires_soon': False,
+                'message': 'Session active'
+            })
+        
+        # Calculate time remaining
+        last_activity_time = timezone.datetime.fromisoformat(last_activity)
+        time_since_activity = timezone.now() - last_activity_time
+        
+        # Session timeout is 30 minutes (1800 seconds)
+        timeout_seconds = 1800
+        elapsed_seconds = time_since_activity.total_seconds()
+        remaining_seconds = max(0, timeout_seconds - elapsed_seconds)
+        minutes_remaining = int(remaining_seconds / 60)
+        
+        # Warn if less than 5 minutes remaining
+        session_expires_soon = minutes_remaining < 5
+        
+        return JsonResponse({
+            'authenticated': True,
+            'minutes_remaining': minutes_remaining,
+            'seconds_remaining': int(remaining_seconds),
+            'session_expires_soon': session_expires_soon,
+            'message': f'Session expires in {minutes_remaining} minutes' if session_expires_soon else 'Session active'
+        })
+        
+    except Exception as e:
+        logger.error(f"Session check error: {str(e)}")
+        return JsonResponse({
+            'authenticated': True,
+            'minutes_remaining': 30,
+            'session_expires_soon': False,
+            'error': str(e)
+        })

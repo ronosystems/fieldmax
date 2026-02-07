@@ -155,6 +155,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'website.middleware.DashboardSessionMiddleware',
+    'website.middleware.StrictSessionMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -381,16 +382,27 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
 # ============================================
 # AUTHENTICATION & AUTHORIZATION
 # ============================================
+
 LOGIN_URL = '/login/'
 LOGOUT_REDIRECT_URL = '/'
 
-SESSION_COOKIE_AGE = 86400
-SESSION_SAVE_EVERY_REQUEST = True
-SESSION_COOKIE_HTTPONLY = True
+# ✅ SESSION EXPIRATION SETTINGS - REQUIRE LOGIN EVERY TIME
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Session expires when browser closes
+SESSION_COOKIE_AGE = 1800  # 30 minutes (1800 seconds) - short session lifetime
+SESSION_SAVE_EVERY_REQUEST = True  # Refresh session on every request
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
+SESSION_COOKIE_SAMESITE = 'Lax'  # Additional security
+
+# ✅ ADDITIONAL SESSION SECURITY
+SESSION_COOKIE_SECURE = not DEBUG  # Only send cookie over HTTPS in production
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Store sessions in database
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+
+
 
 # ============================================
 # REST FRAMEWORK CONFIGURATION
