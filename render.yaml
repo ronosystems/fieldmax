@@ -4,4 +4,4 @@ services:
     env: python
     pythonVersion: "3.11.9"
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn fieldmax.wsgi:application
+    startCommand: gunicorn fieldmax.wsgi:application --config gunicorn.conf.py
