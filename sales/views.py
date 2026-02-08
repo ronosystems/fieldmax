@@ -41,6 +41,13 @@ except ImportError:
 
 from django.contrib.auth import get_user_model
 
+# views.py
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+
+
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
@@ -585,6 +592,116 @@ class SaleReverseView(LoginRequiredMixin, View):
 
 
 
+# =========================================
+# SIMPLE SALE REVERSAL API VIEW
+# =========================================
+
+@csrf_exempt
+@require_POST
+def reverse_sale(request, sale_id):
+    """
+    API endpoint to reverse a sale and return products to inventory
+    """
+    print(f"🔄 [REVERSE SALE START] Sale ID: {sale_id}")
+    print(f"👤 User: {request.user}")
+    
+    try:
+        # Try to find the sale
+        print(f"🔍 Looking for sale with sale_id='{sale_id}'")
+        
+        # First, try exact match on sale_id field
+        sale = Sale.objects.get(sale_id=sale_id)
+        print(f"✅ Found sale: {sale.sale_id}, Created: {sale.sale_date}")
+        print(f"📊 Sale total amount: {sale.total_amount}")
+        print(f"🔄 Currently reversed: {sale.is_reversed}")
+        
+        # Check if already reversed
+        if sale.is_reversed:
+            print(f"⚠️ Sale {sale.sale_id} is already reversed")
+            return JsonResponse({
+                'success': False,
+                'message': 'Sale is already reversed.'
+            })
+        
+        # Get all sale items
+        sale_items = SaleItem.objects.filter(sale=sale).select_related('product')
+        print(f"📦 Found {sale_items.count()} items in sale")
+        
+        # Return each product to inventory
+        reversed_items = []
+        for item in sale_items:
+            if item.product:
+                product = item.product
+                # ✅ FIX: Use 'name' instead of 'product_name'
+                print(f"📝 Processing item: {product.name}, Qty: {item.quantity}")
+                
+                # Check current stock
+                # ✅ FIX: Check if quantity_available exists, otherwise use quantity
+                if hasattr(product, 'quantity_available'):
+                    current_stock = product.quantity_available
+                else:
+                    current_stock = product.quantity
+                
+                print(f"   Current stock: {current_stock}")
+                
+                # Return quantity to stock
+                if hasattr(product, 'quantity_available'):
+                    product.quantity_available += item.quantity
+                else:
+                    product.quantity += item.quantity
+                
+                # Update product status if needed
+                if product.status == 'sold':
+                    product.status = 'available'
+                
+                product.save()
+                
+                reversed_items.append({
+                    'product': product.name,
+                    'product_code': product.product_code,
+                    'quantity': item.quantity,
+                    'new_stock': product.quantity_available if hasattr(product, 'quantity_available') else product.quantity
+                })
+                
+                print(f"   ✅ Added {item.quantity} units back to stock")
+                print(f"   New stock: {product.quantity_available if hasattr(product, 'quantity_available') else product.quantity}")
+            else:
+                print(f"⚠️ Item {item.id} has no associated product")
+        
+        # Mark sale as reversed
+        sale.is_reversed = True
+        sale.reversed_at = timezone.now()
+        sale.reversed_by = request.user
+        sale.save()
+        
+        print(f"✅ Sale {sale.sale_id} successfully reversed")
+        print(f"🔄 Items returned: {len(reversed_items)}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Sale {sale.sale_id} reversed successfully. {len(reversed_items)} items returned to inventory.',
+            'reversed_items': reversed_items,
+            'sale_id': sale.sale_id,
+            'total_amount': float(sale.total_amount)
+        })
+        
+    except Sale.DoesNotExist:
+        print(f"❌ Sale with sale_id='{sale_id}' not found")
+        return JsonResponse({
+            'success': False,
+            'message': f'Sale "{sale_id}" not found.'
+        }, status=404)
+        
+    except Exception as e:
+        print(f"❌ ERROR in reverse_sale: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        return JsonResponse({
+            'success': False,
+            'message': f'Error: {str(e)}',
+            'error_type': type(e).__name__
+        }, status=500)
 
 
 

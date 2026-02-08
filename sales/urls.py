@@ -45,6 +45,7 @@ urlpatterns = [
 
     # Reversal endpoints
     path('sale/<str:sale_id>/', views.SaleDetailView.as_view(), name='sale-detail'),
+    path('api/sales/<str:sale_id>/reverse/', views.reverse_sale, name='reverse_sale'),
     path("reverse/<str:sale_id>/", SaleReverseView.as_view(), name="reverse-sale"),
 
     # ============================================

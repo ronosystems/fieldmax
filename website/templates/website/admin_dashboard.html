@@ -14706,6 +14706,173 @@ function getCookie(name) {
 
 
 
+// Function to reverse a sale - FIXED VERSION
+function reverseSale(saleId, buttonElement) {
+    console.log(`🔄 Attempting to reverse sale: ${saleId}`);
+    
+    if (confirm(`Are you sure you want to reverse sale ${saleId}? This will return all products to inventory and cannot be undone.`)) {
+        // Show loading indicator
+        const originalText = buttonElement.innerHTML;
+        buttonElement.innerHTML = '<i class="bi bi-arrow-repeat"></i> Reversing...';
+        buttonElement.disabled = true;
+        
+        console.log(`📤 Sending POST request to: /api/sales/${saleId}/reverse/`);
+        
+        // Send AJAX request to reverse the sale
+        fetch(`/sales/api/sales/${saleId}/reverse/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({})  // Empty JSON body
+        })
+        .then(response => {
+            console.log(`📥 Response status: ${response.status}`);
+            
+            // Check if response is JSON
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                return response.json().then(data => ({
+                    status: response.status,
+                    ok: response.ok,
+                    data: data
+                }));
+            } else {
+                // Handle non-JSON response
+                return response.text().then(text => ({
+                    status: response.status,
+                    ok: response.ok,
+                    data: { message: text }
+                }));
+            }
+        })
+        .then(result => {
+            console.log(`📊 Response data:`, result.data);
+            
+            if (result.ok) {
+                if (result.data.success) {
+                    // Show success message
+                    alert(`✅ ${result.data.message || 'Sale reversed successfully! Products have been returned to inventory.'}`);
+                    
+                    // Reload the page to update the status
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    // Server returned success: false
+                    alert(`❌ Error: ${result.data.message || 'Unknown error'}`);
+                    buttonElement.innerHTML = originalText;
+                    buttonElement.disabled = false;
+                }
+            } else {
+                // HTTP error (404, 500, etc.)
+                let errorMessage = `Error (${result.status}): `;
+                
+                if (result.status === 404) {
+                    errorMessage += 'Sale not found. The sale may have been deleted or the URL is incorrect.';
+                } else if (result.status === 500) {
+                    errorMessage += 'Server error. Please try again later.';
+                } else if (result.data && result.data.message) {
+                    errorMessage += result.data.message;
+                } else {
+                    errorMessage += 'Unknown error occurred.';
+                }
+                
+                alert(`❌ ${errorMessage}`);
+                buttonElement.innerHTML = originalText;
+                buttonElement.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('❌ Network error:', error);
+            alert(`❌ Network error: ${error.message}. Please check your internet connection and try again.`);
+            buttonElement.innerHTML = originalText;
+            buttonElement.disabled = false;
+        });
+    }
+}
+
+// Get CSRF token function (required for Django)
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    
+    if (!cookieValue) {
+        console.warn(`⚠️ CSRF cookie '${name}' not found!`);
+    }
+    
+    return cookieValue;
+}
+
+// Attach event listeners to reverse buttons - FIXED
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 Looking for reverse sale buttons...');
+    
+    const reverseButtons = document.querySelectorAll('.reverse-sale-btn');
+    console.log(`✅ Found ${reverseButtons.length} reverse buttons`);
+    
+    reverseButtons.forEach((button, index) => {
+        const saleId = button.getAttribute('data-sale-id');
+        console.log(`Button ${index + 1}: data-sale-id = "${saleId}"`);
+        
+        // Remove existing click events (gentler approach)
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+        
+        // Add click event to the new button
+        newButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const currentSaleId = this.getAttribute('data-sale-id');
+            console.log(`🖱️ Button clicked for sale: ${currentSaleId}`);
+            
+            if (currentSaleId) {
+                reverseSale(currentSaleId, this);
+            } else {
+                alert('❌ Error: Sale ID is missing!');
+                console.error('Missing data-sale-id attribute on button:', this);
+            }
+        });
+    });
+});
+
+// Optional: Add a test function to verify the endpoint
+function testReverseEndpoint(saleId) {
+    console.log(`🧪 Testing endpoint for sale: ${saleId}`);
+    
+    // Try a GET request first to see if endpoint exists
+    fetch(`/sales/api/sales/${saleId}/reverse/`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        }
+    })
+    .then(response => {
+        console.log(`Test GET status: ${response.status}`);
+        if (response.status === 405) {
+            console.log('✅ Endpoint exists! (405 Method Not Allowed is expected for GET)');
+        } else {
+            console.log(`⚠️ Unexpected status: ${response.status}`);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Test failed:', error);
+    });
+}
+
+
 </script>
 
 {% endblock %}
