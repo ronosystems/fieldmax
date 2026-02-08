@@ -12,6 +12,25 @@ from pathlib import Path  # <-- Make sure this import is here
 import os
 import urllib.parse
 
+
+# ============================================
+# MEMORY USAGE CHECK (RENDER OPTIMIZATION)
+# ============================================
+def check_memory():
+    """Simple memory check without psutil"""
+    try:
+        import resource
+        memory_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+        print(f"📊 Memory usage: {memory_mb:.2f} MB")
+    except ImportError:
+        print("📊 Memory check not available (no psutil or resource module)")
+
+# Call it during startup
+if 'runserver' not in sys.argv:  # Production only
+    check_memory()
+
+
+
 # ============================================
 # LOAD ENVIRONMENT VARIABLES
 # ============================================
@@ -20,6 +39,7 @@ try:
     load_dotenv()
 except ImportError:
     pass  # python-dotenv not installed
+
 
 
 # ============================================
@@ -31,11 +51,15 @@ IS_MAIN_PROCESS = True
 if 'runserver' in sys.argv:
     IS_MAIN_PROCESS = os.environ.get('RUN_MAIN') == 'true'
 
+
+
 # ============================================
 # BASE DIRECTORY - FIXED
 # ============================================
 # Use Path() to create a Path object, not string
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
 
 # ============================================
 # DEBUG SETTING (MUST BE DEFINED EARLY)
