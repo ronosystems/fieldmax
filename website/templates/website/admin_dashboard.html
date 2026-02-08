@@ -14704,27 +14704,6 @@ function getCookie(name) {
     return cookieValue;
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Staff onboarding page loaded');
-    
-    // Add any initialization code here
-    // For example, auto-refresh every 5 minutes
-    // setInterval(refreshStaffData, 300000);
-});
-
-
-
-// Check session every minute
-setInterval(function() {
-    fetch('/api/check-session/')
-        .then(response => response.json())
-        .then(data => {
-            if (data.minutes_remaining < 5) {
-                alert('Your session will expire in ' + data.minutes_remaining + ' minutes');
-            }
-        });
-}, 30000); // Every 30 seconds
 
 
 </script>
