@@ -40,21 +40,32 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        /* Row 1 - Shop Name */
+        /* Row 1 - Shop Name & Session Info */
         .header-card {
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             background: linear-gradient(135deg, #000000 0%, #000000 100%);
             color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             min-height: 120px;
+            padding: 0 30px;
         }
 
         .shop-name {
             font-size: 100px;
             font-weight: 1000;
             letter-spacing: 10px;
+        }
+
+        .session-info {
+            text-align: right;
+            font-size: 16px;
+        }
+
+        .session-info .time {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ffff;
         }
 
         /* Row 2 - 3 Columns */
@@ -136,7 +147,7 @@
             font-size: 14px;
         }
 
-        .input-group input {
+        .input-group input, .input-group select {
             width: 100%;
             padding: 10px;
             border: 2px solid #ddd;
@@ -144,7 +155,7 @@
             font-size: 14px;
         }
 
-        .input-group input:focus {
+        .input-group input:focus, .input-group select:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -193,7 +204,7 @@
             margin-top: 20px;
             text-align: center;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            display: none; /* Hidden by default */
+            display: none;
             border: 3px solid #00ffff;
         }
 
@@ -232,6 +243,25 @@
             font-size: 20px;
         }
 
+        /* Customer Info Banner */
+        .customer-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .customer-banner .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
         /* Scrollable Table Container */
         .table-container {
             flex: 1;
@@ -266,7 +296,7 @@
         td {
             padding: 10px 12px;
             border-bottom: 1px solid #000000;
-            font-size:20px;
+            font-size: 20px;
         }
 
         tbody tr:hover {
@@ -449,6 +479,18 @@
             color: #991b1b;
         }
 
+        .alert-warning {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+
         .processing-overlay {
             position: fixed;
             top: 0;
@@ -507,6 +549,15 @@
                 font-size: 48px;
                 letter-spacing: 4px;
             }
+            .header-card {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+            }
+            .session-info {
+                margin-top: 15px;
+                text-align: center;
+            }
             .payment-grid {
                 grid-template-columns: 1fr;
             }
@@ -524,10 +575,14 @@
     {% csrf_token %}
     
     <div class="container">
-        <!-- Row 1: Shop Name -->
+        <!-- Row 1: Shop Name & Session Info -->
         <div class="row">
             <div class="card header-card">
                 <div class="shop-name">FIELDMAX LIMITED 🛒</div>
+                <div class="session-info">
+                    <div>Session: <span class="time" id="sessionTimer">0 min</span></div>
+                    <div id="currentTime">{{ current_time|default:"--:--" }}</div>
+                </div>
             </div>
         </div>
 
@@ -551,6 +606,13 @@
             <!-- Column A: Recording Sale Section -->
             <div class="card">
                 <h3>Record Sale</h3>
+                
+                <!-- Customer Search -->
+                <div class="input-group">
+                    <label>Customer Phone</label>
+                    <input type="tel" id="customerPhone" placeholder="07XX XXX XXX">
+                </div>
+                
                 <form id="saleForm">
                     <div class="input-group">
                         <label>Product Code / SKU</label>
@@ -560,6 +622,21 @@
                         <label>Quantity</label>
                         <input type="number" id="quantity" min="1" value="1">
                     </div>
+                    
+                    <!-- Discount System -->
+                    <div class="input-group">
+                        <label>Discount Type</label>
+                        <select id="discountType">
+                            <option value="none">No Discount</option>
+                            <option value="percentage">Percentage %</option>
+                            <option value="fixed">Fixed Amount</option>
+                        </select>
+                    </div>
+                    <div class="input-group" id="discountValueGroup" style="display: none;">
+                        <label>Discount Value</label>
+                        <input type="number" id="discountValue" min="0" step="0.01" placeholder="0.00">
+                    </div>
+                    
                     <div class="input-group">
                         <label>Sale Amount (Editable)</label>
                         <input type="number" id="saleAmount" placeholder="KSh 0.00" step="0.01" min="0">
@@ -567,7 +644,7 @@
                     <button type="button" class="add-btn" id="addToCartBtn">Add to Cart</button>
                 </form>
                 
-                <!-- NEW: Total Price Card Inside Card -->
+                <!-- Total Price Card Inside Card -->
                 <div class="total-price-card" id="totalPriceCard">
                     <div class="total-price-label"><strong>Totals</strong></div>
                     <div class="total-price-value">
@@ -579,7 +656,16 @@
 
             <!-- Column B: Cart Display -->
             <div class="card cart-card">
+                <!-- Customer Banner -->
+                <div class="customer-banner" id="customerBanner">
+                    <button class="close-btn" onclick="clearCustomer()">×</button>
+                    <strong id="customerName">Guest Customer</strong> 
+                    <span id="customerPoints">0 points</span>
+                    <span style="float: right;">Phone: <span id="customerPhoneDisplay">Not set</span></span>
+                </div>
+                
                 <h3>Sales Cart</h3>
+                
                 <!-- Messages Container -->
                 <div id="messageContainer"></div>
                 
@@ -590,9 +676,9 @@
                             <tr>
                                 <th>Product Code</th>
                                 <th>Product Name</th>
-                                <th>Quantity</th>
+                                <th>Qty</th>
                                 <th>Unit Price</th>
-                                <th>Total Price</th>
+                                <th>Total</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -610,6 +696,10 @@
                         <span id="subtotal">KSh 0.00</span>
                     </div>
                     <div class="summary-row">
+                        <span>Discount:</span>
+                        <span id="discountTotal">KSh 0.00</span>
+                    </div>
+                    <div class="summary-row">
                         <span>Tax (16%):</span>
                         <span id="tax">KSh 0.00</span>
                     </div>
@@ -619,7 +709,7 @@
                     </div>
                 </div>
 
-                <!-- Payment Methods - INSIDE COLUMN B -->
+                <!-- Payment Methods -->
                 <div class="payment-methods-container">
                     <h4><strong>Select Payment Methods</strong></h4>
                     <div class="payment-grid">
@@ -672,26 +762,131 @@
         // ============================================
         let cart = [];
         let currentProduct = null;
+        let currentCustomer = null;
         let debounceTimer = null;
         let isAddingToCart = false;
         let isSubmittingSale = false;
         let lastSubmissionTime = 0;
-        const SUBMISSION_COOLDOWN = 3000; // 3 seconds cooldown between submissions
+        const SUBMISSION_COOLDOWN = 3000; // 3 seconds cooldown
+        let sessionStartTime = new Date();
 
-        // Get CSRF token - FIXED VERSION
-        function getCSRFToken() {
-            // Try multiple ways to get CSRF token
-            const token1 = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-            const token2 = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
-            const token3 = document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSessionTimer();
+            document.getElementById('productCode').focus();
+            console.log('Enhanced POS System initialized');
+        });
+
+        // Session Timer
+        function initializeSessionTimer() {
+            updateSessionTimer();
+            setInterval(updateSessionTimer, 60000); // Update every minute
+        }
+
+        function updateSessionTimer() {
+            const elapsedMinutes = Math.floor((new Date() - sessionStartTime) / 1000 / 60);
+            document.getElementById('sessionTimer').textContent = `${elapsedMinutes} min`;
             
-            const token = token1 || token2 || token3 || '';
-            console.log('CSRF Token found:', token ? 'Yes' : 'No');
-            return token;
+            // Update current time
+            const now = new Date();
+            document.getElementById('currentTime').textContent = 
+                now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         }
 
         // ============================================
-        // ROW 2: SKU LOOKUP (Display Only)
+        // CUSTOMER MANAGEMENT
+        // ============================================
+        document.getElementById('customerPhone').addEventListener('blur', async function() {
+            const phone = this.value.trim();
+            if (phone.length < 9) return;
+            
+            await lookupCustomer(phone);
+        });
+
+        async function lookupCustomer(phone) {
+            try {
+                showMessage('Looking up customer...', 'info');
+                
+                const response = await fetch(`/sales/customer-lookup/?phone=${encodeURIComponent(phone)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentCustomer = data.customer;
+                    updateCustomerDisplay();
+                    showMessage(`Customer found: ${data.customer.name}`, 'success');
+                    
+                    // Auto-focus on product code
+                    setTimeout(() => document.getElementById('productCode').focus(), 300);
+                } else {
+                    // New customer
+                    if (confirm('Customer not found. Create new customer?')) {
+                        const name = prompt('Enter customer name:');
+                        if (name) {
+                            await createNewCustomer(phone, name);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Customer lookup error:', error);
+                showMessage('Error looking up customer', 'danger');
+            }
+        }
+
+        async function createNewCustomer(phone, name) {
+            try {
+                const response = await fetch('/sales/create-customer/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({ 
+                        phone: phone, 
+                        name: name,
+                        email: '' 
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    currentCustomer = {
+                        id: data.customer_id,
+                        name: name,
+                        phone: phone,
+                        points: 0
+                    };
+                    updateCustomerDisplay();
+                    showMessage('New customer created!', 'success');
+                } else {
+                    showMessage(data.message || 'Failed to create customer', 'danger');
+                }
+            } catch (error) {
+                console.error('Create customer error:', error);
+                showMessage('Error creating customer', 'danger');
+            }
+        }
+
+        function updateCustomerDisplay() {
+            if (currentCustomer) {
+                const banner = document.getElementById('customerBanner');
+                document.getElementById('customerName').textContent = currentCustomer.name;
+                document.getElementById('customerPoints').textContent = `${currentCustomer.points} points`;
+                document.getElementById('customerPhoneDisplay').textContent = currentCustomer.phone;
+                banner.style.display = 'block';
+            }
+        }
+
+        function clearCustomer() {
+            currentCustomer = null;
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('customerBanner').style.display = 'none';
+            showMessage('Customer cleared', 'info');
+        }
+
+        // ============================================
+        // PRODUCT LOOKUP (Existing functionality)
         // ============================================
         document.getElementById('skuLookup').addEventListener('input', function(e) {
             clearTimeout(debounceTimer);
@@ -704,6 +899,19 @@
             }
             
             debounceTimer = setTimeout(() => lookupProductDisplay(code), 300);
+        });
+
+        document.getElementById('productCode').addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const code = this.value.trim().toUpperCase();
+            
+            if (code.length < 2) {
+                currentProduct = null;
+                document.getElementById('saleAmount').value = '';
+                return;
+            }
+            
+            debounceTimer = setTimeout(() => lookupProductForCart(code), 300);
         });
 
         async function lookupProductDisplay(code) {
@@ -722,22 +930,6 @@
                 console.error('Lookup error:', error);
             }
         }
-
-        // ============================================
-        // ROW 3: PRODUCT CODE INPUT (For Cart)
-        // ============================================
-        document.getElementById('productCode').addEventListener('input', function() {
-            clearTimeout(debounceTimer);
-            const code = this.value.trim().toUpperCase();
-            
-            if (code.length < 2) {
-                currentProduct = null;
-                document.getElementById('saleAmount').value = '';
-                return;
-            }
-            
-            debounceTimer = setTimeout(() => lookupProductForCart(code), 300);
-        });
 
         async function lookupProductForCart(code) {
             try {
@@ -759,40 +951,50 @@
         }
 
         // ============================================
-        // QUANTITY & AMOUNT CALCULATION - EDITABLE
+        // DISCOUNT SYSTEM
         // ============================================
-        document.getElementById('quantity').addEventListener('input', updateSaleAmount);
-
-        // Allow manual editing of sale amount
-        document.getElementById('saleAmount').addEventListener('input', function() {
-            const manualAmount = parseFloat(this.value);
-            if (manualAmount && currentProduct) {
-                const qty = parseInt(document.getElementById('quantity').value) || 1;
-                currentProduct.manual_unit_price = manualAmount / qty;
-            }
+        document.getElementById('discountType').addEventListener('change', function() {
+            const discountGroup = document.getElementById('discountValueGroup');
+            discountGroup.style.display = this.value === 'none' ? 'none' : 'block';
+            updateSaleAmount();
         });
+
+        document.getElementById('discountValue').addEventListener('input', updateSaleAmount);
 
         function updateSaleAmount() {
             const qty = parseInt(document.getElementById('quantity').value) || 0;
+            const discountType = document.getElementById('discountType').value;
+            const discountValue = parseFloat(document.getElementById('discountValue').value) || 0;
             const saleAmountInput = document.getElementById('saleAmount');
             
             if (currentProduct && qty > 0) {
-                if (!saleAmountInput.value || !currentProduct.manual_unit_price) {
-                    const amount = currentProduct.unit_price * qty;
-                    saleAmountInput.value = amount.toFixed(2);
-                } else {
-                    const amount = currentProduct.manual_unit_price * qty;
-                    saleAmountInput.value = amount.toFixed(2);
+                let amount = currentProduct.unit_price * qty;
+                
+                // Apply discount
+                if (discountType === 'percentage' && discountValue > 0) {
+                    amount = amount * (1 - discountValue / 100);
+                } else if (discountType === 'fixed' && discountValue > 0) {
+                    amount = Math.max(0, amount - discountValue);
+                }
+                
+                saleAmountInput.value = amount.toFixed(2);
+                
+                // Show discount preview
+                if (discountValue > 0) {
+                    const original = currentProduct.unit_price * qty;
+                    const saved = original - amount;
+                    if (saved > 0) {
+                        showMessage(`Discount saves: KSh ${saved.toFixed(2)}`, 'info', 2000);
+                    }
                 }
             }
         }
 
         // ============================================
-        // ADD TO CART - SMART DUPLICATE HANDLING
+        // ADD TO CART - ENHANCED WITH DISCOUNT
         // ============================================
         document.getElementById('addToCartBtn').addEventListener('click', addToCart);
 
-        // Prevent form submission on Enter
         document.getElementById('saleForm').addEventListener('submit', function(e) {
             e.preventDefault();
             addToCart();
@@ -800,14 +1002,15 @@
 
         function addToCart() {
             if (isAddingToCart) {
-                console.log('Already adding to cart, please wait...');
-                showMessage('Please wait, adding item...', 'danger');
+                showMessage('Please wait, adding item...', 'warning');
                 return;
             }
 
             const code = document.getElementById('productCode').value.trim().toUpperCase();
             const qty = parseInt(document.getElementById('quantity').value);
             const totalAmount = parseFloat(document.getElementById('saleAmount').value);
+            const discountType = document.getElementById('discountType').value;
+            const discountValue = parseFloat(document.getElementById('discountValue').value) || 0;
             
             if (!code || !qty || qty <= 0) {
                 showMessage('Please enter valid product code and quantity', 'danger');
@@ -824,62 +1027,57 @@
                 return;
             }
 
-            // Calculate unit price from total amount
+            // Calculate unit price
             const unitPrice = totalAmount / qty;
 
-            // Set flag to prevent duplicate additions
             isAddingToCart = true;
             const addBtn = document.getElementById('addToCartBtn');
             addBtn.disabled = true;
             addBtn.textContent = 'Adding...';
 
             try {
-                // Check if exact same product with same unit price exists
+                // Create item with discount info
+                const cartItem = {
+                    code: code,
+                    name: currentProduct.name,
+                    quantity: qty,
+                    amount: unitPrice,
+                    totalPrice: totalAmount,
+                    discountType: discountType,
+                    discountValue: discountValue,
+                    originalPrice: currentProduct.unit_price * qty
+                };
+
+                // Check for duplicates
                 const existingItem = cart.find(item => 
                     item.code === code && 
-                    Math.abs(item.amount - unitPrice) < 0.01
+                    Math.abs(item.amount - unitPrice) < 0.01 &&
+                    item.discountType === discountType &&
+                    Math.abs(item.discountValue - discountValue) < 0.01
                 );
                 
                 if (existingItem) {
-                    // Same product, same price - ask to combine
-                    if (confirm(`${code} at KSh ${unitPrice.toFixed(2)} is already in cart.\n\nCombine quantities?\nYES = Add ${qty} more units\nNO = Add as separate line`)) {
+                    if (confirm(`${code} at KSh ${unitPrice.toFixed(2)} is already in cart.\n\nCombine quantities?`)) {
                         existingItem.quantity += qty;
                         existingItem.totalPrice = existingItem.quantity * existingItem.amount;
-                        showMessage(`✅ Combined: ${existingItem.quantity} units at KSh ${unitPrice.toFixed(2)} each`, 'success');
+                        existingItem.originalPrice += cartItem.originalPrice;
+                        showMessage(`✅ Combined: ${existingItem.quantity} units`, 'success');
                     } else {
-                        // Add as new line item
-                        cart.push({
-                            code: code,
-                            name: currentProduct.name,
-                            quantity: qty,
-                            amount: unitPrice,
-                            totalPrice: totalAmount
-                        });
-                        showMessage('✅ Added as separate line item', 'success');
+                        cart.push(cartItem);
+                        showMessage('✅ Added as separate line', 'success');
                     }
                 } else {
-                    // Different price or product not in cart
-                    cart.push({
-                        code: code,
-                        name: currentProduct.name,
-                        quantity: qty,
-                        amount: unitPrice,
-                        totalPrice: totalAmount
-                    });
-                    
-                    // Check if same product exists with different price
-                    const sameProductDifferentPrice = cart.filter(item => item.code === code).length > 1;
-                    if (sameProductDifferentPrice) {
-                        showMessage(`✅ Added ${code} at KSh ${unitPrice.toFixed(2)} (different price)`, 'success');
-                    } else {
-                        showMessage('✅ Added to cart successfully', 'success');
-                    }
+                    cart.push(cartItem);
+                    showMessage('✅ Added to cart successfully', 'success');
                 }
 
                 // Clear inputs
                 document.getElementById('productCode').value = '';
                 document.getElementById('quantity').value = '1';
                 document.getElementById('saleAmount').value = '';
+                document.getElementById('discountType').value = 'none';
+                document.getElementById('discountValue').value = '';
+                document.getElementById('discountValueGroup').style.display = 'none';
                 currentProduct = null;
 
                 updateCartDisplay();
@@ -895,7 +1093,7 @@
         }
 
         // ============================================
-        // UPDATE CART DISPLAY - SHOW NEWEST FIRST
+        // CART DISPLAY & MANAGEMENT
         // ============================================
         function updateCartDisplay() {
             const tbody = document.getElementById('cartTableBody');
@@ -903,28 +1101,32 @@
             if (cart.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" class="empty-cart">Cart is empty. Add products to start.</td></tr>';
                 document.getElementById('cartSummary').style.display = 'none';
-                document.getElementById('totalPriceCard').style.display = 'none'; // Hide total card
+                document.getElementById('totalPriceCard').style.display = 'none';
                 return;
             }
 
-            // Show newest items first (reverse the array)
+            // Show newest items first
             const reversedCart = [...cart].reverse();
             
-            tbody.innerHTML = reversedCart.map((item, index) => `
+            tbody.innerHTML = reversedCart.map((item, index) => {
+                const discountText = item.discountType !== 'none' ? 
+                    `<br><small style="color: #28a745;">Disc: ${item.discountValue}${item.discountType === 'percentage' ? '%' : ' KSh'}</small>` : '';
+                
+                return `
                 <tr>
                     <td><strong>${item.code}</strong></td>
-                    <td><strong>${item.name}</strong></td>
+                    <td><strong>${item.name}</strong>${discountText}</td>
                     <td>${item.quantity}</td>
                     <td>KSh ${item.amount.toFixed(2)}</td>
                     <td><strong>KSh ${item.totalPrice.toFixed(2)}</strong></td>
                     <td class="remove-cell"><span class="remove-icon" onclick="removeItem(${cart.length - 1 - index})">🗑️</span></td>
                 </tr>
-            `).join('');
+            `}).join('');
 
             document.getElementById('cartSummary').style.display = 'block';
             updateTotals();
             
-            // Auto scroll to top to show newest items
+            // Auto scroll to top
             const tableContainer = document.querySelector('.table-container');
             if (tableContainer) {
                 tableContainer.scrollTop = 0;
@@ -940,41 +1142,40 @@
         }
 
         function updateTotals() {
-            const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-            const tax = total * (16 / 116);
-            const subtotal = total - tax;
-
-            document.getElementById('subtotal').textContent = `KSh ${subtotal.toFixed(2)}`;
-            document.getElementById('tax').textContent = `KSh ${tax.toFixed(2)}`;
-            document.getElementById('total').textContent = `KSh ${total.toFixed(2)}`;
+            const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+            const tax = subtotal * (16 / 116); // 16% VAT included
+            const net = subtotal - tax;
             
-            // NEW: Update the big total price card
-            updateBigTotalCard(total);
+            // Calculate total discount
+            const totalDiscount = cart.reduce((sum, item) => {
+                if (item.discountType !== 'none') {
+                    return sum + (item.originalPrice - item.totalPrice);
+                }
+                return sum;
+            }, 0);
+
+            document.getElementById('subtotal').textContent = `KSh ${net.toFixed(2)}`;
+            document.getElementById('discountTotal').textContent = `KSh ${totalDiscount.toFixed(2)}`;
+            document.getElementById('tax').textContent = `KSh ${tax.toFixed(2)}`;
+            document.getElementById('total').textContent = `KSh ${subtotal.toFixed(2)}`;
+            
+            // Update big total card
+            updateBigTotalCard(subtotal);
         }
 
-        // NEW: Function to update big total price card
         function updateBigTotalCard(total) {
             const totalPriceCard = document.getElementById('totalPriceCard');
             const bigTotalPrice = document.getElementById('bigTotalPrice');
             
             if (cart.length > 0) {
-                // Show the card with animation
                 totalPriceCard.style.display = 'block';
                 setTimeout(() => {
                     totalPriceCard.style.opacity = '1';
                     totalPriceCard.style.transform = 'translateY(0)';
                 }, 10);
                 
-                // Update the big number
                 bigTotalPrice.textContent = total.toFixed(2);
-                
-                // Add pulse animation for new updates
-                bigTotalPrice.style.animation = 'none';
-                setTimeout(() => {
-                    bigTotalPrice.style.animation = 'pulse 0.5s';
-                }, 10);
             } else {
-                // Hide the card with animation
                 totalPriceCard.style.opacity = '0';
                 totalPriceCard.style.transform = 'translateY(10px)';
                 setTimeout(() => {
@@ -984,7 +1185,7 @@
         }
 
         // ============================================
-        // PAYMENT METHODS - FIXED EVENT LISTENERS
+        // PAYMENT PROCESSING (Existing with customer)
         // ============================================
         const paymentCards = document.querySelectorAll('.payment-card');
         const paymentInputs = {
@@ -994,7 +1195,6 @@
             points: document.getElementById('pointsAmount')
         };
 
-        // Auto-fill total when clicking payment card
         paymentCards.forEach(card => {
             card.addEventListener('click', function() {
                 if (cart.length === 0) {
@@ -1012,17 +1212,14 @@
             });
         });
 
-        // Payment submission - FIXED VERSION
         document.querySelectorAll('.submit-btn').forEach(btn => {
             btn.addEventListener('click', async function(e) {
                 e.preventDefault();
-                e.stopImmediatePropagation(); // Prevent event bubbling
+                e.stopImmediatePropagation();
 
-                console.log('=== SUBMIT BUTTON CLICKED ===');
-                console.log('Button:', this);
+                console.log('=== SUBMIT SALE ===');
                 console.log('Payment type:', this.getAttribute('data-payment'));
-                console.log('Cart items:', cart.length);
-                console.log('CSRF Token present:', getCSRFToken() ? 'Yes' : 'No');
+                console.log('Customer:', currentCustomer ? currentCustomer.name : 'Guest');
 
                 const now = Date.now();
                 if (now - lastSubmissionTime < SUBMISSION_COOLDOWN) {
@@ -1045,15 +1242,12 @@
                 };
                 
                 const amount = document.getElementById(`${paymentType}Amount`).value;
-                console.log('Amount entered:', amount);
                 
                 processSale(paymentMethodMap[paymentType], amount);
             });
         });
 
         async function processSale(paymentMethod, amount) {
-            console.log('processSale called with:', { paymentMethod, amount });
-            
             if (isSubmittingSale) {
                 console.log('Sale already being processed, blocked duplicate');
                 return;
@@ -1071,42 +1265,36 @@
             }
 
             const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-            console.log('Cart total:', total);
 
             if (amountPaid < total) {
                 showMessage(`Insufficient amount! Total: KSh ${total.toFixed(2)}`, 'danger');
                 return;
             }
 
-            // Set all flags
+            // Set flags
             isSubmittingSale = true;
             lastSubmissionTime = Date.now();
             
-            // Disable ALL interactive elements
+            // Disable UI
             document.querySelectorAll('.submit-btn, .add-btn').forEach(btn => {
                 btn.disabled = true;
             });
-            document.querySelectorAll('input').forEach(input => {
+            document.querySelectorAll('input, select').forEach(input => {
                 input.disabled = true;
             });
             
-            // Show processing overlay
+            // Show overlay
             document.getElementById('processingOverlay').classList.add('active');
 
             try {
-                // Prepare sales data
+                // Prepare sales data with discounts
                 const salesData = cart.map(item => ({
                     product_code: item.code,
                     quantity: item.quantity,
-                    unit_price: item.amount
+                    unit_price: item.amount,
+                    discount_type: item.discountType,
+                    discount_value: item.discountValue
                 }));
-
-                console.log('Submitting sale data:', {
-                    payment_method: paymentMethod,
-                    amount_paid: amountPaid,
-                    items_count: salesData.length,
-                    sales_data: salesData
-                });
 
                 const csrfToken = getCSRFToken();
                 if (!csrfToken) {
@@ -1123,66 +1311,64 @@
                     body: JSON.stringify({
                         sales_cart: salesData,
                         payment_method: paymentMethod,
-                        amount_paid: amountPaid
+                        amount_paid: amountPaid,
+                        customer_id: currentCustomer ? currentCustomer.id : null
                     })
                 });
 
-                console.log('Response status:', response.status);
-                
                 let data;
                 try {
                     data = await response.json();
-                    console.log('Response data:', data);
                 } catch (jsonError) {
                     const text = await response.text();
-                    console.error('Failed to parse JSON:', text);
                     throw new Error('Invalid response from server');
                 }
 
-                // Hide processing overlay
                 document.getElementById('processingOverlay').classList.remove('active');
 
                 if (response.ok && data.status === 'success') {
-                    // Reset submission flag immediately on success
                     isSubmittingSale = false;
                     
                     const change = amountPaid - total;
-                    let message = `✅ SALE COMPLETED!\n\nPayment Method: ${paymentMethod}\nTotal: KSh ${total.toFixed(2)}\nPaid: KSh ${amountPaid.toFixed(2)}`;
+                    let message = `✅ SALE COMPLETED!\n\n`;
+                    
+                    if (currentCustomer) {
+                        message += `Customer: ${currentCustomer.name}\n`;
+                    }
+                    
+                    message += `Payment: ${paymentMethod}\n`;
+                    message += `Total: KSh ${total.toFixed(2)}\n`;
+                    message += `Paid: KSh ${amountPaid.toFixed(2)}`;
                     
                     if (change > 0) {
                         message += `\nChange: KSh ${change.toFixed(2)}`;
                     }
 
-                    // Check for batch_id or receipt_url in response
                     if (data.batch_id) {
                         const receiptUrl = `/sales/fieldmax-receipt/${data.batch_id}/`;
-                        message += `\n\nReceipt generated successfully!`;
+                        message += `\n\nReceipt generated!`;
                         setTimeout(() => {
-                            window.location.href = receiptUrl;  // Opens in same tab
-                            showMessage(message, 'success');
-                        }, 500);
-                    } else if (data.receipt_url) {
-                        message += `\n\nReceipt generated successfully!`;
-                        setTimeout(() => {
-                            window.location.href = data.receipt_url;  // Opens in same tab
+                            window.open(receiptUrl, '_blank'); // Open in new tab
                             showMessage(message, 'success');
                         }, 500);
                     } else {
                         showMessage(message, 'success');
                     }
 
-                    // Clear everything immediately
+                    // Clear everything
                     cart = [];
                     updateCartDisplay();
                     Object.values(paymentInputs).forEach(input => input.value = '');
                     paymentCards.forEach(c => c.classList.remove('active'));
+                    clearCustomer();
+                    document.getElementById('customerPhone').value = '';
 
-                    // Re-enable inputs for next transaction
+                    // Re-enable UI
                     setTimeout(() => {
                         document.querySelectorAll('.submit-btn, .add-btn').forEach(btn => {
                             btn.disabled = false;
                         });
-                        document.querySelectorAll('input').forEach(input => {
+                        document.querySelectorAll('input, select').forEach(input => {
                             input.disabled = false;
                         });
                         document.getElementById('productCode').focus();
@@ -1190,15 +1376,14 @@
                 } else {
                     showMessage(`❌ Sale failed: ${data.message || 'Unknown error'}`, 'danger');
                     
-                    // Re-enable elements on failure
+                    // Re-enable on failure
                     document.querySelectorAll('.submit-btn, .add-btn').forEach(btn => {
                         btn.disabled = false;
                     });
-                    document.querySelectorAll('input').forEach(input => {
+                    document.querySelectorAll('input, select').forEach(input => {
                         input.disabled = false;
                     });
                     
-                    // Reset flags
                     isSubmittingSale = false;
                     lastSubmissionTime = 0;
                 }
@@ -1207,26 +1392,37 @@
                 document.getElementById('processingOverlay').classList.remove('active');
                 showMessage(`❌ Error: ${error.message}`, 'danger');
                 
-                // Re-enable elements on error
+                // Re-enable on error
                 document.querySelectorAll('.submit-btn, .add-btn').forEach(btn => {
                     btn.disabled = false;
                 });
-                document.querySelectorAll('input').forEach(input => {
+                document.querySelectorAll('input, select').forEach(input => {
                     input.disabled = false;
                 });
                 
-                // Reset flags
                 isSubmittingSale = false;
                 lastSubmissionTime = 0;
             }
         }
 
         // ============================================
-        // MESSAGE DISPLAY
+        // UTILITY FUNCTIONS
         // ============================================
-        function showMessage(message, type = 'success') {
+        function getCSRFToken() {
+            const token1 = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            const token2 = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+            const token3 = document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+            return token1 || token2 || token3 || '';
+        }
+
+        function showMessage(message, type = 'success', duration = 5000) {
             const container = document.getElementById('messageContainer');
-            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const alertClass = {
+                'success': 'alert-success',
+                'danger': 'alert-danger',
+                'warning': 'alert-warning',
+                'info': 'alert-info'
+            }[type] || 'alert-info';
             
             const formattedMessage = message.replace(/\n/g, '<br>');
             
@@ -1236,7 +1432,7 @@
                 if (type !== 'success' || !isSubmittingSale) {
                     container.innerHTML = '';
                 }
-            }, 5000);
+            }, duration);
         }
 
         // ============================================
@@ -1251,18 +1447,21 @@
                 }
             }
             
-            // Escape to clear current product
+            // Escape to clear
             if (e.key === 'Escape') {
                 document.getElementById('productCode').value = '';
                 document.getElementById('quantity').value = '1';
                 document.getElementById('saleAmount').value = '';
+                document.getElementById('discountType').value = 'none';
+                document.getElementById('discountValue').value = '';
+                document.getElementById('discountValueGroup').style.display = 'none';
                 currentProduct = null;
                 document.getElementById('productCode').focus();
             }
         });
 
         // ============================================
-        // PREVENT PAGE UNLOAD DURING SUBMISSION
+        // PAGE UNLOAD PROTECTION
         // ============================================
         window.addEventListener('beforeunload', function(e) {
             if (isSubmittingSale) {
@@ -1270,17 +1469,6 @@
                 e.returnValue = 'Sale is being processed. Are you sure you want to leave?';
                 return e.returnValue;
             }
-        });
-
-        // ============================================
-        // INITIALIZE
-        // ============================================
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('productCode').focus();
-            console.log('Cashier Dashboard initialized');
-            
-            // Test CSRF token
-            console.log('CSRF Token:', getCSRFToken());
         });
     </script>
 </body>

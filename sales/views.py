@@ -74,6 +74,63 @@ def convert_to_local_time(utc_time):
 
 
 
+# ============================================
+# CALCULATE DISCOUNT AND TAX FOR RECEIPT
+# ============================================
+
+def calculate_receipt_totals(sale_items):
+    """
+    Calculate subtotal, discounts, tax, and totals for receipt
+    """
+    subtotal = Decimal('0')
+    discount_total = Decimal('0')
+    
+    for item in sale_items:
+        # Get original price from product if available
+        if hasattr(item, 'product') and item.product:
+            original_price = item.product.selling_price
+        else:
+            # Fallback to unit_price if no product reference
+            original_price = item.unit_price
+        
+        # Calculate item totals
+        item_total = Decimal(str(item.unit_price)) * Decimal(str(item.quantity))
+        
+        # Check if item has discount
+        if hasattr(item, 'discount_type') and item.discount_type != 'none':
+            original_total = Decimal(str(original_price)) * Decimal(str(item.quantity))
+            
+            if item.discount_type == 'percentage':
+                discount_amount = original_total * (Decimal(str(item.discount_value)) / Decimal('100'))
+            else:  # fixed amount
+                discount_amount = Decimal(str(item.discount_value))
+            
+            discount_total += discount_amount
+            item_total = original_total - discount_amount
+            
+            # Add discount info to item
+            item.original_price = float(original_price)
+            item.original_total = float(original_total)
+            item.discount_saved = float(discount_amount)
+        
+        subtotal += item_total
+    
+    # Calculate tax (16% VAT included in subtotal)
+    # VAT = subtotal * (16/116)
+    tax_amount = subtotal * Decimal('16') / Decimal('116')
+    
+    # Net before tax
+    net_amount = subtotal - tax_amount
+    
+    return {
+        'subtotal': float(net_amount),
+        'discount_total': float(discount_total),
+        'tax_amount': float(tax_amount),
+        'gross_total': float(subtotal)
+    }
+
+
+
 
 
 def generate_etr_from_sale_id(sale_id):
@@ -397,7 +454,8 @@ class BatchSaleCreateView(View):
                 buyer_id_number=buyer_id_number,
                 nok_name=nok_name,
                 nok_phone=nok_phone,
-                etr_status="pending"
+                etr_status="pending",
+                payment_method=data.get("payment_method", "Cash")
             )
             
             logger.info(f"[SALE CREATED] Sale ID: {sale.sale_id} | Buyer: {buyer_name}")
@@ -1207,8 +1265,8 @@ def batch_receipt_view(request, batch_id):
         }, status=404)
     
     first_sale = sales.first()
-       
-     # ✅ Convert to local timezone
+    
+    # ✅ Convert to local timezone
     local_time = convert_to_local_time(first_sale.sale_date)
     
     # ============================================
@@ -1240,9 +1298,14 @@ def batch_receipt_view(request, batch_id):
     # ============================================
     # ADD EACH SALE AS A SEPARATE ROW
     # ============================================
+    gross_total = Decimal('0.00')
+    
     for idx, sale in enumerate(sales, 1):
         product = sale.product
         sku_type = product.category.get_sku_type_display() if product.category else "SKU"
+        
+        item_total = Decimal(str(sale.unit_price or sale.selling_price)) * Decimal(str(sale.quantity))
+        gross_total += item_total
         
         receipt["items"].append({
             "row_number": idx,
@@ -1251,20 +1314,35 @@ def batch_receipt_view(request, batch_id):
             "sku": product.sku_value or product.product_code,
             "quantity": sale.quantity,
             "price": float(sale.unit_price or sale.selling_price),
-            "total": float(sale.total_price),
+            "total": float(item_total),
             "sale_id": sale.sale_id
         })
-        
-        receipt["gross_total"] += sale.total_price
     
-    # Convert Decimal to float for template
-    receipt["gross_total"] = float(receipt["gross_total"])
+    # ============================================
+    # ✅ CRITICAL: CALCULATE TAX BREAKDOWN (16% VAT)
+    # ============================================
+    # VAT = gross_total * (16/116)
+    tax_amount = gross_total * Decimal('16') / Decimal('116')
+    subtotal = gross_total - tax_amount
+    
+    # Add calculated amounts to receipt
+    receipt["subtotal"] = float(subtotal)
+    receipt["tax_amount"] = float(tax_amount)
+    receipt["gross_total"] = float(gross_total)
+    receipt["discount_total"] = 0.00  # Default if no discounts
+    
+    # Add payment info if available
+    receipt["payment_method"] = "Cash"  # Default
+    receipt["amount_paid"] = float(gross_total)  # Assume full payment
+    receipt["change"] = 0.00
     
     logger.info(
         f"[BATCH RECEIPT] Batch: {batch_id} | "
         f"Receipt: {receipt['receipt_number']} | "
         f"Items: {len(sales)} | "
-        f"Total: KSH {receipt['gross_total']}"
+        f"Subtotal: KSH {receipt['subtotal']:.2f} | "
+        f"Tax: KSH {receipt['tax_amount']:.2f} | "
+        f"Total: KSH {receipt['gross_total']:.2f}"
     )
     
     return render(request, 'sales/fieldmax_receipt.html', {
@@ -1275,8 +1353,6 @@ def batch_receipt_view(request, batch_id):
         'etr_number': first_sale.etr_receipt_number,
         'fiscal_number': first_sale.fiscal_receipt_number
     })
-
-
 
 
 

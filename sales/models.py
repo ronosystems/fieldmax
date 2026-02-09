@@ -168,6 +168,18 @@ class Sale(models.Model):
         ],
         default='pending'
     )
+
+    payment_method = models.CharField(
+        max_length=20,
+        choices=[
+            ('Cash', 'Cash'),
+            ('M-Pesa', 'M-Pesa'),
+            ('Card', 'Card'),
+            ('Points', 'Points'),
+        ],
+        default='Cash'
+    )
+
     etr_processed_at = models.DateTimeField(blank=True, null=True)
     etr_error_message = models.TextField(blank=True, null=True)
     
