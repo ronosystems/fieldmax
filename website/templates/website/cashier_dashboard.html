@@ -568,6 +568,265 @@
                 font-size: 24px;
             }
         }
+
+        /* ============================================
+        SUCCESS POPUP MODAL - NEW STYLES
+        ============================================ */
+        .success-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .success-popup-overlay.active {
+            display: flex;
+        }
+
+        .success-popup {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            animation: popupSlideUp 0.5s ease;
+            border: 4px solid #28a745;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .success-popup::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #28a745, #20c997, #28a745);
+            animation: progressBar 3s linear;
+        }
+
+        .success-icon {
+            font-size: 70px;
+            color: #28a745;
+            margin-bottom: 20px;
+            animation: bounce 0.5s ease;
+        }
+
+        .success-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #28a745;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .success-subtitle {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .success-details {
+            background: #f1f8ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+            border-left: 4px solid #007bff;
+        }
+
+        .success-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px dashed #ddd;
+        }
+
+        .success-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .success-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .success-value {
+            font-weight: 700;
+            color: #000;
+            text-align: right;
+        }
+
+        .success-total {
+            background: #28a745;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: 800;
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .success-total .label {
+            font-size: 18px;
+        }
+
+        .success-total .amount {
+            font-size: 28px;
+        }
+
+        .popup-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .popup-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .popup-btn-print {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+        }
+
+        .popup-btn-dashboard {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+        }
+
+        .popup-btn-close {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+            color: white;
+        }
+
+        .popup-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .popup-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .receipt-number {
+            background: #000;
+            color: #00ffff;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 22px;
+            font-weight: 800;
+            margin: 15px 0;
+            display: inline-block;
+            border: 2px solid #00ffff;
+            letter-spacing: 2px;
+        }
+
+        .customer-info {
+            background: #e8f5e9;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 2px solid #28a745;
+        }
+
+        .customer-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #28a745;
+            margin-bottom: 5px;
+        }
+
+        .customer-phone {
+            color: #666;
+            font-size: 16px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes popupSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-20px);}
+            60% {transform: translateY(-10px);}
+        }
+
+        @keyframes progressBar {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        /* Confetti effect */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            opacity: 0;
+        }
+
+        @media (max-width: 768px) {
+            .success-popup {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .popup-buttons {
+                flex-direction: column;
+            }
+
+            .success-title {
+                font-size: 22px;
+            }
+
+            .success-total {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -756,6 +1015,61 @@
         </div>
     </div>
 
+    <!-- ============================================
+    SUCCESS POPUP MODAL - NEW HTML
+    ============================================ -->
+    <div class="success-popup-overlay" id="successPopup">
+        <div class="success-popup">
+            <div class="success-icon">🎉</div>
+            <div class="success-title">SALE COMPLETED!</div>
+            <div class="success-subtitle">Transaction Successful</div>
+            
+            <div class="receipt-number" id="popupReceiptNumber">RCPT-0000</div>
+            
+            <!-- Customer Info -->
+            <div class="customer-info" id="popupCustomerInfo" style="display: none;">
+                <div class="customer-name" id="popupCustomerName"></div>
+                <div class="customer-phone" id="popupCustomerPhone"></div>
+            </div>
+            
+            <!-- Sale Details -->
+            <div class="success-details">
+                <div class="success-row">
+                    <span class="success-label">Payment Method:</span>
+                    <span class="success-value" id="popupPaymentMethod">Cash</span>
+                </div>
+                <div class="success-row">
+                    <span class="success-label">Items Sold:</span>
+                    <span class="success-value" id="popupItemsCount">0</span>
+                </div>
+                <div class="success-row">
+                    <span class="success-label">Amount Paid:</span>
+                    <span class="success-value" id="popupAmountPaid">KSh 0.00</span>
+                </div>
+                <div class="success-row" id="popupChangeRow" style="display: none;">
+                    <span class="success-label">Change:</span>
+                    <span class="success-value" id="popupChange">KSh 0.00</span>
+                </div>
+            </div>
+            
+            <!-- Total -->
+            <div class="success-total">
+                <span class="label">TOTAL AMOUNT:</span>
+                <span class="amount" id="popupTotalAmount">KSh 0.00</span>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="popup-buttons">
+                <button class="popup-btn popup-btn-print" onclick="printReceipt()">
+                    <i class="bi bi-printer"></i> Print Receipt
+                </button>
+                <button class="popup-btn popup-btn-dashboard" onclick="closePopupAndReset()">
+                    <i class="bi bi-house"></i> New Sale
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ============================================
         // GLOBAL STATE & FLAGS
@@ -769,6 +1083,125 @@
         let lastSubmissionTime = 0;
         const SUBMISSION_COOLDOWN = 3000; // 3 seconds cooldown
         let sessionStartTime = new Date();
+        let lastSaleData = null; // Store last sale data for popup
+
+        // ============================================
+        // POPUP FUNCTIONS
+        // ============================================
+        function showSuccessPopup(saleData) {
+            lastSaleData = saleData;
+            
+            // Update popup content
+            document.getElementById('popupReceiptNumber').textContent = 
+                saleData.receipt_number || `RCPT-${saleData.sale_id || '0000'}`;
+            
+            // Update customer info if available
+            if (saleData.customer_name && saleData.customer_name !== 'Guest Customer') {
+                document.getElementById('popupCustomerInfo').style.display = 'block';
+                document.getElementById('popupCustomerName').textContent = saleData.customer_name;
+                document.getElementById('popupCustomerPhone').textContent = saleData.customer_phone || '';
+            } else {
+                document.getElementById('popupCustomerInfo').style.display = 'none';
+            }
+            
+            // Update payment details
+            document.getElementById('popupPaymentMethod').textContent = saleData.payment_method || 'Cash';
+            document.getElementById('popupItemsCount').textContent = saleData.items_count || cart.length;
+            document.getElementById('popupAmountPaid').textContent = `KSh ${parseFloat(saleData.amount_paid || 0).toFixed(2)}`;
+            document.getElementById('popupTotalAmount').textContent = `KSh ${parseFloat(saleData.total_amount || 0).toFixed(2)}`;
+            
+            // Show change if applicable
+            const change = parseFloat(saleData.change || 0);
+            if (change > 0) {
+                document.getElementById('popupChangeRow').style.display = 'flex';
+                document.getElementById('popupChange').textContent = `KSh ${change.toFixed(2)}`;
+            } else {
+                document.getElementById('popupChangeRow').style.display = 'none';
+            }
+            
+            // Show popup
+            document.getElementById('successPopup').classList.add('active');
+            
+            // Play success sound (optional)
+            playSuccessSound();
+            
+            // Auto-close after 10 seconds
+            setTimeout(() => {
+                if (document.getElementById('successPopup').classList.contains('active')) {
+                    closePopupAndReset();
+                }
+            }, 10000);
+        }
+
+        function closePopup() {
+            document.getElementById('successPopup').classList.remove('active');
+        }
+
+        function closePopupAndReset() {
+            closePopup();
+            
+            // Reset for next sale
+            document.getElementById('productCode').focus();
+            
+            // Play reset sound (optional)
+            playResetSound();
+        }
+
+        function printReceipt() {
+            if (lastSaleData && lastSaleData.receipt_url) {
+                window.open(lastSaleData.receipt_url, '_blank');
+            } else if (lastSaleData && lastSaleData.sale_id) {
+                window.open(`/sales/fieldmax-receipt/${lastSaleData.sale_id}/`, '_blank');
+            }
+            closePopup();
+        }
+
+        // Sound effects (optional)
+        function playSuccessSound() {
+            try {
+                // Create a simple success sound
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+                oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (e) {
+                console.log("Audio not supported");
+            }
+        }
+
+        function playResetSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(392.00, audioContext.currentTime); // G4
+                oscillator.frequency.setValueAtTime(329.63, audioContext.currentTime + 0.1); // E4
+                
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (e) {
+                console.log("Audio not supported");
+            }
+        }
 
         // ============================================
         // INITIALIZATION
@@ -782,14 +1215,13 @@
         // Session Timer
         function initializeSessionTimer() {
             updateSessionTimer();
-            setInterval(updateSessionTimer, 60000); // Update every minute
+            setInterval(updateSessionTimer, 60000);
         }
 
         function updateSessionTimer() {
             const elapsedMinutes = Math.floor((new Date() - sessionStartTime) / 1000 / 60);
             document.getElementById('sessionTimer').textContent = `${elapsedMinutes} min`;
             
-            // Update current time
             const now = new Date();
             document.getElementById('currentTime').textContent = 
                 now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -817,10 +1249,8 @@
                     updateCustomerDisplay();
                     showMessage(`Customer found: ${data.customer.name}`, 'success');
                     
-                    // Auto-focus on product code
                     setTimeout(() => document.getElementById('productCode').focus(), 300);
                 } else {
-                    // New customer
                     if (confirm('Customer not found. Create new customer?')) {
                         const name = prompt('Enter customer name:');
                         if (name) {
@@ -886,7 +1316,7 @@
         }
 
         // ============================================
-        // PRODUCT LOOKUP (Existing functionality)
+        // PRODUCT LOOKUP
         // ============================================
         document.getElementById('skuLookup').addEventListener('input', function(e) {
             clearTimeout(debounceTimer);
@@ -970,7 +1400,6 @@
             if (currentProduct && qty > 0) {
                 let amount = currentProduct.unit_price * qty;
                 
-                // Apply discount
                 if (discountType === 'percentage' && discountValue > 0) {
                     amount = amount * (1 - discountValue / 100);
                 } else if (discountType === 'fixed' && discountValue > 0) {
@@ -979,7 +1408,6 @@
                 
                 saleAmountInput.value = amount.toFixed(2);
                 
-                // Show discount preview
                 if (discountValue > 0) {
                     const original = currentProduct.unit_price * qty;
                     const saved = original - amount;
@@ -991,7 +1419,7 @@
         }
 
         // ============================================
-        // ADD TO CART - ENHANCED WITH DISCOUNT
+        // ADD TO CART
         // ============================================
         document.getElementById('addToCartBtn').addEventListener('click', addToCart);
 
@@ -1027,7 +1455,6 @@
                 return;
             }
 
-            // Calculate unit price
             const unitPrice = totalAmount / qty;
 
             isAddingToCart = true;
@@ -1036,7 +1463,6 @@
             addBtn.textContent = 'Adding...';
 
             try {
-                // Create item with discount info
                 const cartItem = {
                     code: code,
                     name: currentProduct.name,
@@ -1048,7 +1474,6 @@
                     originalPrice: currentProduct.unit_price * qty
                 };
 
-                // Check for duplicates
                 const existingItem = cart.find(item => 
                     item.code === code && 
                     Math.abs(item.amount - unitPrice) < 0.01 &&
@@ -1071,7 +1496,6 @@
                     showMessage('✅ Added to cart successfully', 'success');
                 }
 
-                // Clear inputs
                 document.getElementById('productCode').value = '';
                 document.getElementById('quantity').value = '1';
                 document.getElementById('saleAmount').value = '';
@@ -1105,7 +1529,6 @@
                 return;
             }
 
-            // Show newest items first
             const reversedCart = [...cart].reverse();
             
             tbody.innerHTML = reversedCart.map((item, index) => {
@@ -1126,7 +1549,6 @@
             document.getElementById('cartSummary').style.display = 'block';
             updateTotals();
             
-            // Auto scroll to top
             const tableContainer = document.querySelector('.table-container');
             if (tableContainer) {
                 tableContainer.scrollTop = 0;
@@ -1143,10 +1565,9 @@
 
         function updateTotals() {
             const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-            const tax = subtotal * (16 / 116); // 16% VAT included
+            const tax = subtotal * (16 / 116);
             const net = subtotal - tax;
             
-            // Calculate total discount
             const totalDiscount = cart.reduce((sum, item) => {
                 if (item.discountType !== 'none') {
                     return sum + (item.originalPrice - item.totalPrice);
@@ -1159,7 +1580,6 @@
             document.getElementById('tax').textContent = `KSh ${tax.toFixed(2)}`;
             document.getElementById('total').textContent = `KSh ${subtotal.toFixed(2)}`;
             
-            // Update big total card
             updateBigTotalCard(subtotal);
         }
 
@@ -1185,7 +1605,7 @@
         }
 
         // ============================================
-        // PAYMENT PROCESSING (Existing with customer)
+        // PAYMENT PROCESSING - UPDATED WITH POPUP
         // ============================================
         const paymentCards = document.querySelectorAll('.payment-card');
         const paymentInputs = {
@@ -1216,10 +1636,6 @@
             btn.addEventListener('click', async function(e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
-
-                console.log('=== SUBMIT SALE ===');
-                console.log('Payment type:', this.getAttribute('data-payment'));
-                console.log('Customer:', currentCustomer ? currentCustomer.name : 'Guest');
 
                 const now = Date.now();
                 if (now - lastSubmissionTime < SUBMISSION_COOLDOWN) {
@@ -1330,40 +1746,37 @@
                     isSubmittingSale = false;
                     
                     const change = amountPaid - total;
-                    let message = `✅ SALE COMPLETED!\n\n`;
                     
-                    if (currentCustomer) {
-                        message += `Customer: ${currentCustomer.name}\n`;
-                    }
+                    // Prepare data for popup
+                    const popupData = {
+                        receipt_number: data.etr_receipt_number || data.receipt_number || `RCPT-${data.sale_id}`,
+                        sale_id: data.sale_id,
+                        customer_name: currentCustomer ? currentCustomer.name : 'Guest Customer',
+                        customer_phone: currentCustomer ? currentCustomer.phone : '',
+                        payment_method: paymentMethod,
+                        items_count: cart.length,
+                        amount_paid: amountPaid,
+                        total_amount: total,
+                        change: change,
+                        receipt_url: data.receipt_url || (data.batch_id ? `/sales/fieldmax-receipt/${data.batch_id}/` : null)
+                    };
                     
-                    message += `Payment: ${paymentMethod}\n`;
-                    message += `Total: KSh ${total.toFixed(2)}\n`;
-                    message += `Paid: KSh ${amountPaid.toFixed(2)}`;
-                    
-                    if (change > 0) {
-                        message += `\nChange: KSh ${change.toFixed(2)}`;
-                    }
-
-                    if (data.batch_id) {
-                        const receiptUrl = `/sales/fieldmax-receipt/${data.batch_id}/`;
-                        message += `\n\nReceipt generated!`;
-                        setTimeout(() => {
-                            window.open(receiptUrl, '_blank'); // Open in new tab
-                            showMessage(message, 'success');
-                        }, 500);
-                    } else {
-                        showMessage(message, 'success');
-                    }
-
                     // Clear everything
                     cart = [];
                     updateCartDisplay();
                     Object.values(paymentInputs).forEach(input => input.value = '');
                     paymentCards.forEach(c => c.classList.remove('active'));
+                    
+                    // Show success popup
+                    setTimeout(() => {
+                        showSuccessPopup(popupData);
+                    }, 500);
+                    
+                    // Clear customer
                     clearCustomer();
                     document.getElementById('customerPhone').value = '';
 
-                    // Re-enable UI
+                    // Re-enable UI after popup
                     setTimeout(() => {
                         document.querySelectorAll('.submit-btn, .add-btn').forEach(btn => {
                             btn.disabled = false;
@@ -1457,6 +1870,23 @@
                 document.getElementById('discountValueGroup').style.display = 'none';
                 currentProduct = null;
                 document.getElementById('productCode').focus();
+            }
+            
+            // Escape to close popup
+            if (e.key === 'Escape' && document.getElementById('successPopup').classList.contains('active')) {
+                closePopupAndReset();
+            }
+            
+            // P to print receipt when popup is open
+            if (e.key === 'p' && document.getElementById('successPopup').classList.contains('active')) {
+                printReceipt();
+                e.preventDefault();
+            }
+            
+            // N for new sale when popup is open
+            if (e.key === 'n' && document.getElementById('successPopup').classList.contains('active')) {
+                closePopupAndReset();
+                e.preventDefault();
             }
         });
 
