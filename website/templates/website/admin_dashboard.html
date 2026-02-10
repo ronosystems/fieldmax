@@ -7167,6 +7167,10 @@ strong[style*="background-color"] {
  </main>
 </div>
 
+
+
+
+
 <script>
 // Make roles available globally for JavaScript
 window.roles = JSON.parse('{{ roles_json|escapejs }}');
@@ -8013,6 +8017,11 @@ async function loadSellers() {
 }
 
 
+
+
+
+
+
 // ====================================
 // ================================
 // FILTER SALES (Like filterProducts)
@@ -8052,6 +8061,9 @@ function filterSales() {
   
   updateSalesStats(visibleCount, totalActive, totalReversed);
 }
+
+
+
 
 
 
@@ -8861,6 +8873,14 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
+
+
+
+
+
+
+
+
 // ==========================================
 // HELPER: SHOW TOAST NOTIFICATION
 // ==========================================
@@ -8881,6 +8901,11 @@ function showToast(message, type = 'success') {
         setTimeout(() => toast.remove(), 400);
     }, 4000);
 }
+
+
+
+
+
 
 
 
@@ -9126,6 +9151,11 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
+
+
+
+
+
 // ====================================
 // ====================================
 // RESTOCK PRODUCT JAVASCRIPT
@@ -9156,6 +9186,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const successDisplay = document.getElementById('restockSuccessDisplay');
 
   let autocompleteTimer = null;
+  let searchResults = []; // Store multiple search results
 
   // Auto-complete on input
   searchInput.addEventListener('input', function() {
@@ -9267,6 +9298,7 @@ document.addEventListener('DOMContentLoaded', function() {
     successDisplay.style.display = 'none';
     restockForm.reset();
     totalAmountDiv.style.display = 'none';
+    searchResults = []; // Clear stored results
   }
 
   function performSearch() {
@@ -9315,10 +9347,12 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function displayMultipleProducts(products) {
-    productsList.innerHTML = products.map(p => `
+    searchResults = products; // Store products for selection
+    
+    productsList.innerHTML = products.map((p, index) => `
       <button 
-        onclick="selectRestockProduct(${p.id})"
-        class="btn btn-outline-primary text-start p-3">
+        onclick="selectRestockProduct(${index})"
+        class="btn btn-outline-primary text-start p-3 mb-2 w-100">
         <div class="fw-bold">${p.name}</div>
         <small class="text-muted">
           Code: ${p.product_code} | Category: ${p.category} | Stock: ${p.current_quantity}
@@ -9328,16 +9362,15 @@ document.addEventListener('DOMContentLoaded', function() {
     multipleResults.style.display = 'block';
   }
 
-  // Make selectRestockProduct global
-  window.selectRestockProduct = function(productId) {
-    fetch(`/inventory/restock/search/?search=${productId}`)
-    .then(response => response.json())
-    .then(data => {
-      if (data.success && !data.multiple) {
-        displayRestockForm(data.product);
-        multipleResults.style.display = 'none';
-      }
-    });
+  // Select product from multiple results
+  window.selectRestockProduct = function(index) {
+    const product = searchResults[index];
+    if (product) {
+      displayRestockForm(product);
+      multipleResults.style.display = 'none';
+    } else {
+      showSearchMessage('Error: Product not found', 'error');
+    }
   };
 
   function displayRestockForm(product) {
@@ -9359,6 +9392,7 @@ document.addEventListener('DOMContentLoaded', function() {
     productInfo.style.display = 'block';
     formSection.style.display = 'block';
     successDisplay.style.display = 'none';
+    formMessage.style.display = 'none';
     quantityInput.focus();
   }
 
@@ -9436,6 +9470,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
+
+
+
+
 
 
 // ====================================
@@ -10343,6 +10381,10 @@ function updateUserTableInfo(visibleCount) {
 }
 
 
+
+
+
+
 // ====================================
 // =====================================
 // BUTTON CLICK HANDLERS FOR ROW ACTIONS
@@ -10368,6 +10410,12 @@ function transferProduct(btn) {
     const isSKU = qty === 1;
     openTransferModal(id, isSKU);
 }
+
+
+
+
+
+
 
 
 // ====================================
