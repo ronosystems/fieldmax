@@ -724,11 +724,6 @@
             color: white;
         }
 
-        .popup-btn-close {
-            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-            color: white;
-        }
-
         .popup-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
@@ -797,14 +792,6 @@
         @keyframes progressBar {
             0% { width: 0%; }
             100% { width: 100%; }
-        }
-
-        /* Confetti effect */
-        .confetti {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            opacity: 0;
         }
 
         @media (max-width: 768px) {
@@ -1122,9 +1109,6 @@
             // Show popup
             document.getElementById('successPopup').classList.add('active');
             
-            // Play success sound (optional)
-            playSuccessSound();
-            
             // Auto-close after 10 seconds
             setTimeout(() => {
                 if (document.getElementById('successPopup').classList.contains('active')) {
@@ -1142,9 +1126,6 @@
             
             // Reset for next sale
             document.getElementById('productCode').focus();
-            
-            // Play reset sound (optional)
-            playResetSound();
         }
 
         function printReceipt() {
@@ -1154,53 +1135,6 @@
                 window.open(`/sales/fieldmax-receipt/${lastSaleData.sale_id}/`, '_blank');
             }
             closePopup();
-        }
-
-        // Sound effects (optional)
-        function playSuccessSound() {
-            try {
-                // Create a simple success sound
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
-                oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
-                oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
-                
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.5);
-            } catch (e) {
-                console.log("Audio not supported");
-            }
-        }
-
-        function playResetSound() {
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.setValueAtTime(392.00, audioContext.currentTime); // G4
-                oscillator.frequency.setValueAtTime(329.63, audioContext.currentTime + 0.1); // E4
-                
-                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.3);
-            } catch (e) {
-                console.log("Audio not supported");
-            }
         }
 
         // ============================================
@@ -1381,7 +1315,7 @@
         }
 
         // ============================================
-        // DISCOUNT SYSTEM
+        // DISCOUNT SYSTEM - MULTIPLICATION FIXED
         // ============================================
         document.getElementById('discountType').addEventListener('change', function() {
             const discountGroup = document.getElementById('discountValueGroup');
@@ -1390,6 +1324,7 @@
         });
 
         document.getElementById('discountValue').addEventListener('input', updateSaleAmount);
+        document.getElementById('quantity').addEventListener('input', updateSaleAmount);
 
         function updateSaleAmount() {
             const qty = parseInt(document.getElementById('quantity').value) || 0;
@@ -1398,8 +1333,10 @@
             const saleAmountInput = document.getElementById('saleAmount');
             
             if (currentProduct && qty > 0) {
+                // ✅ FIXED: Multiply unit price by quantity FIRST
                 let amount = currentProduct.unit_price * qty;
                 
+                // Apply discount to the total
                 if (discountType === 'percentage' && discountValue > 0) {
                     amount = amount * (1 - discountValue / 100);
                 } else if (discountType === 'fixed' && discountValue > 0) {
@@ -1419,7 +1356,7 @@
         }
 
         // ============================================
-        // ADD TO CART
+        // ADD TO CART - MULTIPLICATION FIXED
         // ============================================
         document.getElementById('addToCartBtn').addEventListener('click', addToCart);
 
@@ -1436,7 +1373,7 @@
 
             const code = document.getElementById('productCode').value.trim().toUpperCase();
             const qty = parseInt(document.getElementById('quantity').value);
-            const totalAmount = parseFloat(document.getElementById('saleAmount').value);
+            const totalAmountInput = document.getElementById('saleAmount').value;
             const discountType = document.getElementById('discountType').value;
             const discountValue = parseFloat(document.getElementById('discountValue').value) || 0;
             
@@ -1450,12 +1387,42 @@
                 return;
             }
 
+            // Parse the total amount
+            const totalAmount = parseFloat(totalAmountInput);
             if (!totalAmount || totalAmount <= 0) {
                 showMessage('Please enter a valid sale amount', 'danger');
                 return;
             }
 
-            const unitPrice = totalAmount / qty;
+            // ✅ FIXED: Get unit price from product directly
+            const originalUnitPrice = currentProduct.unit_price;
+            
+            // ✅ FIXED: Calculate expected total based on quantity and unit price
+            const expectedTotal = originalUnitPrice * qty;
+            
+            // Apply discount to expected total
+            let discountedTotal = expectedTotal;
+            if (discountType === 'percentage' && discountValue > 0) {
+                discountedTotal = expectedTotal * (1 - discountValue / 100);
+            } else if (discountType === 'fixed' && discountValue > 0) {
+                discountedTotal = Math.max(0, expectedTotal - discountValue);
+            }
+
+            // Check if user entered amount matches calculated amount (allow small difference)
+            const tolerance = 0.01;
+            const amountDifference = Math.abs(totalAmount - discountedTotal);
+            
+            // If user manually changed the amount, use their amount
+            let finalUnitPrice = originalUnitPrice;
+            let finalTotal = discountedTotal;
+            
+            if (amountDifference > tolerance) {
+                // User entered a different amount, calculate implied unit price
+                finalUnitPrice = totalAmount / qty;
+                finalTotal = totalAmount;
+                
+                showMessage(`Using adjusted price: KSh ${finalUnitPrice.toFixed(2)} per unit`, 'info', 3000);
+            }
 
             isAddingToCart = true;
             const addBtn = document.getElementById('addToCartBtn');
@@ -1463,29 +1430,43 @@
             addBtn.textContent = 'Adding...';
 
             try {
+                // ✅ FIXED: Clear cart item structure with proper naming
                 const cartItem = {
                     code: code,
                     name: currentProduct.name,
                     quantity: qty,
-                    amount: unitPrice,
-                    totalPrice: totalAmount,
+                    unitPrice: finalUnitPrice,              // Price per unit after any adjustments
+                    totalPrice: finalTotal,                 // Total for this line item
+                    originalUnitPrice: originalUnitPrice,   // Original unit price from product
+                    originalTotalPrice: originalUnitPrice * qty, // Original total before discount
                     discountType: discountType,
-                    discountValue: discountValue,
-                    originalPrice: currentProduct.unit_price * qty
+                    discountValue: discountValue
                 };
 
+                // Check for duplicates (same product, same price, same discount)
                 const existingItem = cart.find(item => 
                     item.code === code && 
-                    Math.abs(item.amount - unitPrice) < 0.01 &&
+                    Math.abs(item.unitPrice - finalUnitPrice) < 0.01 &&
                     item.discountType === discountType &&
                     Math.abs(item.discountValue - discountValue) < 0.01
                 );
                 
                 if (existingItem) {
-                    if (confirm(`${code} at KSh ${unitPrice.toFixed(2)} is already in cart.\n\nCombine quantities?`)) {
+                    if (confirm(`${code} at KSh ${finalUnitPrice.toFixed(2)} is already in cart.\n\nCombine quantities?`)) {
                         existingItem.quantity += qty;
-                        existingItem.totalPrice = existingItem.quantity * existingItem.amount;
-                        existingItem.originalPrice += cartItem.originalPrice;
+                        
+                        // ✅ FIXED: Recalculate total when combining using unit price
+                        const combinedOriginalTotal = existingItem.unitPrice * existingItem.quantity;
+                        
+                        if (discountType === 'percentage' && discountValue > 0) {
+                            existingItem.totalPrice = combinedOriginalTotal * (1 - discountValue / 100);
+                        } else if (discountType === 'fixed' && discountValue > 0) {
+                            existingItem.totalPrice = Math.max(0, combinedOriginalTotal - discountValue);
+                        } else {
+                            existingItem.totalPrice = combinedOriginalTotal;
+                        }
+                        
+                        existingItem.originalTotalPrice += cartItem.originalTotalPrice;
                         showMessage(`✅ Combined: ${existingItem.quantity} units`, 'success');
                     } else {
                         cart.push(cartItem);
@@ -1496,6 +1477,7 @@
                     showMessage('✅ Added to cart successfully', 'success');
                 }
 
+                // Clear inputs
                 document.getElementById('productCode').value = '';
                 document.getElementById('quantity').value = '1';
                 document.getElementById('saleAmount').value = '';
@@ -1517,7 +1499,7 @@
         }
 
         // ============================================
-        // CART DISPLAY & MANAGEMENT
+        // CART DISPLAY & MANAGEMENT - FIXED
         // ============================================
         function updateCartDisplay() {
             const tbody = document.getElementById('cartTableBody');
@@ -1535,12 +1517,13 @@
                 const discountText = item.discountType !== 'none' ? 
                     `<br><small style="color: #28a745;">Disc: ${item.discountValue}${item.discountType === 'percentage' ? '%' : ' KSh'}</small>` : '';
                 
+                // ✅ FIXED: Use unitPrice directly for display
                 return `
                 <tr>
                     <td><strong>${item.code}</strong></td>
                     <td><strong>${item.name}</strong>${discountText}</td>
                     <td>${item.quantity}</td>
-                    <td>KSh ${item.amount.toFixed(2)}</td>
+                    <td>KSh ${item.unitPrice.toFixed(2)}</td>
                     <td><strong>KSh ${item.totalPrice.toFixed(2)}</strong></td>
                     <td class="remove-cell"><span class="remove-icon" onclick="removeItem(${cart.length - 1 - index})">🗑️</span></td>
                 </tr>
@@ -1568,9 +1551,10 @@
             const tax = subtotal * (16 / 116);
             const net = subtotal - tax;
             
+            // ✅ FIXED: Calculate discount using originalTotalPrice
             const totalDiscount = cart.reduce((sum, item) => {
                 if (item.discountType !== 'none') {
-                    return sum + (item.originalPrice - item.totalPrice);
+                    return sum + (item.originalTotalPrice - item.totalPrice);
                 }
                 return sum;
             }, 0);
@@ -1605,7 +1589,7 @@
         }
 
         // ============================================
-        // PAYMENT PROCESSING - UPDATED WITH POPUP
+        // PAYMENT PROCESSING
         // ============================================
         const paymentCards = document.querySelectorAll('.payment-card');
         const paymentInputs = {
@@ -1703,11 +1687,11 @@
             document.getElementById('processingOverlay').classList.add('active');
 
             try {
-                // Prepare sales data with discounts
+                // ✅ FIXED: Prepare sales data with correct unitPrice field
                 const salesData = cart.map(item => ({
                     product_code: item.code,
                     quantity: item.quantity,
-                    unit_price: item.amount,
+                    unit_price: item.unitPrice,  // Use unitPrice instead of amount
                     discount_type: item.discountType,
                     discount_value: item.discountValue
                 }));
