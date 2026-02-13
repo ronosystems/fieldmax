@@ -1,1108 +1,539 @@
-{% extends "website/base.html" %}
-{% load static %}
-{% load tz %}
-{% load l10n %}
-{% load humanize %}
-{% block title %}Fiscal Receipt #{{ receipt.receipt_number }}{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt #{{ receipt.receipt_number }}</title>
+    <style>
+        /* ============================================
+           THERMAL RECEIPT PRINTER STYLES
+           ============================================ */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block content %}
+        body {
+            font-family: 'Courier New', monospace;
+            background: #f5f5f5;
+            padding: 20px;
+        }
 
-<style>
-/* ===== FISCAL RECEIPT STYLES - TAX COMPLIANT ===== */
-:root {
-    --fiscal-blue: #003366;
-    --fiscal-black: #000000;
-    --fiscal-gray: #333333;
-    --fiscal-light: #f8f9fc;
-    --fiscal-border: #1a3e6f;
-    --fiscal-accent: #c41e3a;
-}
+        /* Receipt Container - 80mm thermal paper width */
+        .receipt-wrapper {
+            max-width: 302px; /* 80mm = ~302px at 96dpi */
+            margin: 0 auto;
+            background: white;
+            padding: 0;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+        .receipt {
+            padding: 10px;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #000;
+        }
 
-body {
-    font-family: 'Courier New', 'Lucida Console', monospace;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 30px 20px;
-    min-height: 100vh;
-}
+        /* Company Header */
+        .header {
+            text-align: center;
+            border-bottom: 2px dashed #000;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
 
-/* ===== FISCAL RECEIPT CONTAINER ===== */
-.receipt-container {
-    width: 512px; /* Standard fiscal printer width: 80mm */
-    margin: 0 auto;
-    background: white;
-    padding: 32px 28px 28px 28px;
-    border: 3px solid var(--fiscal-blue);
-    box-shadow: 0 20px 40px rgba(0,51,102,0.2);
-    border-radius: 12px;
-    position: relative;
-}
+        .company-name {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 3px;
+            letter-spacing: 0.5px;
+        }
 
-/* Fiscal Seal - Tamper Evidence */
-.fiscal-seal {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    font-size: 10px;
-    color: var(--fiscal-accent);
-    font-weight: bold;
-    border: 1px solid var(--fiscal-accent);
-    padding: 4px 8px;
-    border-radius: 20px;
-    background: rgba(196,30,58,0.05);
-    transform: rotate(2deg);
-}
+        .company-details {
+            font-size: 10px;
+            line-height: 1.3;
+        }
 
-/* ===== HEADER SECTION ===== */
-.receipt-header {
-    text-align: center;
-    border-bottom: 3px double var(--fiscal-blue);
-    padding-bottom: 18px;
-    margin-bottom: 20px;
-    position: relative;
-}
+        /* Receipt Info Section - Two Columns */
+        .receipt-info {
+            border-bottom: 1px dashed #000;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
 
-.company-name {
-    font-size: 32px;
-    font-weight: 900;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--fiscal-blue);
-    text-shadow: 1px 1px 0 rgba(0,51,102,0.1);
-}
+        .info-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 6px;
+            font-size: 10px;
+        }
 
-.fiscal-badge {
-    display: inline-block;
-    background: linear-gradient(145deg, var(--fiscal-blue), #002244);
-    color: white;
-    padding: 6px 16px;
-    border-radius: 30px;
-    font-size: 12px;
-    font-weight: bold;
-    margin: 10px 0 5px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    border: 1px solid #ffd700;
-}
+        .info-row > span {
+            display: flex;
+            flex-direction: column;
+        }
 
-.receipt-info {
-    font-size: 12px;
-    line-height: 1.7;
-    color: var(--fiscal-gray);
-    background: var(--fiscal-light);
-    padding: 10px;
-    border-radius: 8px;
-    margin-top: 8px;
-}
+        .info-label {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
 
-/* ===== FISCAL IDENTIFIERS ===== */
-.fiscal-identifiers {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    background: linear-gradient(to right, #f0f4ff, #ffffff);
-    padding: 16px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    border-left: 6px solid var(--fiscal-blue);
-    font-size: 11px;
-}
+        /* Customer Info */
+        .customer-info {
+            border-bottom: 1px dashed #000;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+            font-size: 10px;
+        }
 
-.fiscal-id-item {
-    display: flex;
-    flex-direction: column;
-}
+        .customer-row {
+            margin-bottom: 2px;
+            word-wrap: break-word;
+        }
 
-.fiscal-id-label {
-    font-weight: 800;
-    color: var(--fiscal-blue);
-    text-transform: uppercase;
-    font-size: 9px;
-    letter-spacing: 1px;
-}
+        /* Items Table */
+        .items-section {
+            border-bottom: 2px solid #000;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+        }
 
-.fiscal-id-value {
-    font-weight: 700;
-    font-family: 'Courier New', monospace;
-    color: #000;
-    font-size: 13px;
-    word-break: break-word;
-}
+        .items-header {
+            display: grid;
+            grid-template-columns: 2fr 0.6fr 0.8fr 0.6fr 0.8fr;
+            gap: 4px;
+            font-weight: bold;
+            border-bottom: 1px solid #000;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+            font-size: 9px;
+        }
 
-/* ===== RECEIPT DETAILS ===== */
-.receipt-details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    font-size: 12px;
-    margin-bottom: 20px;
-    padding: 15px;
-    background: white;
-    border: 1px solid #e0e7ff;
-    border-radius: 8px;
-}
+        .item-row {
+            display: grid;
+            grid-template-columns: 2fr 0.6fr 0.8fr 0.6fr 0.8fr;
+            gap: 4px;
+            margin-bottom: 6px;
+            font-size: 10px;
+            align-items: start;
+        }
 
-.receipt-column {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
+        .item-name-sku {
+            display: flex;
+            flex-direction: column;
+        }
 
-.receipt-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 2px 0;
-}
+        .item-name-line {
+            font-weight: bold;
+            margin-bottom: 2px;
+            font-size: 10px;
+        }
 
-.receipt-label {
-    font-weight: 800;
-    color: var(--fiscal-blue);
-    text-transform: uppercase;
-    font-size: 10px;
-}
+        .item-sku-line {
+            color: #666;
+            font-size: 8px;
+        }
 
-.receipt-value {
-    text-align: right;
-    font-weight: 600;
-    font-size: 11px;
-}
+        .item-row > div {
+            padding-top: 2px;
+        }
 
-/* ===== CLIENT INFORMATION ===== */
-.client-section {
-    background: linear-gradient(145deg, #ffffff, #f8faff);
-    border: 1px solid #ccd9ff;
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 20px;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-}
+        /* Totals Section */
+        .totals-section {
+            border-bottom: 2px dashed #000;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
 
-.client-title {
-    font-weight: 900;
-    color: var(--fiscal-blue);
-    border-bottom: 1px solid var(--fiscal-blue);
-    padding-bottom: 8px;
-    margin-bottom: 12px;
-    text-transform: uppercase;
-    font-size: 12px;
-    letter-spacing: 1.5px;
-}
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 11px;
+        }
 
-.client-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-}
+        .total-row.grand-total {
+            font-size: 13px;
+            font-weight: bold;
+            border-top: 2px solid #000;
+            padding-top: 6px;
+            margin-top: 6px;
+        }
 
-.client-item {
-    display: flex;
-    flex-direction: column;
-}
+        .total-row.grand-total .amount {
+            font-size: 14px;
+        }
 
-.client-label {
-    font-size: 9px;
-    text-transform: uppercase;
-    color: #666;
-    font-weight: 700;
-}
+        /* Payment Section */
+        .payment-section {
+            border-bottom: 1px dashed #000;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
 
-.client-value {
-    font-size: 12px;
-    font-weight: 600;
-    color: #000;
-    word-break: break-word;
-}
+        /* Footer */
+        .footer {
+            text-align: center;
+            font-size: 10px;
+            margin-top: 10px;
+        }
 
-/* ===== ITEMS TABLE - FISCAL FORMAT ===== */
-.items-container {
-    margin: 20px 0;
-    border: 2px solid var(--fiscal-blue);
-    border-radius: 10px;
-    overflow: hidden;
-}
+        .thank-you {
+            font-weight: bold;
+            margin: 10px 0;
+            font-size: 12px;
+        }
 
-.items-table {
-    width: 100%;
-    font-size: 11px;
-    border-collapse: collapse;
-    background: white;
-}
+        .barcode {
+            margin: 10px 0;
+            text-align: center;
+        }
 
-.items-table th {
-    background: var(--fiscal-blue);
-    color: white;
-    font-weight: 700;
-    padding: 12px 6px;
-    text-transform: uppercase;
-    font-size: 10px;
-    letter-spacing: 1px;
-    border-bottom: 2px solid #000;
-}
+        .barcode-text {
+            font-size: 9px;
+            letter-spacing: 2px;
+            margin-top: 5px;
+        }
 
-.items-table td {
-    padding: 10px 6px;
-    border-bottom: 1px dashed #ccc;
-    vertical-align: top;
-}
+        /* QR Code Placeholder */
+        .qr-code {
+            width: 80px;
+            height: 80px;
+            margin: 10px auto;
+            border: 1px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+        }
 
-.items-table tr:last-child td {
-    border-bottom: none;
-}
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
 
-.items-table tfoot td {
-    background: #f0f4ff;
-    font-weight: 700;
-    padding: 10px 6px;
-    border-top: 2px solid var(--fiscal-blue);
-}
+            .receipt-wrapper {
+                max-width: 80mm;
+                box-shadow: none;
+                margin: 0;
+            }
 
-.item-sku {
-    font-size: 9px;
-    color: #4a5568;
-    display: block;
-    margin-top: 3px;
-    font-style: normal;
-    font-family: 'Courier New', monospace;
-}
+            .receipt {
+                padding: 5mm;
+            }
 
-/* ===== TAX BREAKDOWN SECTION ===== */
-.tax-breakdown {
-    margin-top: 15px;
-    padding: 16px;
-    background: #fafcff;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-}
+            .no-print {
+                display: none !important;
+            }
 
-.tax-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 6px 0;
-    font-size: 12px;
-    border-bottom: 1px dotted #cbd5e0;
-}
+            /* Ensure black ink on thermal paper */
+            * {
+                color: #000 !important;
+                background: white !important;
+            }
+        }
 
-.tax-row:last-child {
-    border-bottom: none;
-    font-weight: 800;
-    color: var(--fiscal-accent);
-    font-size: 14px;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 2px solid var(--fiscal-blue);
-}
+        /* Print Button */
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
 
-.tax-label {
-    font-weight: 600;
-    color: #2d3748;
-}
+        .print-button:hover {
+            background: #059669;
+        }
 
-.tax-value {
-    font-family: 'Courier New', monospace;
-    font-weight: 700;
-}
+        .print-button:active {
+            transform: scale(0.98);
+        }
 
-/* ===== TOTAL SECTION ===== */
-.total-section {
-    margin-top: 15px;
-    padding: 20px;
-    background: linear-gradient(145deg, #f0f4ff, #ffffff);
-    border-radius: 10px;
-    border: 2px solid var(--fiscal-blue);
-    position: relative;
-}
+        /* Utilities */
+        .text-right {
+            text-align: right;
+        }
 
-.total-row {
-    display: flex;
-    justify-content: space-between;
-    font-weight: 900;
-    font-size: 24px;
-    color: var(--fiscal-accent);
-    letter-spacing: 1px;
-}
+        .text-center {
+            text-align: center;
+        }
 
-.total-row span:first-child {
-    color: var(--fiscal-blue);
-    font-size: 18px;
-}
+        .bold {
+            font-weight: bold;
+        }
 
-/* ===== FISCAL FOOTER ===== */
-.fiscal-footer {
-    margin-top: 25px;
-    padding: 20px 15px;
-    background: linear-gradient(145deg, #002244, #001122);
-    border-radius: 10px;
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
+        .small {
+            font-size: 9px;
+        }
 
-.fiscal-footer::before {
-    content: "FISCALIZED";
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 8px;
-    opacity: 0.3;
-    color: #ffd700;
-    font-weight: 900;
-}
+        .divider {
+            border-top: 1px dashed #000;
+            margin: 8px 0;
+        }
 
-.fiscal-hash {
-    font-family: 'Courier New', monospace;
-    font-size: 10px;
-    word-break: break-all;
-    background: rgba(255,255,255,0.1);
-    padding: 10px;
-    border-radius: 6px;
-    margin: 10px 0;
-    text-align: center;
-    letter-spacing: 1px;
-}
+        .double-divider {
+            border-top: 2px solid #000;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Print Button (Hidden when printing) -->
+    <button class="print-button no-print" onclick="window.print()">
+        🖨️ Print Receipt
+    </button>
 
-/* ===== QR CODE SECTION ===== */
-.qr-section {
-    text-align: center;
-    margin-top: 20px;
-    padding: 15px;
-    background: white;
-    border: 2px dashed var(--fiscal-blue);
-    border-radius: 12px;
-}
-
-.qr-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
-}
-
-.qr-code {
-    padding: 8px;
-    background: white;
-    border: 2px solid var(--fiscal-blue);
-    border-radius: 12px;
-}
-
-.qr-info {
-    text-align: left;
-    font-size: 10px;
-    color: var(--fiscal-gray);
-}
-
-.qr-verify {
-    color: #059669;
-    font-weight: 700;
-    margin-top: 8px;
-}
-
-/* ===== BUTTON STYLES ===== */
-.action-buttons {
-    margin: 30px auto;
-    max-width: 700px;
-}
-
-.button-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 15px;
-    justify-content: center;
-}
-
-.btn {
-    padding: 14px 22px;
-    font-size: 14px;
-    border-radius: 50px;
-    border: none;
-    cursor: pointer;
-    font-weight: 700;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    justify-content: center;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border: 2px solid transparent;
-}
-
-.btn-fiscal {
-    background: linear-gradient(145deg, #28a745, #1e7e34);
-    color: white;
-    border-color: #145523;
-}
-
-.btn-pdf {
-    background: linear-gradient(145deg, #dc3545, #bd2130);
-    color: white;
-    border-color: #a71d2a;
-}
-
-.btn-dashboard {
-    background: linear-gradient(145deg, var(--fiscal-blue), #002244);
-    color: white;
-    border-color: #001122;
-}
-
-.btn-email {
-    background: linear-gradient(145deg, #6c757d, #545b62);
-    color: white;
-    border-color: #3d4246;
-}
-
-.btn:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-}
-
-.btn:active {
-    transform: translateY(0);
-}
-
-/* ===== PRINT STYLES - FISCAL COMPLIANT ===== */
-@media print {
-    @page {
-        size: 80mm 297mm; /* Thermal paper size */
-        margin: 0;
-    }
-    
-    body {
-        background: white;
-        padding: 0;
-        margin: 0;
-    }
-    
-    body * {
-        visibility: hidden;
-    }
-    
-    .receipt-container,
-    .receipt-container * {
-        visibility: visible;
-    }
-    
-    .receipt-container {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 80mm;
-        padding: 3mm;
-        margin: 0;
-        border: none;
-        box-shadow: none;
-        background: white;
-    }
-    
-    .no-print, 
-    .action-buttons,
-    .btn,
-    .fiscal-seal {
-        display: none !important;
-    }
-    
-    .receipt-container {
-        border: 1px dashed #ccc;
-    }
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 600px) {
-    .receipt-container {
-        width: 100%;
-        padding: 15px;
-    }
-    
-    .button-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .client-grid {
-        grid-template-columns: 1fr;
-    }
-}
-</style>
-
-<!-- ===== FISCAL RECEIPT ===== -->
-<div class="receipt-container" id="fiscalReceipt">
-    
-    <!-- Fiscal Tamper Seal -->
-    <div class="fiscal-seal">
-        ⚡ FISCAL DOCUMENT ⚡
-    </div>
-
-    <!-- Header with Fiscal Badge -->
-    <div class="receipt-header">
-        <div class="company-name">{{ receipt.company_name|default:"FIELDMAX" }}</div>
-        <span class="fiscal-badge">FISCAL RECEIPT</span>
-        <div class="receipt-info">
-            <strong>{{ receipt.business_type|default:"RETAIL STORE" }}</strong><br>
-            {% if receipt.address %}{{ receipt.address }}<br>{% endif %}
-            {% if receipt.tel %}T: {{ receipt.tel }} | E: {{ receipt.email|default:"info@fieldmax.com" }}{% endif %}
-        </div>
-    </div>
-
-    <!-- Fiscal Identification Numbers -->
-    <div class="fiscal-identifiers">
-        <div class="fiscal-id-item">
-            <span class="fiscal-id-label">PIN/VAT</span>
-            <span class="fiscal-id-value">{{ receipt.pin|default:"P051-123-456-789" }}</span>
-        </div>
-        <div class="fiscal-id-item">
-            <span class="fiscal-id-label">SERIAL #</span>
-            <span class="fiscal-id-value">{{ receipt.serial_number|default:"FMAX-2024-001234" }}</span>
-        </div>
-        <div class="fiscal-id-item">
-            <span class="fiscal-id-label">FISCAL DATE</span>
-            <span class="fiscal-id-value">{{ receipt.fiscal_date|default:receipt.date|default:"N/A" }}</span>
-        </div>
-        <div class="fiscal-id-item">
-            <span class="fiscal-id-label">Z-NUMBER</span>
-            <span class="fiscal-id-value">{{ receipt.z_number|default:"Z-0001" }}</span>
-        </div>
-    </div>
-
-    <!-- Receipt Transaction Details -->
-    <div class="receipt-details">
-        <div class="receipt-column">
-            <div class="receipt-row">
-                <span class="receipt-label">FISCAL ID:</span>
-                <span class="receipt-value">{{ receipt.receipt_number|default:"N/A" }}</span>
+    <div class="receipt-wrapper">
+        <div class="receipt">
+            <!-- ============================================
+                 HEADER SECTION
+                 ============================================ -->
+            <div class="header">
+                <div class="company-name">{{ receipt.company_name }}</div>
+                <div class="company-details">
+                    {{ receipt.address }}<br>
+                    TEL: {{ receipt.tel }}<br>
+                    PIN: {{ receipt.pin }}
+                </div>
             </div>
-            <div class="receipt-row">
-                <span class="receipt-label">CASHIER:</span>
-                <span class="receipt-value">{{ receipt.user|default:"Unknown" }}</span>
-            </div>
-            <div class="receipt-row">
-                <span class="receipt-label">TILL #:</span>
-                <span class="receipt-value">{{ receipt.till_number|default:"001" }}</span>
-            </div>
-        </div>
-        <div class="receipt-column">
-            <div class="receipt-row">
-                <span class="receipt-label">DATE:</span>
-                <span class="receipt-value">{{ receipt.date|default:"N/A" }}</span>
-            </div>
-            <div class="receipt-row">
-                <span class="receipt-label">TIME:</span>
-                <span class="receipt-value">{{ receipt.time|default:"N/A" }}</span>
-            </div>
-            <div class="receipt-row">
-                <span class="receipt-label">TRANS #:</span>
-                <span class="receipt-value">{{ receipt.transaction_id|default:receipt.receipt_number }}</span>
-            </div>
-        </div>
-    </div>
 
-    <!-- Client/Customer Information -->
-    {% if receipt.client_name %}
-    <div class="client-section">
-        <div class="client-title">👤 CUSTOMER INFORMATION</div>
-        <div class="client-grid">
-            <div class="client-item">
-                <span class="client-label">Customer Name</span>
-                <span class="client-value">{{ receipt.client_name }}</span>
+            <!-- ============================================
+                 RECEIPT INFORMATION - TWO COLUMNS
+                 ============================================ -->
+            <div class="receipt-info">
+                <div class="info-row">
+                    <span>
+                        <div class="info-label">RECEIPT NO:</div>
+                        <div>{{ receipt.receipt_number }}</div>
+                    </span>
+                    <span>
+                        <div class="info-label">DATE:</div>
+                        <div>{{ receipt.date }}</div>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span>
+                        <div class="info-label">CASHIER:</div>
+                        <div>{{ receipt.user }}</div>
+                    </span>
+                    <span>
+                        <div class="info-label">TIME:</div>
+                        <div>{{ receipt.time }}</div>
+                    </span>
+                </div>
             </div>
-            {% if receipt.client_phone %}
-            <div class="client-item">
-                <span class="client-label">Phone</span>
-                <span class="client-value">{{ receipt.client_phone }}</span>
+
+            <!-- ============================================
+                 CUSTOMER INFORMATION (if available)
+                 ============================================ -->
+            {% if receipt.client_name %}
+            <div class="customer-info">
+                <div class="customer-row">
+                    <strong>CUSTOMER:</strong> {{ receipt.client_name }}
+                </div>
+                {% if receipt.client_phone %}
+                <div class="customer-row">
+                    <strong>PHONE:</strong> {{ receipt.client_phone }}
+                </div>
+                {% endif %}
+                {% if receipt.client_id %}
+                <div class="customer-row">
+                    <strong>ID NO:</strong> {{ receipt.client_id }}
+                </div>
+                {% endif %}
+                {% if receipt.nok_name %}
+                <div class="customer-row">
+                    <strong>NOK:</strong> {{ receipt.nok_name }}
+                </div>
+                {% endif %}
+                {% if receipt.nok_phone %}
+                <div class="customer-row">
+                    <strong>NOK PHONE:</strong> {{ receipt.nok_phone }}
+                </div>
+                {% endif %}
             </div>
             {% endif %}
-            {% if receipt.client_email %}
-            <div class="client-item">
-                <span class="client-label">Email</span>
-                <span class="client-value">{{ receipt.client_email }}</span>
-            </div>
-            {% endif %}
-            {% if receipt.client_id %}
-            <div class="client-item">
-                <span class="client-label">ID/Passport</span>
-                <span class="client-value">{{ receipt.client_id }}</span>
-            </div>
-            {% endif %}
-            {% if receipt.client_vat %}
-            <div class="client-item">
-                <span class="client-label">VAT PIN</span>
-                <span class="client-value">{{ receipt.client_vat }}</span>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
 
-    <!-- Items Table with Tax Breakdown -->
-    <div class="items-container">
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th width="40%">Description</th>
-                    <th width="15%">Qty</th>
-                    <th width="20%">Price</th>
-                    <th width="25%">Total</th>
-                </tr>
-            </thead>
-            <tbody>
+            <!-- ============================================
+                 ITEMS SECTION - TABLE FORMAT
+                 ============================================ -->
+            <div class="items-section">
+                <div class="items-header">
+                    <div>ITEM</div>
+                    <div class="text-right">QTY</div>
+                    <div class="text-right">PRICE</div>
+                    <div class="text-right">DISC</div>
+                    <div class="text-right">TOTAL</div>
+                </div>
+                
                 {% for item in receipt.items %}
-                <tr>
-                    <td>
-                        <strong>{{ item.name|default:"Unknown Item"|truncatechars:25 }}</strong>
-                        {% if item.sku %}
-                        <span class="item-sku">{{ item.sku_type|default:"SKU" }}: {{ item.sku }}</span>
+                <div class="item-row">
+                    <div class="item-name-sku">
+                        <div class="item-name-line">{{ item.name }}</div>
+                        <div class="item-sku-line">
+                            {% if item.sku_type %}{{ item.sku_type }}: {% endif %}{{ item.sku }}
+                        </div>
+                    </div>
+                    <div class="text-right">{{ item.quantity }}</div>
+                    <div class="text-right">{{ item.price|floatformat:2 }}</div>
+                    <div class="text-right">
+                        {% if item.discount_saved %}
+                            {{ item.discount_saved|floatformat:2 }}
+                        {% else %}
+                            0.00
                         {% endif %}
-                        {% if item.tax_rate %}
-                        <span class="item-sku">VAT {{ item.tax_rate }}%</span>
-                        {% endif %}
-                    </td>
-                    <td style="text-align: center;">{{ item.quantity|default:0|intcomma }}</td>
-                    <td style="text-align: right;">{{ currency|default:"KSh" }} {{ item.price|default:0|floatformat:2|intcomma }}</td>
-                    <td style="text-align: right; font-weight: 600;">{{ currency|default:"KSh" }} {{ item.total|default:0|floatformat:2|intcomma }}</td>
-                </tr>
+                    </div>
+                    <div class="text-right"><strong>{{ item.total|floatformat:2 }}</strong></div>
+                </div>
                 {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="3" style="text-align: right; font-weight: 700;">Subtotal:</td>
-                    <td style="text-align: right; font-weight: 700;">{{ currency|default:"KSh" }} {{ receipt.subtotal|default:receipt.gross_total|floatformat:2|intcomma }}</td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-
-    <!-- Tax Breakdown - Fiscal Requirement -->
-    <div class="tax-breakdown">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <span style="font-weight: 800; color: var(--fiscal-blue);">TAX BREAKDOWN</span>
-            <span style="font-size: 10px; color: #666;">VAT INCLUDED</span>
-        </div>
-        
-        <!-- VAT 16% -->
-        <div class="tax-row">
-            <span class="tax-label">VAT 16% (Standard Rate):</span>
-            <span class="tax-value">{{ currency|default:"KSh" }} {{ receipt.vat_16|default:"0.00"|floatformat:2|intcomma }}</span>
-        </div>
-        
-        <!-- VAT 8% -->
-        <div class="tax-row">
-            <span class="tax-label">VAT 8% (Reduced Rate):</span>
-            <span class="tax-value">{{ currency|default:"KSh" }} {{ receipt.vat_8|default:"0.00"|floatformat:2|intcomma }}</span>
-        </div>
-        
-        <!-- VAT 0% -->
-        <div class="tax-row">
-            <span class="tax-label">VAT 0% (Zero Rated):</span>
-            <span class="tax-value">{{ currency|default:"KSh" }} {{ receipt.vat_0|default:"0.00"|floatformat:2|intcomma }}</span>
-        </div>
-        
-        <!-- Exempt -->
-        <div class="tax-row">
-            <span class="tax-label">VAT Exempt:</span>
-            <span class="tax-value">{{ currency|default:"KSh" }} {{ receipt.vat_exempt|default:"0.00"|floatformat:2|intcomma }}</span>
-        </div>
-        
-        <!-- Total Tax -->
-        <div class="tax-row">
-            <span class="tax-label" style="color: var(--fiscal-accent);">TOTAL TAX:</span>
-            <span class="tax-value" style="color: var(--fiscal-accent);">{{ currency|default:"KSh" }} {{ receipt.total_tax|default:"0.00"|floatformat:2|intcomma }}</span>
-        </div>
-    </div>
-
-    <!-- Payment and Total Section -->
-    <div class="total-section">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-            <div>
-                <span style="font-size: 11px; color: #666;">PAYMENT METHOD</span>
-                <div style="font-weight: 700; font-size: 14px; margin-top: 5px;">{{ receipt.payment_method|default:"CASH" }}</div>
             </div>
-            <div style="text-align: right;">
-                <span style="font-size: 11px; color: #666;">TENDERED</span>
-                <div style="font-weight: 700; font-size: 14px;">{{ currency|default:"KSh" }} {{ receipt.tendered|default:receipt.gross_total|floatformat:2|intcomma }}</div>
-            </div>
-        </div>
-        
-        <div class="total-row">
-            <span>GRAND TOTAL</span>
-            <span>{{ currency|default:"KSh" }} {{ receipt.gross_total|default:0|floatformat:2|intcomma }}</span>
-        </div>
-        
-        {% if receipt.change %}
-        <div style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ccc;">
-            <span style="font-weight: 600;">CHANGE</span>
-            <span style="font-weight: 800; color: #059669;">{{ currency|default:"KSh" }} {{ receipt.change|floatformat:2|intcomma }}</span>
-        </div>
-        {% endif %}
-    </div>
 
-    <!-- Fiscal Footer with Digital Signature -->
-    <div class="fiscal-footer">
-        <div style="text-align: center; margin-bottom: 12px;">
-            <span style="background: #ffd700; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 900;">
-                ✓ FISCALIZED TRANSACTION ✓
-            </span>
-        </div>
-        
-        <!-- Fiscal Digital Signature/Hash -->
-        <div class="fiscal-hash">
-            <div style="font-size: 8px; margin-bottom: 5px; color: #ffd700;">FISCAL SIGNATURE</div>
-            {{ receipt.fiscal_hash|default:"A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0" }}
-        </div>
-        
-        <div style="display: flex; justify-content: space-between; font-size: 9px; margin-top: 10px;">
-            <span>CRYPT: {{ receipt.cryptogram|default:"V1.2.3" }}</span>
-            <span>SEQ: {{ receipt.sequence_number|default:"123456" }}</span>
-        </div>
-        
-        <!-- Footer Messages -->
-        <div style="text-align: center; margin-top: 15px; font-size: 10px;">
-            <div style="font-weight: 700; margin-bottom: 5px;">⚡ GOODS ONCE SOLD CANNOT BE RETURNED ⚡</div>
-            <div style="font-style: italic;">{{ receipt.footer_message|default:"Thank you for shopping with Fieldmax" }}</div>
-            <div style="margin-top: 8px; font-size: 9px; opacity: 0.9;">
-                SERVED BY: {{ receipt.user|default:"System" }} | {{ receipt.timestamp|default:receipt.date }} {{ receipt.time }}
-            </div>
-        </div>
-    </div>
+            <!-- ============================================
+                 TOTALS SECTION
+                 ============================================ -->
+            <div class="totals-section">
+                {% if receipt.subtotal %}
+                <div class="total-row">
+                    <span>SUBTOTAL:</span>
+                    <span>KSH {{ receipt.subtotal|floatformat:2 }}</span>
+                </div>
+                {% endif %}
 
-    <!-- Enhanced QR Code with Fiscal Verification -->
-    <div class="qr-section">
-        <div style="font-weight: 800; color: var(--fiscal-blue); margin-bottom: 10px;">
-            📱 VERIFY RECEIPT AUTHENTICITY
-        </div>
-        <div class="qr-container">
+                {% if receipt.discount_total and receipt.discount_total > 0 %}
+                <div class="total-row">
+                    <span>DISCOUNT:</span>
+                    <span>- KSH {{ receipt.discount_total|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+
+                {% if receipt.tax_amount %}
+                <div class="total-row">
+                    <span>VAT (16%):</span>
+                    <span>KSH {{ receipt.tax_amount|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+
+                <div class="total-row grand-total">
+                    <span>TOTAL:</span>
+                    <span class="amount">KSH {{ receipt.gross_total|floatformat:2 }}</span>
+                </div>
+            </div>
+
+            <!-- ============================================
+                 PAYMENT SECTION
+                 ============================================ -->
+            {% if receipt.payment_method or receipt.amount_paid %}
+            <div class="payment-section">
+                {% if receipt.payment_method %}
+                <div class="total-row">
+                    <span>PAYMENT METHOD:</span>
+                    <span>{{ receipt.payment_method }}</span>
+                </div>
+                {% endif %}
+
+                {% if receipt.amount_paid %}
+                <div class="total-row">
+                    <span>AMOUNT PAID:</span>
+                    <span>KSH {{ receipt.amount_paid|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+
+                {% if receipt.change %}
+                <div class="total-row">
+                    <span>CHANGE:</span>
+                    <span>KSH {{ receipt.change|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- ============================================
+                 FISCAL INFORMATION
+                 ============================================ -->
+            <div class="receipt-info">
+                <div class="info-row small">
+                    <span>FISCAL RECEIPT</span>
+                    <span>TAX INVOICE</span>
+                </div>
+                {% if sale.fiscal_receipt_number %}
+                <div class="info-row small">
+                    <span>FISCAL NO:</span>
+                    <span>{{ sale.fiscal_receipt_number }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- ============================================
+                 QR CODE SECTION (Optional)
+                 ============================================ -->
+            {% if receipt.verification_url %}
             <div class="qr-code">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data={{ fiscal_verification_url|default:request.build_absolute_uri }}" 
-                     alt="Fiscal Verification QR Code"
-                     style="width: 130px; height: 130px; border: 3px solid var(--fiscal-blue); border-radius: 12px; padding: 6px; background: white;"
-                     onerror="this.style.display='none'">
+                <!-- QR Code would go here -->
+                <div class="small">QR CODE</div>
             </div>
-            <div class="qr-info">
-                <div style="font-weight: 700; margin-bottom: 5px;">SCAN TO VERIFY</div>
-                <div>Receipt #: {{ receipt.receipt_number }}</div>
-                <div>Amount: {{ currency|default:"KSh" }} {{ receipt.gross_total|floatformat:2|intcomma }}</div>
-                <div>Date: {{ receipt.date }}</div>
-                <div class="qr-verify">✓ KRA VERIFIED</div>
+            <div class="text-center small">
+                Scan to verify receipt
+            </div>
+            {% endif %}
+
+            <!-- ============================================
+                 FOOTER
+                 ============================================ -->
+            <div class="footer">
+                <div class="divider"></div>
+                <div class="thank-you">THANK YOU FOR YOUR BUSINESS!</div>
+                <div class="small">
+                    Goods once sold cannot be returned<br>
+                    Please keep this receipt for your records
+                </div>
+                <div class="divider"></div>
+                <div class="small">
+                    This is a computer-generated receipt<br>
+                    No signature required
+                </div>
+                <div class="barcode-text">
+                    * {{ receipt.receipt_number }} *
+                </div>
             </div>
         </div>
-        <div style="margin-top: 10px; font-size: 9px; color: #4a5568;">
-            This is a legally valid fiscal receipt. Retain for tax purposes.
-        </div>
     </div>
-    
-    <!-- Duplicate Indicator -->
-    {% if receipt.is_duplicate %}
-    <div style="text-align: center; margin-top: 10px; padding: 5px; border: 2px solid #ff6b6b; border-radius: 6px; color: #c41e3a; font-weight: 900; font-size: 14px;">
-        ⚠️ DUPLICATE RECEIPT - NOT VALID FOR TAX CLAIM ⚠️
-    </div>
-    {% endif %}
-    
-    <!-- Receipt Copy Number -->
-    <div style="text-align: center; margin-top: 10px; font-size: 9px; color: #718096;">
-        {{ receipt.copy_number|default:"ORIGINAL" }} | {{ receipt.page_info|default:"Page 1 of 1" }}
-    </div>
-</div>
 
-<!-- ===== ACTION BUTTONS ===== -->
-<div class="action-buttons no-print">
-    <div class="button-grid">
-        <!-- Dashboard Button -->
-        <button class="btn btn-dashboard" onclick="navigateBack()" aria-label="Go to dashboard">
-            🏠 DASHBOARD
-        </button>
+    <script>
+        // Auto-print on page load (optional - uncomment if needed)
+        // window.onload = function() {
+        //     setTimeout(function() {
+        //         window.print();
+        //     }, 500);
+        // };
 
-        <!-- Fiscal Print Button -->
-        <button class="btn btn-fiscal" onclick="printFiscalReceipt()" aria-label="Print fiscal receipt">
-            🖨️ PRINT FISCAL
-        </button>
+        // Print function
+        function printReceipt() {
+            window.print();
+        }
 
-        <!-- Download PDF Button -->
-        <button class="btn btn-pdf" onclick="downloadFiscalPDF()" aria-label="Download fiscal PDF">
-            📥 PDF RECEIPT
-        </button>
-
-        <!-- Email Receipt Button -->
-        <button class="btn btn-email" onclick="emailReceipt()" aria-label="Email receipt">
-            📧 EMAIL COPY
-        </button>
-    </div>
-    
-    <!-- Fiscal Warning -->
-    <div style="text-align: center; margin-top: 15px; color: #721c24; background: #f8d7da; padding: 10px; border-radius: 6px; font-size: 12px; border: 1px solid #f5c6cb;">
-        <strong>⚠️ FISCAL REQUIREMENT:</strong> This receipt must be printed on fiscalized printer for tax compliance.
-    </div>
-</div>
-
-<script>
-// ===== FISCAL RECEIPT FUNCTIONS =====
-
-// Fiscal Receipt Configuration
-const FISCAL_CONFIG = {
-    printerType: 'fiscal',
-    paperWidth: '80mm',
-    taxAuthority: 'KRA',
-    complianceVersion: '2.1.0'
-};
-
-/**
- * Print Fiscal Receipt with thermal printer optimization
- */
-function printFiscalReceipt() {
-    try {
-        // Set fiscal printing flag
-        sessionStorage.setItem('fiscal_receipt_printed', 'true');
-        sessionStorage.setItem('fiscal_receipt_number', '{{ receipt.receipt_number|escapejs }}');
-        sessionStorage.setItem('fiscal_timestamp', new Date().toISOString());
-        
-        // Show fiscal printing notice
-        showNotification('Preparing fiscal receipt for thermal printer...', 'info');
-        
-        // Optimize for fiscal printer
-        const receipt = document.getElementById('fiscalReceipt');
-        receipt.style.width = '80mm';
-        receipt.style.padding = '2mm';
-        receipt.style.fontSize = '11px';
-        
-        // Trigger print dialog
-        window.print();
-        
-        // Log fiscal event
-        logFiscalEvent('PRINT', '{{ receipt.receipt_number|escapejs }}');
-        
-    } catch (error) {
-        console.error('Fiscal print error:', error);
-        showNotification('Error preparing fiscal receipt', 'error');
-    }
-}
-
-/**
- * Download as Fiscal PDF
- */
-function downloadFiscalPDF() {
-    showNotification('Preparing fiscal PDF document...', 'info');
-    
-    // Store fiscal metadata
-    const fiscalData = {
-        receiptNumber: '{{ receipt.receipt_number|escapejs }}',
-        timestamp: new Date().toISOString(),
-        taxTotal: '{{ receipt.total_tax|default:"0.00" }}',
-        grandTotal: '{{ receipt.gross_total|default:"0.00" }}'
-    };
-    
-    sessionStorage.setItem('fiscal_pdf_data', JSON.stringify(fiscalData));
-    
-    // Provide instructions for PDF generation
-    setTimeout(() => {
-        alert('📄 FISCAL PDF GENERATION:\n\n' +
-              '1. Select "Save as PDF" in print dialog\n' +
-              '2. Set paper size to "80 x 297 mm"\n' +
-              '3. Enable "Background Graphics"\n' +
-              '4. Save file as: FISCAL_{{ receipt.receipt_number }}.pdf');
-    }, 100);
-    
-    window.print();
-}
-
-/**
- * Email Receipt Copy
- */
-function emailReceipt() {
-    const receiptNumber = '{{ receipt.receipt_number|escapejs }}';
-    const customerEmail = '{{ receipt.client_email|escapejs }}';
-    const total = '{{ receipt.gross_total|escapejs }}';
-    
-    let emailPrompt = '📧 SEND FISCAL RECEIPT\n\n';
-    
-    if (customerEmail && customerEmail !== '') {
-        emailPrompt += `Customer email: ${customerEmail}\n`;
-        emailPrompt += 'Send receipt to this address?\n\n';
-        emailPrompt += 'Click OK to confirm or Cancel to enter another email.';
-        
-        if (confirm(emailPrompt)) {
-            sendFiscalEmail(customerEmail, receiptNumber, total);
-        } else {
-            const newEmail = prompt('Enter customer email address:');
-            if (newEmail && newEmail.includes('@')) {
-                sendFiscalEmail(newEmail, receiptNumber, total);
+        // Keyboard shortcut: Ctrl+P
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                window.print();
             }
-        }
-    } else {
-        const email = prompt('Enter customer email address for fiscal receipt:');
-        if (email && email.includes('@')) {
-            sendFiscalEmail(email, receiptNumber, total);
-        }
-    }
-}
-
-/**
- * Send Fiscal Email via API
- */
-function sendFiscalEmail(email, receiptNumber, total) {
-    showNotification(`Sending fiscal receipt to ${email}...`, 'info');
-    
-    // Simulate API call - replace with actual endpoint
-    setTimeout(() => {
-        showNotification(`✅ Fiscal receipt sent to ${email}`, 'success');
-        logFiscalEvent('EMAIL', receiptNumber, email);
-    }, 1500);
-}
-
-/**
- * Show Notification
- */
-function showNotification(message, type = 'info') {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 25px;
-        background: ${type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#cce5ff'};
-        color: ${type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#004085'};
-        border: 1px solid ${type === 'success' ? '#c3e6cb' : type === 'error' ? '#f5c6cb' : '#b8daff'};
-        border-radius: 8px;
-        font-weight: 600;
-        z-index: 9999;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        animation: slideIn 0.3s ease;
-    `;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
-    // Remove after 3 seconds
-    setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
-}
-
-/**
- * Log Fiscal Event
- */
-function logFiscalEvent(eventType, receiptNumber, email = null) {
-    const eventData = {
-        event: eventType,
-        receipt: receiptNumber,
-        timestamp: new Date().toISOString(),
-        user: '{{ receipt.user|escapejs }}',
-        terminal: navigator.userAgent,
-        email: email
-    };
-    
-    console.log('FISCAL EVENT:', eventData);
-    
-    // Send to server for audit trail
-    fetch('/api/fiscal-log/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify(eventData)
-    }).catch(error => console.error('Fiscal log error:', error));
-}
-
-/**
- * Navigate Back with Fiscal Context
- */
-function navigateBack() {
-    if (confirm('Return to dashboard? Fiscal receipt has been recorded.')) {
-        window.history.back();
-    }
-}
-
-/**
- * Get CSRF Token
- */
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-/**
- * Keyboard Shortcuts for Fiscal Operations
- */
-document.addEventListener('keydown', function(e) {
-    // Ctrl+P or Cmd+P - Print Fiscal
-    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-        e.preventDefault();
-        printFiscalReceipt();
-    }
-    
-    // Ctrl+E or Cmd+E - Email Receipt
-    if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
-        e.preventDefault();
-        emailReceipt();
-    }
-    
-    // Ctrl+D or Cmd+D - Dashboard
-    if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-        e.preventDefault();
-        navigateBack();
-    }
-});
-
-/**
- * Initialize Fiscal Features
- */
-document.addEventListener('DOMContentLoaded', function() {
-    // Check for duplicate printing
-    const lastPrinted = sessionStorage.getItem('fiscal_receipt_number');
-    if (lastPrinted === '{{ receipt.receipt_number|escapejs }}') {
-        console.log('⚠️ Warning: Receipt already printed in this session');
-    }
-    
-    // Add fiscal animation
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-    `;
-    document.head.appendChild(style);
-});
-
-// Add fiscal watermark for duplicate detection
-window.addEventListener('beforeprint', function() {
-    const receipt = document.getElementById('fiscalReceipt');
-    const timestamp = new Date().toLocaleString();
-    
-    // Add print timestamp
-    const printInfo = document.createElement('div');
-    printInfo.style.cssText = 'text-align: center; font-size: 8px; margin-top: 5px; color: #999;';
-    printInfo.textContent = `Printed: ${timestamp} | Terminal: ${navigator.platform}`;
-    receipt.appendChild(printInfo);
-});
-
-// Track successful print
-window.addEventListener('afterprint', function() {
-    showNotification('✅ Fiscal receipt printed successfully', 'success');
-    logFiscalEvent('PRINT_SUCCESS', '{{ receipt.receipt_number|escapejs }}');
-});
-</script>
-
-<!-- Add Fiscal Icons -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
-{% endblock %}
+        });
+    </script>
+</body>
+</html>
