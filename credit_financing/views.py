@@ -84,7 +84,7 @@ def credit_dashboard(request):
         'partner_stats': partner_stats,
     }
     
-    return render(request, 'credit_financing/dashboard.html', context)
+    return render(request, 'credit_financing/credit_finance.html', context)
 
 
 # ====================================

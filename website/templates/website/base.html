@@ -1415,11 +1415,20 @@ body {
         
       {% endif %}
       
-      <!-- Common Links -->
-      <a href="#" class="nav-link">
-        <i class="bi bi-envelope"></i>
-        <span>CONTACT</span>
-      </a>
+      <!-- Contact / Credit Finance Link - Changes based on user authentication and role -->
+      {% if user.is_authenticated and user.is_superuser %}
+        <!-- Admin/Superuser sees CREDIT FINANCE -->
+        <a href="{% url 'credit:dashboard' %}" class="nav-link">
+          <i class="bi bi-credit-card"></i>
+          <span>CREDIT FINANCE</span>
+        </a>
+      {% else %}
+        <!-- Regular users (authenticated non-admin or not authenticated) see CONTACT -->
+        <a href="#" class="nav-link">
+          <i class="bi bi-envelope"></i>
+          <span>CONTACT</span>
+        </a>
+      {% endif %}
     </div>
   </div>
 </nav>
