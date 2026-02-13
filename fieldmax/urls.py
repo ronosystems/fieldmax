@@ -80,6 +80,7 @@ urlpatterns = [
     path('sales/', include('sales.urls')),
     path('staff/', include('staff_registration.urls')),  
     path('api/staff/', include('staff_registration.api_urls')),
+    path('credit/', include('credit_financing.urls')),
     path('users/', include('users.urls')),
     path('', include('website.urls')),
 

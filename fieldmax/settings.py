@@ -166,6 +166,7 @@ INSTALLED_APPS = [
     'inventory.apps.InventoryConfig',
     'sales.apps.SalesConfig',
     'staff_registration',
+    'credit_financing',
 ]
 
 # ============================================
