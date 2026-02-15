@@ -33,6 +33,16 @@ from .forms import StaffApplicationForm
 from django.db.models import Q
 from difflib import SequenceMatcher
 
+# ====================================
+# CREDIT FINANCING IMPORTS
+# ====================================
+from credit_financing.models import (
+    CreditCompany,
+    CreditCustomer,
+    CreditTransaction,
+    CompanyPayment,
+    CreditTransactionLog
+)
 
 
 
@@ -3910,98 +3920,101 @@ def manager_dashboard(request):
 
     return render(request, 'website/manager_dashboard.html', context)
 
-# ============================================
-# AGENT DASHBOARD - FIXED VERSION
-# ============================================
-@login_required(login_url='/accounts/login/')
+
+
+
+
+# ====================================
+# AGENT DASHBOARD VIEW
+# ====================================
+# ====================================
+# AGENT DASHBOARD VIEW - FIXED
+# ====================================
+@login_required
 def agent_dashboard(request):
-    user = request.user
-    today = timezone.now().date()
+    """
+    Agent dashboard with simplified interface for creating transactions
+    """
+    try:
+        # Get all transactions for this agent
+        all_transactions = CreditTransaction.objects.filter(dealer=request.user)
+        
+        # Today's transactions
+        today = timezone.now().date()
+        today_transactions = all_transactions.filter(
+            transaction_date__date=today
+        ).count()
+        
+        # Statistics
+        stats = {
+            'total_transactions': all_transactions.count(),
+            'pending_count': all_transactions.filter(payment_status='pending').count(),
+            'paid_count': all_transactions.filter(payment_status='paid').count(),
+            'total_credit_value': all_transactions.aggregate(
+                Sum('ceiling_price')
+            )['ceiling_price__sum'] or Decimal('0.00'),
+            'total_pending_amount': all_transactions.filter(
+                payment_status='pending'
+            ).aggregate(Sum('ceiling_price'))['ceiling_price__sum'] or Decimal('0.00'),
+            'today_transactions': today_transactions,
+        }
+        
+        # Recent transactions (last 10)
+        recent_transactions = all_transactions.select_related(
+            'customer', 'product', 'credit_company'
+        ).order_by('-transaction_date')[:10]
+        
+        # Get ALL companies (not filtered by created_by)
+        companies = CreditCompany.objects.all()
+        print(f"ALL Companies in system: {companies.count()}")  # Debug in console
+        
+        # Also show breakdown by creator for debugging
+        for company in companies:
+            creator = company.created_by.username if company.created_by else "None"
+            print(f"  - Company: {company.name} (created by: {creator})")
+        
+        # Get customers created by this user
+        customers = CreditCustomer.objects.filter(created_by=request.user)
+        print(f"Customers found: {customers.count()}")  # Debug in console
+        
+        # Get available products owned by the current user
+        products = Product.objects.filter(
+            owner=request.user,  # Only products owned by this user
+            quantity__gt=0,
+            status='available'
+        ).select_related('category')[:50]
+        print(f"Products owned by {request.user.username}: {products.count()}") # Debug in console
+        
+        # Also show total products in system for comparison
+        total_products = Product.objects.filter(quantity__gt=0, status='available').count()
+        print(f"Total available products in system: {total_products}")
 
-    # Products - only those with categories
-    my_products = Product.objects.filter(
-        is_active=True,
-        owner=user,
-        category__isnull=False  # Only products with categories
-    ).select_related('category').order_by('name')
-
-    my_products_count = my_products.count()
-
-    # Sales for this user
-    user_sales = Sale.objects.filter(seller=user)
-
-    # Today's Sales Total
-    todays_sales_total = user_sales.filter(
-        sale_date__date=today
-    ).aggregate(total=Sum('total_amount'))['total'] or 0
-
-    todays_sales = f"{float(todays_sales_total):.2f}"
-
-    # Total Sales Count
-    total_sales_count = user_sales.count()
-
-    # Total Sales Revenue
-    total_sales_revenue = user_sales.aggregate(
-        total=Sum('total_amount')
-    )['total'] or 0
-    
-    total_sales = f"{float(total_sales_revenue):.2f}"
-
-    # Monthly Sales Revenue
-    monthly_sales_total = user_sales.filter(
-        sale_date__year=today.year,
-        sale_date__month=today.month
-    ).aggregate(total=Sum('total_amount'))['total'] or 0
-    
-    monthly_sales = f"{float(monthly_sales_total):.2f}"
-
-    # Monthly Sales Count
-    monthly_sales_count = user_sales.filter(
-        sale_date__year=today.year,
-        sale_date__month=today.month
-    ).count()
-
-    # Recent Sales
-    recent_sales = user_sales.prefetch_related(
-        'items', 'items__product'
-    ).order_by('-sale_date')[:5]
-
-    # All Sales
-    all_sales = user_sales.prefetch_related(
-        'items', 'items__product'
-    ).order_by('-sale_date')
-
-    # Additional Metrics
-    total_revenue = total_sales_revenue
-
-    week_start = today - timezone.timedelta(days=today.weekday())
-    week_sales = user_sales.filter(
-        sale_date__date__gte=week_start
-    ).aggregate(total=Sum('total_amount'))['total'] or 0
-
-    month_sales = monthly_sales_total
-
-    # Stock - only for products with categories
-    low_stock_count = my_products.filter(quantity__lte=5, quantity__gt=0).count()
-    out_of_stock_count = my_products.filter(quantity=0).count()
-
-    return render(request, "website/agent_dashboard.html", {
-        'todays_sales': todays_sales,
-        'total_sales_count': total_sales_count,
-        'total_sales': total_sales,
-        'my_products_count': my_products_count,
-        'monthly_sales': monthly_sales,
-        'monthly_sales_count': monthly_sales_count,
-        'recent_sales': recent_sales,
-        'all_sales': all_sales,
-        'my_products': my_products,
-        'total_revenue': total_revenue,
-        'week_sales': week_sales,
-        'month_sales': month_sales,
-        'low_stock_count': low_stock_count,
-        'out_of_stock_count': out_of_stock_count,
-        'user': user,
-    })
+        context = {
+            'stats': stats,
+            'recent_transactions': recent_transactions,
+            'companies': companies,
+            'customers': customers,
+            'products': products,
+            'debug': {
+                'companies_count': companies.count(),
+                'customers_count': customers.count(),
+                'products_count': products.count(),
+            }
+        }
+        
+        return render(request, 'website/agent_dashboard.html', context)
+        
+    except Exception as e:
+        print(f"Error in agent_dashboard: {str(e)}")  # Debug in console
+        messages.error(request, f"Error loading dashboard: {str(e)}")
+        return render(request, 'website/agent_dashboard.html', {
+            'stats': {},
+            'recent_transactions': [],
+            'companies': [],
+            'customers': [],
+            'products': [],
+            'error': str(e)
+        })
 
 
 

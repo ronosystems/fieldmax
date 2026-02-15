@@ -1,2417 +1,1570 @@
-
 {% extends "website/base.html" %}
-{% block title %}Agent Dashboard - Fieldmax Shop{% endblock %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Agent Dashboard - Credit Financing{% endblock %}
 
 {% block content %}
 <style>
 /* ========================================
-   DASHBOARD LAYOUT
+   AGENT DASHBOARD STYLES
    ======================================== */
-.dashboard-wrapper {
-  display: flex;
-  min-height: calc(100vh - 160px);
-  background-color: #516272;
+.agent-wrapper {
+    padding: 2rem;
+    background: #f8fafc;
+    min-height: calc(100vh - 160px);
+    max-width: 1500px; 
+    margin: 0 auto;
+    position: relative;
 }
 
-/* ========================================
-   SIDEBAR NAVIGATION
-   ======================================== */
-.dashboard-sidebar {
-  width: 260px;
-  background: #ffffff;
-  border-right: 1px solid #e5e7eb;
-  padding: 1.5rem 0;
-  position: sticky;
-  top: 76px;
-  height: calc(100vh - 76px);
-  overflow-y: auto;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
-  flex-shrink: 0;
+/* Welcome Banner */
+.welcome-banner {
+    background: linear-gradient(135deg, #0dcaf0 0%, #3b82f6 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    color: white;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 10px 20px rgba(13, 202, 240, 0.2);
 }
 
-.sidebar-header {
-  padding: 0 1.5rem 1.5rem;
-  border-bottom: 2px solid #e5e7eb;
-  margin-bottom: 1rem;
+.welcome-text h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
 }
 
-.sidebar-title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: #1a1f2e;
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin: 0;
+.welcome-text p {
+    opacity: 0.9;
+    font-size: 1.1rem;
 }
 
-.sidebar-title i {
-  font-size: 1.75rem;
-  color: #10b981;
+.stats-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 1rem 2rem;
+    border-radius: 1rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
 }
 
-.sidebar-user {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #6c757d;
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
+.stats-badge .number {
+    font-size: 2rem;
+    font-weight: 700;
+    display: block;
 }
 
-.sidebar-nav {
-  padding: 0 1rem;
+.stats-badge .label {
+    font-size: 0.9rem;
+    opacity: 0.9;
 }
 
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  color: #6c757d;
-  font-weight: 500;
-  border-radius: 0.5rem;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  border: none;
-  background: transparent;
-  width: 100%;
-  text-align: left;
-  font-size: 0.95rem;
-  text-decoration: none;
-  margin-bottom: 0.25rem;
+/* Action Cards */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
-.nav-item:hover {
-  background: #f3f4f6;
-  color: #1a1f2e;
-  text-decoration: none;
+.action-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
 }
 
-.nav-item.active {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #ffffff;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    border-color: #0dcaf0;
 }
 
-.nav-item i {
-  font-size: 1.25rem;
-  width: 24px;
-  text-align: center;
+.action-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    background: linear-gradient(135deg, rgba(13, 202, 240, 0.1) 0%, rgba(13, 202, 240, 0.05) 100%);
+    color: #0dcaf0;
 }
 
-/* ========================================
-   MAIN CONTENT AREA
-   ======================================== */
-.dashboard-content {
-  flex: 1;
-  padding: 2rem;
-  overflow-x: hidden;
+.action-content h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #1a1f2e;
 }
 
-.content-section {
-  display: none;
+.action-content p {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0;
 }
 
-.content-section.active {
-  display: block;
-  animation: fadeIn 0.3s ease-in;
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    overflow-y: auto;
+    backdrop-filter: blur(5px);
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.modal-content {
+    background-color: #fefefe;
+    margin: 2% auto;
+    padding: 0;
+    border: none;
+    border-radius: 1rem;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    animation: modalSlideIn 0.3s ease;
 }
 
-.content-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-  gap: 1rem;
-  flex-wrap: wrap;
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
-.page-title {
-  font-size: 2rem;
-  font-weight: 500;
-  color: #1a1f2e;
-  margin: 0;
+.modal-header {
+    background: linear-gradient(135deg, #0dcaf0 0%, #3b82f6 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 1rem 1rem 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.mobile-sidebar-toggle {
-  display: none;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  color: #1a1f2e;
-  font-size: 1.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
 }
 
-.mobile-sidebar-toggle:hover {
-  background: #10b981;
-  color: #ffffff;
-  border-color: #10b981;
+.modal-header h2 i {
+    margin-right: 0.5rem;
 }
 
-/* ========================================
-   CARDS & GRIDS
-   ======================================== */
-.lookup-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+.close-modal {
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: opacity 0.3s ease;
 }
 
-.lookup-card {
-  background: #ffffff;
-  border-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  padding: 1.5rem;
-  transition: all 0.3s ease;
+.close-modal:hover {
+    opacity: 0.8;
 }
 
-.lookup-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.modal-body {
+    padding: 2rem;
+    max-height: 70vh;
+    overflow-y: auto;
 }
 
-.card-header-custom {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #f3f4f6;
+/* ETR Receipt Modal - Larger */
+#etrModal .modal-content {
+    max-width: 800px;
 }
 
-.card-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.5rem;
-  font-size: 1.5rem;
+#etrModal .modal-body {
+    padding: 1rem;
+    background: #f5f5f5;
 }
 
-.card-icon.primary {
-  background: linear-gradient(135deg, rgba(13, 202, 240, 0.15) 0%, rgba(13, 202, 240, 0.05) 100%);
-  color: #0dcaf0;
+/* Receipt Container */
+.receipt-container {
+    max-width: 302px; /* 80mm */
+    margin: 0 auto;
+    background: white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    padding: 10px;
 }
 
-.card-icon.success {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
-  color: #10b981;
+.receipt {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    line-height: 1.4;
+    color: #000;
 }
 
-.card-icon.info {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%);
-  color: #3b82f6;
+.receipt-header {
+    text-align: center;
+    border-bottom: 2px dashed #000;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
 }
 
-.card-title-custom {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1a1f2e;
-  margin: 0;
+.receipt-company {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
 }
 
-.display-box {
-  min-height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f9fafb;
-  border: 2px dashed #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  text-align: center;
-  transition: all 0.3s ease;
+.receipt-info {
+    border-bottom: 1px dashed #000;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
 }
 
-.display-box.has-content {
-  background: #ffffff;
-  border: 2px solid #10b981;
-  border-style: solid;
+.receipt-info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3px;
+    font-size: 10px;
 }
 
-.display-value {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1a1f2e;
-  margin: 0;
+.receipt-customer {
+    border-bottom: 1px dashed #000;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    font-size: 10px;
 }
 
-.display-label {
-  font-size: 0.875rem;
-  color: #6c757d;
-  margin-top: 0.25rem;
+.receipt-items {
+    border-bottom: 2px solid #000;
+    margin-bottom: 10px;
 }
 
-/* ========================================
-   DATA TABLES
-   ======================================== */
-.data-card {
-  background: #ffffff;
-  border-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+.receipt-items-header {
+    display: grid;
+    grid-template-columns: 40% 15% 20% 25%;
+    font-weight: bold;
+    border-bottom: 2px solid #000;
+    padding: 4px 0;
+    font-size: 9px;
+    background: #f0f0f0;
 }
 
-.card-header-table {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  background: #f9fafb;
-  border-bottom: 2px solid #e5e7eb;
+.receipt-item {
+    display: grid;
+    grid-template-columns: 40% 15% 20% 25%;
+    border-bottom: 1px dashed #ccc;
+    padding: 3px 0;
+    font-size: 9px;
 }
 
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1a1f2e;
-  margin: 0;
+.receipt-totals {
+    border-bottom: 2px dashed #000;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
 }
 
-.table-wrapper {
-  overflow-x: auto;
+.receipt-total-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3px;
+    font-size: 10px;
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
+.receipt-grand-total {
+    font-size: 12px;
+    font-weight: bold;
+    border-top: 2px solid #000;
+    padding-top: 5px;
+    margin-top: 5px;
 }
 
-.data-table thead {
-  background: #f3f4f6;
+.receipt-footer {
+    text-align: center;
+    font-size: 9px;
+    margin-top: 10px;
 }
 
-.data-table th {
-  padding: 1rem 1.25rem;
-  text-align: left;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #6c757d;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 2px solid #e5e7eb;
+.receipt-barcode {
+    text-align: center;
+    margin: 10px 0;
+    font-family: 'Libre Barcode 39', cursive;
+    font-size: 24px;
 }
 
-.data-table td {
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid #f3f4f6;
-  color: #1a1f2e;
-  font-size: 0.925rem;
+/* Modal Actions */
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
 }
 
-.data-table tbody tr {
-  transition: background-color 0.15s ease;
-}
-
-.data-table tbody tr:hover {
-  background: #f9fafb;
-}
-
-.data-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.sale-id {
-  font-family: 'Courier New', monospace;
-  color: #6c757d;
-  font-weight: 600;
-}
-
-.price-tag {
-  color: #10b981;
-  font-weight: 700;
-  font-size: 1.05rem;
-}
-
-.empty-state {
-  padding: 3rem !important;
-  color: #6c757d;
-  text-align: center;
-}
-
-.empty-state i {
-  font-size: 3rem;
-  color: #d1d5db;
-  display: block;
-  margin-bottom: 1rem;
-}
-
-/* ========================================
-   FORMS & INPUTS
-   ======================================== */
-.form-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #1a1f2e;
-  font-size: 0.95rem;
-}
-
-.required::after {
-  content: " *";
-  color: #dc3545;
-}
-
-.form-control {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-}
-
-.form-control-lg {
-  padding: 1rem;
-  font-size: 1.1rem;
-}
-
-/* ========================================
-   BUTTONS
-   ======================================== */
 .btn-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  width: 100%;
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #0dcaf0 0%, #0ab4d6 100%);
-  color: #ffffff;
-  box-shadow: 0 2px 4px rgba(13, 202, 240, 0.3);
+    background: linear-gradient(135deg, #0dcaf0 0%, #3b82f6 100%);
+    color: white;
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(13, 202, 240, 0.4);
-  color: #ffffff;
-  text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 202, 240, 0.3);
+    color: white;
 }
 
 .btn-success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #ffffff;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
 }
 
 .btn-success:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
-  color: #ffffff;
-  text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+    color: white;
 }
 
-.btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+.btn-outline {
+    background: white;
+    border: 2px solid #e5e7eb;
+    color: #6c757d;
 }
 
-/* ========================================
-   PRODUCT DETAILS
-   ======================================== */
-.product-info-card {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
-  padding: 1.5rem;
-  border: 2px solid #e2e8f0;
+.btn-outline:hover {
+    background: #f3f4f6;
 }
 
-.product-info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #e2e8f0;
+/* Receipt Button */
+.activity-item .btn-receipt {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    width: auto;
+    margin-left: 1rem;
+    background: linear-gradient(135deg, #0dcaf0 0%, #3b82f6 100%);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.3s ease;
 }
 
-.product-info-item:last-child {
-  border-bottom: none;
+.activity-item .btn-receipt:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 202, 240, 0.3);
 }
 
-.product-info-label {
-  color: #64748b;
-  font-size: 0.875rem;
-  font-weight: 500;
+/* Product Search */
+.search-input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
 }
 
-.product-info-value {
-  color: #1e293b;
-  font-size: 1rem;
-  font-weight: 600;
+.search-input-group input {
+    flex: 1;
 }
 
-.fifo-badge {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  display: inline-block;
-  margin-top: 0.5rem;
-}
-
-.sold-alert {
-  border-left: 4px solid #ef4444;
-  background: #fef2f2;
-  padding: 1.5rem;
-  border-radius: 8px;
-}
-
-.available-alert {
-  border-left: 4px solid #10b981;
-  background: #f0fdf4;
-  padding: 1.5rem;
-  border-radius: 8px;
-}
-
-.product-badge {
-  font-size: 0.875rem;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-weight: 600;
-}
-
-/* ========================================
-   ALERTS & MESSAGES
-   ======================================== */
-.alert {
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.alert-info {
-  background: #e0f7ff;
-  border: 1px solid #0dcaf0;
-  color: #0a7a8f;
-}
-
-.alert-success {
-  background: #d1fae5;
-  border: 1px solid #10b981;
-  color: #065f46;
-}
-
-.alert-danger {
-  background: #fee2e2;
-  border: 1px solid #ef4444;
-  color: #991b1b;
-}
-
-.toast-message {
-  position: fixed;
-  top: 20px;
-  right: -300px;
-  padding: 15px 20px;
-  background: #10b981;
-  color: white;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  transition: all 0.4s ease;
-  z-index: 9999;
-  font-weight: bold;
-}
-
-.toast-message.error {
-  background: #ef4444;
-}
-
-.toast-message.show {
-  right: 20px;
-}
-
-/* ========================================
-   ANIMATIONS
-   ======================================== */
-#productDetails {
-  animation: fadeInUp 0.4s ease-out;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-#emptyState i {
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
-}
-
-/* ========================================
-   RESPONSIVE DESIGN
-   ======================================== */
-@media (max-width: 992px) {
-  .dashboard-wrapper {
-    flex-direction: column;
-  }
-
-  .dashboard-sidebar {
-    position: fixed;
-    left: -260px;
-    top: 76px;
-    z-index: 998;
-    transition: left 0.3s ease;
-  }
-
-  .dashboard-sidebar.active {
-    left: 0;
-  }
-
-  .mobile-sidebar-toggle {
-    display: block;
-  }
-
-  .dashboard-content {
-    padding: 1.5rem;
-  }
-
-  .lookup-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .col-lg-6 {
-    margin-bottom: 1.5rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard-content {
+/* Product Details Panel */
+.product-details-panel {
+    background: #f8fafc;
+    border-radius: 0.5rem;
     padding: 1rem;
-  }
+    margin: 1rem 0;
+    border: 2px solid #e5e7eb;
+}
 
-  .page-title {
+.product-detail-row {
+    display: flex;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
+    border-bottom: 1px dashed #e5e7eb;
+}
+
+.product-detail-label {
+    width: 100px;
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.product-detail-value {
+    flex: 1;
+    color: #1a1f2e;
+}
+
+.product-availability {
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.availability-available {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.availability-unavailable {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.availability-warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.specs-badge {
+    display: inline-block;
+    background: #e9ecef;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+}
+
+/* Recent Activity */
+.recent-activity {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.recent-activity h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #1a1f2e;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.activity-list {
+    list-style: none;
+    padding: 0;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+}
+
+.activity-details {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 600;
+    color: #1a1f2e;
+    margin-bottom: 0.25rem;
+}
+
+.activity-time {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-paid {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Quick Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid #e5e7eb;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.stat-value {
     font-size: 1.5rem;
-  }
+    font-weight: 600;
+    color: #1a1f2e;
+    margin: 0;
 }
 
-
-.product-display-card, .client-display-card {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
-  padding: 1.5rem;
-  border: 2px solid #e2e8f0;
+/* Responsive */
+@media (max-width: 768px) {
+    .agent-wrapper {
+        padding: 1rem;
+    }
+    
+    .welcome-banner {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content {
+        margin: 5% auto;
+        width: 95%;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .activity-item {
+        flex-wrap: wrap;
+    }
+    
+    .activity-item .btn-receipt {
+        margin-left: 0;
+        margin-top: 0.5rem;
+        width: 100%;
+    }
 }
 
-.info-item {
-  padding: 0.5rem 0;
-}
-
-.display-label {
-  display: block;
-  color: #64748b;
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.display-value {
-  color: #1e293b;
-  font-size: 1.1rem;
-  font-weight: 600;
-  padding: 0.75rem;
-  background: #ffffff;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-}
-
-.input-group .form-control:read-only {
-  background-color: #f8fafc;
+/* Form Styles */
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #374151;
 }
 
 .required::after {
-  content: " *";
-  color: #dc3545;
+    content: " *";
+    color: #dc3545;
 }
 
- /* Styling for search results */
-  #skuSearchResults .list-group-item {
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  #skuSearchResults .list-group-item:hover {
-    background-color: #f8f9fa;
-    border-left: 4px solid #0d6efd;
-  }
-  
-  #skuSearchResults .list-group-item.active {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
-  }
-  
-  .product-sku {
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    color: #0d6efd;
-  }
-  
-  .product-price {
-    color: #198754;
-    font-weight: 600;
-  }
-  
-  .search-loading {
-    padding: 1rem;
-    text-align: center;
-    color: #6c757d;
-  }
-  
-  .no-results {
-    padding: 1rem;
-    text-align: center;
-    color: #dc3545;
-  }
+.form-control, .form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
 
+.form-control:focus, .form-select:focus {
+    outline: none;
+    border-color: #0dcaf0;
+    box-shadow: 0 0 0 3px rgba(13, 202, 240, 0.1);
+}
+
+.form-control-lg, .form-select-lg {
+    padding: 1rem;
+    font-size: 1.1rem;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+}
+
+.input-group .form-control {
+    flex: 1;
+}
+
+.input-group-text {
+    padding: 0.75rem 1rem;
+    background: #f3f4f6;
+    border: 2px solid #e5e7eb;
+    border-right: none;
+    border-radius: 0.5rem 0 0 0.5rem;
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.mb-4 {
+    margin-bottom: 1.5rem;
+}
+
+.mt-3 {
+    margin-top: 1rem;
+}
+
+.text-muted {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.text-right {
+    text-align: right;
+}
 </style>
 
-
-
-
-
-
-
-
-
-
-
-
-<div class="dashboard-wrapper">
-  
-  <!-- Sidebar Navigation -->
-  <aside class="dashboard-sidebar" id="dashboardSidebar">
-    <div class="sidebar-header">
-      <h2 class="sidebar-title">
-        <i class="bi bi-person-badge"></i>
-        <span>FIELDDMAX STAFF 🪪</span>
-      </h2>
-      <div class="sidebar-user">
-        <i class="bi bi-person-circle"></i>
-        <span>
-          {% if user.is_authenticated %}
-            {{ user.get_full_name|default:user.username }}
-          {% else %}
-            Guest
-          {% endif %}
-        </span>
-      </div>
+<div class="agent-wrapper">
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+        <div class="welcome-text">
+            <h1>Welcome, {{ user.first_name|default:user.username }}! 👋</h1>
+            <p>Ready to help customers with credit financing today?</p>
+        </div>
+        <div class="stats-badge">
+            <span class="number">{{ stats.today_count|default:"0" }}</span>
+            <span class="label">Today's Sales</span>
+        </div>
     </div>
-    
-    <nav class="sidebar-nav">
-      <button type="button" class="nav-item active" data-section="overview">
-        <i class="bi bi-speedometer2"></i>
-        <span>Overview</span>
-      </button>
-
-      <button type="button" class="nav-item" data-section="product-lookup">
-        <i class="bi bi-search"></i>
-        <span>Product Lookup</span>
-      </button>
-
-      <button type="button" class="nav-item" data-section="record-sale">
-        <i class="bi bi-cart-plus"></i>
-        <span>Record Sale</span>
-      </button>
-
-      <button type="button" class="nav-item" data-section="my-sales">
-        <i class="bi bi-receipt"></i>
-        <span>My Sales</span>
-      </button>
-
-      <button type="button" class="nav-item" data-section="My-inventory">
-        <i class="bi bi-box-seam"></i>
-        <span>My Inventory</span>
-      </button>
-
-      <!-- Logout Section -->
-      <div style="margin-top: auto; padding: 1rem; border-top: 2px solid #e5e7eb;">
-        <form method="post" action="{% url 'logout' %}">
-          {% csrf_token %}
-          <button type="submit" class="nav-item" style="border: 1px solid #dc2626; background: #fee2e2; color: #dc2626; width: 100%;">
-            <i class="bi bi-box-arrow-right"></i>
-            <span>Logout</span>
-          </button>
-        </form>
-      </div>
-    </nav>
-  </aside>
 
 
-
-
-
-
-
-
-
-
-
-
-
-<!-- Main Dashboard Content -->
-  <main class="dashboard-content">
-    
-    <!-- ========================================
-         OVERVIEW SECTION
-         ======================================== -->
-    <div id="overview" class="content-section active">
-      <div class="content-header">
-        <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
-          <i class="bi bi-list"></i>
-        </button>
-        <h1 class="page-title">Sales Overview</h1>
-      </div>
-
-      <!-- Statistics Cards Grid -->
-      <div class="lookup-grid">
-        <!-- Today's Sales Count Card -->
-        <div class="lookup-card">
-          <div class="card-header-custom">
-            <div class="card-icon success">
-              <i class="bi bi-currency-dollar"></i>
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <div class="action-card" onclick="openModal('newTransactionModal')">
+            <div class="action-icon">
+                <i class="bi bi-plus-circle"></i>
             </div>
-            <h3 class="card-title-custom">Daily Sales Count</h3>
-          </div>
-          <div class="display-box has-content">
-            <div>
-              <p class="display-value">{{ todays_sales_count|default:"0" }}</p>
-              <p class="display-label">Transactions today</p>
+            <div class="action-content">
+                <h3>New Credit Transaction</h3>
+                <p>Create a new credit sale for a customer</p>
             </div>
-          </div>
         </div>
 
-        <!-- Weekly Sales Count Card -->
-        <div class="lookup-card">
-          <div class="card-header-custom">
-            <div class="card-icon primary">
-              <i class="bi bi-graph-up"></i>
+        <div class="action-card" onclick="openModal('addCustomerModal')">
+            <div class="action-icon">
+                <i class="bi bi-person-plus"></i>
             </div>
-            <h3 class="card-title-custom">Weekly Sales Count</h3>
-          </div>
-          <div class="display-box has-content">
-            <div>
-              <p class="display-value">{{ weekly_sales_count|default:"0" }}</p>
-              <p class="display-label">Transactions this week</p>
+            <div class="action-content">
+                <h3>Add Customer</h3>
+                <p>Register a new customer for credit</p>
             </div>
-          </div>
         </div>
-
-        <!-- Monthly Sales Count Card -->
-        <div class="lookup-card">
-          <div class="card-header-custom">
-            <div class="card-icon primary">
-              <i class="bi bi-graph-up"></i>
-            </div>
-            <h3 class="card-title-custom">Monthly Sales Count</h3>
-          </div>
-          <div class="display-box has-content">
-            <div>
-              <p class="display-value">{{ monthly_sales_count|default:"0" }}</p>
-              <p class="display-label">Transactions this month</p>
-            </div>
-          </div>
-        </div>  
-
-        <!-- Inventory Count Card -->
-        <div class="lookup-card">
-          <div class="card-header-custom">
-            <div class="card-icon info">
-              <i class="bi bi-box-seam"></i>
-            </div>
-            <h3 class="card-title-custom">My Products Count</h3>
-          </div>
-          <div class="display-box has-content">
-            <div>
-              <p class="display-value">{{ my_products_count|default:"0" }}</p>
-              <p class="display-label">Items in inventory</p>
-            </div>
-          </div>
-        </div>        
-
-      </div>
-
-      <!-- Quick Actions Grid -->
-      <div class="lookup-grid">
-        <!-- Product Search Action -->
-        <div class="lookup-card">
-          <div class="card-header-custom">
-            <div class="card-icon primary">
-              <i class="bi bi-search"></i>
-            </div>
-            <h3 class="card-title-custom">Quick Lookup</h3>
-          </div>
-          <button type="button" class="btn-action btn-primary" data-section="product-lookup">
-            <i class="bi bi-search"></i>
-            <span>Search Product</span>
-          </button>
-        </div>
-
-        <!-- Record Sale Action -->
-        <div class="lookup-card">
-          <div class="card-header-custom">
-            <div class="card-icon success">
-              <i class="bi bi-cart-plus"></i>
-            </div>
-            <h3 class="card-title-custom">Record Sale</h3>
-          </div>
-          <button type="button" class="btn-action btn-success" data-section="record-sale">
-            <i class="bi bi-plus-circle"></i>
-            <span>New Sale</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Recent Sales Table -->
-      <div class="data-card" style="margin-top: 2rem;">
-        <div class="card-header-table">
-          <h2 class="section-title">Recent Sales</h2>
-          <button type="button" class="btn-action btn-success" data-section="record-sale" style="width: auto; padding: 0.5rem 1.25rem;">
-            <i class="bi bi-plus-circle"></i>
-            <span>Record Sale</span>
-          </button>
-        </div>
-        
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Sale ID</th>
-                <th>Buyer</th>
-                <th>Total Price</th>
-                <th>Date Sold</th>
-                <th>View Receipt</th>
-              </tr>
-            </thead>
-        <tbody>
-          {% for sale in recent_sales %}
-          <tr>
-            <!-- Sale ID -->
-            <td>
-              <strong>#{{ sale.sale_id }}</strong>
-              {% if sale.is_reversed %}
-                <span class="badge badge-warning" style="font-size: 10px; background: #fef3c7; color: #92400e;">
-                  <i class="bi bi-arrow-counterclockwise"></i> REVERSED
-                </span>
-              {% endif %}
-            </td>
-
-            <!-- buyer -->
-            <td>{{ sale.buyer_name|default:"Walk-in" }}</td>
-
-            <!-- Total Price -->
-            <td><strong style="color:#10b981;">{{ sale.total_amount }}</strong></td>
-
-
-            <!-- sale date -->
-            <td>{{ sale.sale_date|date:"M d, Y H:i" }}</td>
-
-            <!-- Vieww etr-->
-            <td>
-              {% if sale.is_reversed %}
-                <span class="btn btn-secondary disabled">ETR Returned</span>
-
-              {% else %}
-                {% if sale.batch_id %}
-                  <a href="{% url 'sales:fieldmax-receipt' sale.batch_id %}"
-                     class="btn btn-primary"
-                     style="display: inline-block;">
-                    View Receipt ({{ sale.batch_total_sales }} items)
-                  </a>
-                {% else %}
-                  <a href="{% url 'sales:sale-etr' sale.sale_id %}"
-                     class="btn btn-primary"
-                     style="display: inline-block;">
-                   View Receipt
-                  </a>
-                {% endif %}
-                {% endif %}
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="9">
-              <div class="empty-state">
-                <i class="bi bi-box-seam"></i>
-                <p>No recent sales found.</p>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
     </div>
-  </div>
-</section>
+
+    <!-- Recent Activity with Receipt Buttons -->
+    <div class="recent-activity">
+        <h3><i class="bi bi-clock-history" style="color: #0dcaf0;"></i> Recent Activity</h3>
+        <div class="activity-list">
+            {% for transaction in recent_transactions %}
+            <div class="activity-item">
+                <div class="activity-icon">
+                    <i class="bi bi-receipt"></i>
+                </div>
+                <div class="activity-details">
+                    <div class="activity-title">
+                        {{ transaction.customer.full_name }} - {{ transaction.product_name }}
+                    </div>
+                    <div class="activity-time">
+                        {{ transaction.transaction_date|timesince }} ago · 
+                        KSH {{ transaction.ceiling_price|floatformat:0|intcomma }} · 
+                        {{ transaction.credit_company.name }}
+                    </div>
+                </div>
+                <!-- View Receipt Button -->
+                <button class="btn-receipt" onclick="viewReceipt('{{ transaction.transaction_id }}')">
+                    <i class="bi bi-receipt"></i> View Receipt
+                </button>
+            </div>
+            {% empty %}
+            <p class="text-center text-muted py-4">No recent activity</p>
+            {% endfor %}
+        </div>
+    </div>
 </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-    <!-- ========================================
-         PRODUCT LOOKUP SECTION
-         ======================================== -->
-    <div id="product-lookup" class="content-section">
-      <div class="content-header">
-        <button class="mobile-sidebar-toggle" id="mobileSidebarToggle2">
-          <i class="bi bi-list"></i>
-        </button>
-        <h1 class="page-title">Product Lookup & Quick Sale</h1>
-      </div>
-
-      <!-- Product Lookup 3-Column Grid -->
-      <div class="lookup-grid">
-        <!-- Product Code Input -->
-        <div class="lookup-card">
-          <div class="card-header-custom">
-            <div class="card-icon primary">
-              <i class="bi bi-upc-scan"></i>
-            </div>
-            <h3 class="card-title-custom">Product Code</h3>
-          </div>
-          <input type="text" id="lookup-product-code" class="form-control form-control-lg" placeholder="Enter product code…">
-          <button type="button" class="btn-action btn-primary" id="btn-search-product" style="margin-top: 1rem;">
-            <i class="bi bi-search"></i>
-            <span>Lookup Product</span>
-          </button>
+<!-- ======================================== -->
+<!-- NEW TRANSACTION MODAL -->
+<!-- ======================================== -->
+<div id="newTransactionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="bi bi-plus-circle"></i> New Credit Transaction</h2>
+            <span class="close-modal" onclick="closeModal('newTransactionModal')">&times;</span>
         </div>
+        <div class="modal-body">
+            <form id="creditTransactionForm" method="POST" action="{% url 'credit:create_transaction' %}" onsubmit="return validateAndSubmit(event, this)">
+                {% csrf_token %}
+                
+                <div class="mb-4">
+                    <label for="credit_company" class="form-label required">
+                        <i class="bi bi-building"></i> Credit Company
+                    </label>
+                    <select id="credit_company" name="credit_company" class="form-select form-select-lg" required>
+                        <option value="">-- Select Company --</option>
+                        {% for company in companies %}
+                        <option value="{{ company.id }}">{{ company.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-        <!-- Product Name Display -->
-        <div class="lookup-card">
-          <div class="card-header-custom">
-            <div class="card-icon success">
-              <i class="bi bi-box"></i>
-            </div>
-            <h3 class="card-title-custom">Product Name</h3>
-          </div>
-          <div class="display-box" id="product-name-display">
-            <p style="color: #9ca3af; margin: 0;">Search for a product</p>
-          </div>
+                <div class="mb-4">
+                    <label for="customer" class="form-label required">
+                        <i class="bi bi-person"></i> Customer
+                    </label>
+                    <select id="customer" name="customer" class="form-select form-select-lg" required>
+                        <option value="">-- Select Customer --</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer.id }}">{{ customer.full_name }} ({{ customer.id_number }})</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">
+                        <a href="#" onclick="openModal('addCustomerModal'); closeModal('newTransactionModal')">+ Add New Customer</a>
+                    </small>
+                </div>
+
+                <div class="mb-4">
+                    <label for="product_search" class="form-label">
+                        <i class="bi bi-search"></i> Search Product
+                    </label>
+                    <div class="search-input-group">
+                        <input type="text" 
+                               id="product_search" 
+                               class="form-control form-control-lg" 
+                               placeholder="Scan IMEI/Serial/Barcode">
+                        <button type="button" class="btn-action btn-primary" onclick="searchProduct()">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="product" class="form-label required">
+                        <i class="bi bi-phone"></i> Select Product
+                    </label>
+                    <select id="product" name="product" class="form-select form-select-lg" required onchange="loadProductDetails()">
+                        <option value="">-- Select Product --</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}" 
+                                data-price="{{ product.selling_price }}"
+                                data-name="{{ product.name }}"
+                                data-code="{{ product.product_code }}"
+                                data-sku="{{ product.sku_value }}"
+                                data-barcode="{{ product.barcode }}"
+                                data-brand="{{ product.brand }}"
+                                data-model="{{ product.model }}"
+                                data-category="{{ product.category.name }}"
+                                data-quantity="{{ product.quantity }}"
+                                data-status="{{ product.status }}"
+                                data-specs='{{ product.specifications|safe }}'
+                                data-condition="{{ product.condition }}"
+                                data-warranty="{{ product.warranty_months }}">
+                            {{ product.display_name|default:product.name }} - {{ product.product_code }}
+                            {% if product.brand %} - {{ product.brand }}{% endif %}
+                            {% if product.model %} {{ product.model }}{% endif %}
+                            (Stock: {{ product.quantity }})
+                            {% if product.status != 'available' %} - [{{ product.get_status_display }}]{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Product Details Panel -->
+                <div id="productDetailsPanel" class="product-details-panel" style="display: none;">
+                    <h6 class="mb-3"><i class="bi bi-info-circle"></i> Product Details</h6>
+                    <div class="product-detail-row">
+                        <span class="product-detail-label">Product Code:</span>
+                        <span class="product-detail-value" id="detail_product_code">---</span>
+                    </div>
+                    <div class="product-detail-row">
+                        <span class="product-detail-label">Brand/Model:</span>
+                        <span class="product-detail-value" id="detail_brand_model">---</span>
+                    </div>
+                    <div class="product-detail-row">
+                        <span class="product-detail-label">Category:</span>
+                        <span class="product-detail-value" id="detail_category">---</span>
+                    </div>
+                    <div class="product-detail-row">
+                        <span class="product-detail-label">IMEI/Serial:</span>
+                        <span class="product-detail-value" id="detail_sku">---</span>
+                    </div>
+                    <div class="product-detail-row">
+                        <span class="product-detail-label">Barcode:</span>
+                        <span class="product-detail-value" id="detail_barcode">---</span>
+                    </div>
+                    <div class="product-detail-row">
+                        <span class="product-detail-label">Selling Price:</span>
+                        <span class="product-detail-value" id="detail_price">KSH 0.00</span>
+                    </div>
+                    <div class="product-detail-row">
+                        <span class="product-detail-label">Condition:</span>
+                        <span class="product-detail-value" id="detail_condition">---</span>
+                    </div>
+                    <div class="product-detail-row">
+                        <span class="product-detail-label">Warranty:</span>
+                        <span class="product-detail-value" id="detail_warranty">--- months</span>
+                    </div>
+                    <div class="product-detail-row">
+                        <span class="product-detail-label">Specifications:</span>
+                        <span class="product-detail-value" id="detail_specs"></span>
+                    </div>
+                    
+                    <!-- Availability Status -->
+                    <div id="availabilityStatus" class="product-availability mt-3">
+                        Checking availability...
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="imei" class="form-label">
+                        <i class="bi bi-upc-scan"></i> IMEI / Serial Number
+                    </label>
+                    <input type="text" 
+                           id="imei" 
+                           name="imei" 
+                           class="form-control form-control-lg"
+                           placeholder="IMEI/Serial number"
+                           readonly>
+                </div>
+
+                <div class="mb-4">
+                    <label for="ceiling_price" class="form-label required">
+                        <i class="bi bi-cash-stack"></i> Ceiling Price (KSH)
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">KSH</span>
+                        <input type="number" 
+                               id="ceiling_price" 
+                               name="ceiling_price" 
+                               class="form-control form-control-lg"
+                               step="0.01"
+                               min="0"
+                               placeholder="Amount company will pay you"
+                               required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="company_reference" class="form-label">
+                        <i class="bi bi-tag"></i> Company Reference
+                    </label>
+                    <input type="text" 
+                           id="company_reference" 
+                           name="company_reference" 
+                           class="form-control form-control-lg"
+                           placeholder="Reference from company (optional)">
+                </div>
+
+                <div class="mb-4">
+                    <label for="notes" class="form-label">
+                        <i class="bi bi-pencil"></i> Notes
+                    </label>
+                    <textarea id="notes" name="notes" class="form-control" rows="2" placeholder="Any additional notes..."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-action btn-outline" onclick="closeModal('newTransactionModal')">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submitTransactionBtn" class="btn-action btn-success">
+                        <i class="bi bi-check-circle"></i> Create Transaction
+                    </button>
+                </div>
+            </form>
         </div>
-
-        <!-- Selling Price Display -->
-        <div class="lookup-card">
-          <div class="card-header-custom">
-            <div class="card-icon info">
-              <i class="bi bi-currency-dollar"></i>
-            </div>
-            <h3 class="card-title-custom">Selling Price</h3>
-          </div>
-          <div class="display-box" id="selling-price-display">
-            <p style="color: #9ca3af; margin: 0;">---</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Sales Table -->
-      <div class="data-card" style="margin-top: 2rem;">
-        <div class="card-header-table">
-          <h2 class="section-title">Recent Sales</h2>
-          <button type="button" class="btn-action btn-success" data-section="record-sale" style="width: auto; padding: 0.5rem 1.25rem;">
-            <i class="bi bi-plus-circle"></i>
-            <span>Record Sale</span>
-          </button>
-        </div>
-        
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Sale ID</th>
-                <th>Buyer</th>
-                <th>Total Price</th>
-                <th>Date Sold</th>
-                <th>View Receipt</th>
-              </tr>
-            </thead>
-        <tbody>
-          {% for sale in recent_sales %}
-          <tr>
-            <!-- Sale ID -->
-            <td>
-              <strong>#{{ sale.sale_id }}</strong>
-              {% if sale.is_reversed %}
-                <span class="badge badge-warning" style="font-size: 10px; background: #fef3c7; color: #92400e;">
-                  <i class="bi bi-arrow-counterclockwise"></i> REVERSED
-                </span>
-              {% endif %}
-            </td>
-
-            <!-- buyer -->
-            <td>{{ sale.buyer_name|default:"Walk-in" }}</td>
-
-            <!-- Total Price -->
-            <td><strong style="color:#10b981;">{{ sale.total_amount }}</strong></td>
-
-
-            <!-- sale date -->
-            <td>{{ sale.sale_date|date:"M d, Y H:i" }}</td>
-
-            <!-- Vieww etr-->
-            <td>
-              {% if sale.is_reversed %}
-                <span class="btn btn-secondary disabled">ETR Returned</span>
-
-              {% else %}
-                {% if sale.batch_id %}
-                  <a href="{% url 'sales:fieldmax-receipt' sale.batch_id %}"
-                     class="btn btn-primary"
-                     style="display: inline-block;">
-                    View Receipt ({{ sale.batch_total_sales }} items)
-                  </a>
-                {% else %}
-                  <a href="{% url 'sales:sale-etr' sale.sale_id %}"
-                     class="btn btn-primary"
-                     style="display: inline-block;">
-                   View Receipt
-                  </a>
-                {% endif %}
-                {% endif %}
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="9">
-              <div class="empty-state">
-                <i class="bi bi-box-seam"></i>
-                <p>No recent sales found.</p>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
     </div>
-  </div>
-</section>
 </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <!-- ==========================================
-         RECORD SALE SECTION
-    ========================================== -->
-<div id="record-sale" class="content-section">
-
-  <!-- Header -->
-  <div class="content-header">
-    <button class="mobile-sidebar-toggle" id="mobileSidebarToggle3">
-      <i class="bi bi-list"></i>
-    </button>
-    <h1 class="page-title">
-      <i class="bi bi-cart-plus"></i> Record Sale
-    </h1>
-  </div>
-
-  <!-- Two Column Layout -->
-  <div class="row g-4">
-    
-    <!-- ==========================================
-         COLUMN A: INPUT FORM
-    ========================================== -->
-    <div class="col-lg-6">
-      <div class="data-card h-100">
-        <div class="card-header bg-primary text-white">
-          <h5 class="mb-0">
-            <i class="bi bi-pencil-square"></i> Sale Input Form
-          </h5>
+<!-- ======================================== -->
+<!-- ADD CUSTOMER MODAL -->
+<!-- ======================================== -->
+<div id="addCustomerModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="bi bi-person-plus"></i> Add New Customer</h2>
+            <span class="close-modal" onclick="closeModal('addCustomerModal')">&times;</span>
         </div>
-        <div class="card-body" style="padding: 2rem;">
-          
-          <form id="simpleSaleForm">
-            
-            <!-- SKU Value with Live Search -->
-            <div class="mb-4">
-              <label for="skuValue" class="form-label required">
-                <i class="bi bi-upc-scan"></i> SKU Value
-              </label>
-              <input type="text" 
-                     id="skuValue" 
-                     name="sku_value" 
-                     class="form-control form-control-lg"
-                     placeholder="Start typing SKU / IMEI / Serial Number" 
-                     required 
-                     autocomplete="off"
-                     autofocus>
-              <small class="form-text text-muted">
-                <i class="bi bi-info-circle"></i> Searching only YOUR products
-  
-              </small>
-              
-              <!-- Live Search Results Dropdown -->
-              <!-- Live Search Results Dropdown -->
-              <div id="skuSearchResults" class="list-group mt-2" style="display: none;"></div>
-           </div>
+        <div class="modal-body">
+            <form method="POST" action="{% url 'credit:add_customer' %}" onsubmit="return handleCustomerSubmit(event, this)">
+                {% csrf_token %}
+                
+                <div class="mb-4">
+                    <label for="full_name" class="form-label required">Full Name</label>
+                    <input type="text" class="form-control form-control-lg" id="full_name" name="full_name" required>
+                </div>
 
-            <!-- Client Name -->
-            <div class="mb-3">
-              <label for="clientName" class="form-label required">
-                <i class="bi bi-person"></i> Client Name
-              </label>
-              <input type="text" 
-                     id="clientName" 
-                     name="client_name" 
-                     class="form-control form-control-lg"
-                     placeholder="Enter client full name" 
-                     required>
-            </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="id_number" class="form-label required">ID Number</label>
+                        <input type="text" class="form-control form-control-lg" id="id_number" name="id_number" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="phone_number" class="form-label required">Phone Number</label>
+                        <input type="tel" class="form-control form-control-lg" id="phone_number" name="phone_number" required>
+                    </div>
+                </div>
 
-            <!-- ID Number -->
-            <div class="mb-3">
-              <label for="idNumber" class="form-label required">
-                <i class="bi bi-card-text"></i> ID Number
-              </label>
-              <input type="text" 
-                     id="idNumber" 
-                     name="id_number" 
-                     class="form-control form-control-lg"
-                     placeholder="Enter ID number" 
-                     required>
-            </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="nok_name" class="form-label">Next of Kin Name</label>
+                        <input type="text" class="form-control form-control-lg" id="nok_name" name="nok_name">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="nok_phone" class="form-label">Next of Kin Phone</label>
+                        <input type="tel" class="form-control form-control-lg" id="nok_phone" name="nok_phone">
+                    </div>
+                </div>
 
-            <!-- Phone Number -->
-            <div class="mb-3">
-              <label for="phoneNumber" class="form-label required">
-                <i class="bi bi-telephone"></i> Phone Number
-              </label>
-              <input type="tel" 
-                     id="phoneNumber" 
-                     name="phone_number" 
-                     class="form-control form-control-lg"
-                     placeholder="0712345678" 
-                     required>
-            </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label for="county" class="form-label">County</label>
+                        <input type="text" class="form-control form-control-lg" id="county" name="county">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="town" class="form-label">Town</label>
+                        <input type="text" class="form-control form-control-lg" id="town" name="town">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control form-control-lg" id="email" name="email">
+                    </div>
+                </div>
 
-            <!-- NOK Name -->
-            <div class="mb-3">
-              <label for="nokName" class="form-label required">
-                <i class="bi bi-person-badge"></i> Next of Kin Name
-              </label>
-              <input type="text" 
-                     id="nokName" 
-                     name="nok_name" 
-                     class="form-control form-control-lg"
-                     placeholder="Enter NOK name" 
-                     required>
-            </div>
-
-            <!-- NOK Phone Number -->
-            <div class="mb-4">
-              <label for="nokPhone" class="form-label required">
-                <i class="bi bi-telephone-forward"></i> NOK Phone Number
-              </label>
-              <input type="tel" 
-                     id="nokPhone" 
-                     name="nok_phone" 
-                     class="form-control form-control-lg"
-                     placeholder="0712345678" 
-                     required>
-            </div>
-
-            <!-- Submit Button -->
-            <div class="d-grid gap-2 mt-4">
-              <button type="submit" 
-                      id="submitSaleBtn" 
-                      class="btn btn-success btn-lg">
-                <i class="bi bi-check-circle"></i> Submit Sale
-              </button>
-            </div>
-
-          </form>
+                <div class="modal-actions">
+                    <button type="button" class="btn-action btn-outline" onclick="closeModal('addCustomerModal')">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-action btn-success">
+                        <i class="bi bi-check-circle"></i> Save Customer
+                    </button>
+                </div>
+            </form>
         </div>
-      </div>
     </div>
-
-    <!-- ==========================================
-         COLUMN B: DISPLAY & EDIT SECTION
-    ========================================== -->
-    <div class="col-lg-6">
-      <div class="data-card h-100">
-        <div class="card-header bg-info text-white">
-          <h5 class="mb-0">
-            <i class="bi bi-display"></i> Product & Client Details
-          </h5>
-        </div>
-        <div class="card-body" style="padding: 2rem;">
-          
-          <!-- Initial State (No Product Selected) -->
-          <div id="emptyDisplayState" class="text-center py-5">
-            <i class="bi bi-box-seam" style="font-size: 4rem; color: #cbd5e1;"></i>
-            <h5 class="text-muted mt-3">No Product Selected</h5>
-            <p class="text-muted">
-              Start typing SKU value to search products
-            </p>
-          </div>
-
-          <!-- Product Details Display -->
-          <div id="productDisplaySection" style="display: none;">
-            
-            <!-- Product Info Card -->
-            <div class="product-display-card mb-4">
-              <h5 class="mb-3" style="color: #10b981; font-weight: 700;">
-                <i class="bi bi-box"></i> Product Information
-              </h5>
-              
-              <div class="info-item mb-3">
-                <label class="display-label">
-                  <i class="bi bi-tag"></i> Product Name
-                </label>
-                <div class="display-value" id="displayProductName">---</div>
-              </div>
-
-              <div class="info-item mb-3">
-                <label class="display-label">
-                  <i class="bi bi-upc"></i> Full SKU Value
-                </label>
-                <div class="display-value" id="displaySkuValue">---</div>
-              </div>
-
-              <div class="info-item mb-3">
-                <label class="display-label">
-                  <i class="bi bi-currency-exchange"></i> Selling Price (Editable)
-                </label>
-                <div class="input-group">
-                  <span class="input-group-text">KSH</span>
-                  <input type="number" 
-                         id="editSellingPrice" 
-                         class="form-control form-control-lg" 
-                         step="0.01"
-                         placeholder="0.00">
-                  <button class="btn btn-outline-success" 
-                          type="button" 
-                          id="updatePriceBtn">
-                    <i class="bi bi-check"></i> Update
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <hr class="my-4">
-
-            <!-- Client Details Display -->
-            <div class="client-display-card">
-              <h5 class="mb-3" style="color: #0dcaf0; font-weight: 700;">
-                <i class="bi bi-person-vcard"></i> Client Information
-              </h5>
-
-              <!-- Client Name -->
-              <div class="info-item mb-3">
-                <label class="display-label">
-                  <i class="bi bi-person"></i> Client Name
-                </label>
-                <div class="input-group">
-                  <input type="text" 
-                         id="editClientName" 
-                         class="form-control" 
-                         placeholder="Client name"
-                         readonly>
-                  <button class="btn btn-outline-primary btn-sm" 
-                          type="button" 
-                          onclick="enableEdit('editClientName')">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- ID Number -->
-              <div class="info-item mb-3">
-                <label class="display-label">
-                  <i class="bi bi-card-text"></i> ID Number
-                </label>
-                <div class="input-group">
-                  <input type="text" 
-                         id="editIdNumber" 
-                         class="form-control" 
-                         placeholder="ID number"
-                         readonly>
-                  <button class="btn btn-outline-primary btn-sm" 
-                          type="button" 
-                          onclick="enableEdit('editIdNumber')">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Phone Number -->
-              <div class="info-item mb-3">
-                <label class="display-label">
-                  <i class="bi bi-telephone"></i> Phone Number
-                </label>
-                <div class="input-group">
-                  <input type="tel" 
-                         id="editPhoneNumber" 
-                         class="form-control" 
-                         placeholder="Phone number"
-                         readonly>
-                  <button class="btn btn-outline-primary btn-sm" 
-                          type="button" 
-                          onclick="enableEdit('editPhoneNumber')">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- NOK Name -->
-              <div class="info-item mb-3">
-                <label class="display-label">
-                  <i class="bi bi-person-badge"></i> NOK Name
-                </label>
-                <div class="input-group">
-                  <input type="text" 
-                         id="editNokName" 
-                         class="form-control" 
-                         placeholder="NOK name"
-                         readonly>
-                  <button class="btn btn-outline-primary btn-sm" 
-                          type="button" 
-                          onclick="enableEdit('editNokName')">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- NOK Phone -->
-              <div class="info-item mb-3">
-                <label class="display-label">
-                  <i class="bi bi-telephone-forward"></i> NOK Phone
-                </label>
-                <div class="input-group">
-                  <input type="tel" 
-                         id="editNokPhone" 
-                         class="form-control" 
-                         placeholder="NOK phone"
-                         readonly>
-                  <button class="btn btn-outline-primary btn-sm" 
-                          type="button" 
-                          onclick="enableEdit('editNokPhone')">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Sale Messages -->
-          <div id="saleStatusMessage" class="mt-4"></div>
-
-        </div>
-      </div>
-    </div>
-
-  </div><!-- End Row -->
-
 </div>
 
-
-
-
-
-
-
-
-
-
-
-
-    <!-- ========================================
-         MY SALES SECTION
-         ======================================== -->
-    <div id="my-sales" class="content-section">
-      <div class="content-header">
-        <button class="mobile-sidebar-toggle" id="mobileSidebarToggle4">
-          <i class="bi bi-list"></i>
-        </button>
-        <h1 class="page-title">My Sales</h1>
-        <button type="button" class="btn-action btn-success" data-section="record-sale" style="width: auto; padding: 0.75rem 1.5rem;">
-          <i class="bi bi-plus-circle"></i>
-          <span>Record Sale</span>
-        </button>
-      </div>
-      
-      <div class="data-card">
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Sale ID</th>
-                <th>Buyer</th>
-                <th>Total Amount</th>
-                <th>Date Sold</th>
-                <th>View Receipt</th>
-              </tr>
-            </thead>
-            <tbody>
-          {% for sale in all_sales %}
-          <tr>
-            <td class="sale-id">#{{ sale.sale_id }}</td>
-            <td>{{ sale.buyer_name|default:"N/A" }}</td>
-            <td><strong style="color:#10b981;">{{ sale.total_amount }}</strong></td>
-            <td>{{ sale.sale_date|date:"M d, Y H:i" }}</td>
-            <td>
-              {% if sale.is_reversed %}
-                <span class="btn btn-secondary disabled">ETR Returned</span>
-
-              {% else %}
-                {% if sale.batch_id %}
-                  <a href="{% url 'sales:fieldmax-receipt' sale.batch_id %}"
-                    class="btn btn-primary"
-                     style="display: inline-block;">
-                    View Receipt ({{ sale.batch_total_sales }} items)
-                  </a>
-                {% else %}
-                  <a href="{% url 'sales:sale-etr' sale.sale_id %}"
-                     class="btn btn-primary"
-                     style="display: inline-block;">
-                    View Receipt
-                  </a>
-                {% endif %}
-              {% endif %}
-            </td>
-
-          </tr>
-
-          {% empty %}
-          <tr>
-            <td colspan="8" class="empty-state">
-              <i class="bi bi-receipt"></i>
-              <p>No sales recorded yet</p>
-            </td>
-          </tr>
-          {% endfor %}
-            </tbody>
-          </table>
+<!-- ======================================== -->
+<!-- ETR RECEIPT MODAL -->
+<!-- ======================================== -->
+<div id="etrModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="bi bi-receipt"></i> ETR Receipt</h2>
+            <span class="close-modal" onclick="closeModal('etrModal')">&times;</span>
         </div>
-      </div>
-    </div>
-
-    <!-- ========================================
-         ALL INVENTORY SECTION
-         ======================================== -->
-    <div id="My-inventory" class="content-section">
-      <div class="content-header">
-        <button class="mobile-sidebar-toggle" id="mobileSidebarToggle5">
-          <i class="bi bi-list"></i>
-        </button>
-        <h1 class="page-title">All Inventory</h1>
-              <!-- Filter Buttons -->
-        <select id="productStatusFilter" class="form-select" style="width: auto;" onchange="filterProducts()">
-          <option value="all">All Products</option>
-          <option value="instock">In Stock</option>
-          <option value="outofstock">Out of Stock</option>
-          <option value="lowstock">Low Stock (≤5)</option>
-        </select>
-      
-        <select id="productCategoryFilter" class="form-select" style="width: auto;" onchange="filterProducts()">
-          <option value="all">All Categories</option>
-          {% for category in categories %}
-          <option value="{{ category.id }}">{{ category.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      
-      <div class="data-card">
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Product Code</th>
-                <th>Product Name</th>
-                <th>Category</th>
-                <th>Stock</th>
-                <th>IMEI/Serial Number</th>
-                <th>Selling Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for product in my_products %}
-              <tr>
-                <td><strong>{{ product.product_code }}</strong></td>
-                <td>{{ product.name }}</td>
-                <td>{{ product.category.name }}</td>
-
-
-<!-- STOCK COLUMN -->
-<td class="product-quantity">
-  {% if product.category.is_single_item %}
-    {% if product.status == 'sold' %}
-      <strong style="color: #dc3545; font-weight: bold;">
-        <i class="bi bi-x-circle-fill"></i> SOLD
-      </strong>
-    {% else %}
-      <strong style="color: #28a745; font-weight: bold;">
-        <i class="bi bi-check-circle-fill"></i> Available
-      </strong>
-    {% endif %}
-  {% else %}
-    {% if product.quantity > 5 %}
-      <strong style="color: #28a745; font-weight: bold;">
-        {{ product.quantity }} units
-      </strong>
-    {% elif product.quantity > 0 %}
-      <strong style="color: #ffc107; font-weight: bold;">
-        {{ product.quantity }} units (Low)
-      </strong>
-    {% else %}
-      <strong style="color: #dc3545; font-weight: bold;">
-        0 units (Out)
-      </strong>
-    {% endif %}
-  {% endif %}
-</td>
-
-
-                <td>{{ product.sku_value }}</td>
-                <td class="price-tag">KSH {{ product.selling_price }}</td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="7" class="empty-state">
-                  <i class="bi bi-box-seam"></i>
-                  <p>No products in inventory</p>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        <div class="modal-body" id="receiptContent">
+            <!-- Receipt will be loaded here dynamically -->
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Generating receipt...</p>
+            </div>
         </div>
-      </div>
+        <div class="modal-actions">
+            <button class="btn-action btn-outline" onclick="closeModal('etrModal')">
+                <i class="bi bi-x-circle"></i> Close
+            </button>
+            <button class="btn-action btn-primary" onclick="printReceipt()">
+                <i class="bi bi-printer"></i> Print
+            </button>
+            <button class="btn-action btn-success" onclick="downloadReceipt()">
+                <i class="bi bi-download"></i> Download
+            </button>
+        </div>
     </div>
-
-  </main>
 </div>
-
-
-
-
-
-
-
-
-
-
-
 
 <script>
-  
-// ================================
-// SECTION NAVIGATION SYSTEM
-// ================================
+// ========================================
+// MODAL FUNCTIONS
+// ========================================
+function openModal(modalId) {
+    document.getElementById(modalId).style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
 
-document.addEventListener('DOMContentLoaded', function() {
-  const navItems = document.querySelectorAll('.nav-item[data-section], .btn-action[data-section], button[data-section]');
-  const sections = document.querySelectorAll('.content-section');
-  const sidebar = document.getElementById('dashboardSidebar');
-  
-  // Get all mobile sidebar toggles
-  const mobileSidebarToggles = [
-    document.getElementById('mobileSidebarToggle'),
-    document.getElementById('mobileSidebarToggle2'),
-    document.getElementById('mobileSidebarToggle3'),
-    document.getElementById('mobileSidebarToggle4'),
-    document.getElementById('mobileSidebarToggle5')
-  ];
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
 
-  // ============================================
-  // DETECT FRESH LOGIN vs NAVIGATION
-  // ============================================
-  function isFreshLogin() {
-    // Check if this is the first page load after login
-    const isFirstLoad = !sessionStorage.getItem('dashboardVisited');
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+}
+
+// ========================================
+// PRODUCT SEARCH & DETAILS
+// ========================================
+function searchProduct() {
+    const searchTerm = document.getElementById('product_search').value.trim();
+    if (!searchTerm) return;
     
-    if (isFirstLoad) {
-      // Mark that dashboard has been visited in this session
-      sessionStorage.setItem('dashboardVisited', 'true');
-      return true;
-    }
+    const productSelect = document.getElementById('product');
+    let found = false;
     
-    return false;
-  }
-
-  // Navigation handler
-  function navigateToSection(sectionId) {
-    // Hide all sections
-    sections.forEach(section => section.classList.remove('active'));
-    
-    // Remove active class from all sidebar nav items only
-    document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
-      item.classList.remove('active');
-    });
-    
-    // Show target section
-    const targetSection = document.getElementById(sectionId);
-    if (targetSection) {
-      targetSection.classList.add('active');
-      
-      // Scroll to top of page
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    
-    // Add active class to clicked sidebar nav item
-    const activeSidebarNavItem = document.querySelector(`.sidebar-nav .nav-item[data-section="${sectionId}"]`);
-    if (activeSidebarNavItem) {
-      activeSidebarNavItem.classList.add('active');
-    }
-    
-    // Save current section to localStorage
-    localStorage.setItem('activeSection', sectionId);
-    
-    // Close mobile sidebar if open
-    if (window.innerWidth <= 992) {
-      sidebar.classList.remove('active');
-    }
-  }
-
-  // ============================================
-  // RESTORE SECTION ON PAGE LOAD
-  // ============================================
-  function restoreActiveSection() {
-    // ✅ If fresh login, always go to Overview
-    if (isFreshLogin()) {
-      console.log('Fresh login detected - Loading Overview');
-      navigateToSection('overview');
-      return;
-    }
-    
-    // ✅ Otherwise, restore saved section
-    const savedSection = localStorage.getItem('activeSection');
-    if (savedSection) {
-      console.log('Restoring saved section:', savedSection);
-      navigateToSection(savedSection);
-    } else {
-      // Fallback to overview if no saved section
-      navigateToSection('overview');
-    }
-  }
-
-  // Restore section on page load
-  restoreActiveSection();
-
-  // Add click handlers to all navigation items
-  navItems.forEach(item => {
-    item.addEventListener('click', function(e) {
-      // Don't prevent default for logout button
-      if (this.type !== 'submit' || !this.closest('form[action*="logout"]')) {
-        e.preventDefault();
-      }
-      
-      const sectionId = this.getAttribute('data-section');
-      if (sectionId) {
-        navigateToSection(sectionId);
-      }
-    });
-  });
-
-  // Mobile sidebar toggle handlers
-  mobileSidebarToggles.forEach(toggle => {
-    if (toggle) {
-      toggle.addEventListener('click', function(e) {
-        e.stopPropagation();
-        sidebar.classList.toggle('active');
-      });
-    }
-  });
-
-  // Close sidebar when clicking outside on mobile
-  document.addEventListener('click', function(e) {
-    if (window.innerWidth <= 992) {
-      const isClickInsideSidebar = sidebar.contains(e.target);
-      const isClickOnToggle = mobileSidebarToggles.some(toggle => toggle && toggle.contains(e.target));
-      
-      if (!isClickInsideSidebar && !isClickOnToggle && sidebar.classList.contains('active')) {
-        sidebar.classList.remove('active');
-      }
-    }
-  });
-
-  // Handle window resize
-  window.addEventListener('resize', function() {
-    if (window.innerWidth > 992) {
-      sidebar.classList.remove('active');
-    }
-  });
-
-  // ============================================
-  // CLEAR SESSION ON LOGOUT
-  // ============================================
-  const logoutButton = document.querySelector('form[action*="logout"] button[type="submit"]');
-  if (logoutButton) {
-    logoutButton.addEventListener('click', function() {
-      // Clear session storage on logout
-      sessionStorage.removeItem('dashboardVisited');
-      console.log('Session cleared on logout');
-    });
-  }
-});
-
-
-// ================================
-// PRODUCT LOOKUP - AJAX FUNCTIONALITY
-// ================================
-
-document.addEventListener('DOMContentLoaded', function() {
-  const lookupBtn = document.getElementById("btn-search-product");
-  const productCodeInput = document.getElementById("lookup-product-code");
-  const nameDisplay = document.getElementById("product-name-display");
-  const priceDisplay = document.getElementById("selling-price-display");
-
-  // Ensure the URL points to your Django AJAX endpoint
-  const productLookupUrl = "{% url 'inventory:product-lookup' %}";
-
-  function resetDisplays() {
-    if (nameDisplay) {
-      nameDisplay.innerHTML = '<p style="color: #9ca3af; margin: 0;">Search for a product</p>';
-      nameDisplay.classList.remove('has-content');
-    }
-    if (priceDisplay) {
-      priceDisplay.innerHTML = '<p style="color: #9ca3af; margin: 0;">---</p>';
-      priceDisplay.classList.remove('has-content');
-    }
-  }
-
-  function showToast(message, type="info") {
-    // Simple toast implementation
-    const toast = document.createElement("div");
-    toast.className = `toast-message ${type}`;
-    toast.innerText = message;
-    document.body.appendChild(toast);
-    setTimeout(() => { toast.classList.add("show"); }, 50);
-    setTimeout(() => { toast.remove(); }, 3000);
-  }
-
-  function lookupProduct() {
-    const code = productCodeInput.value.trim();
-    if (!code) {
-      showToast("Please enter a product code", "error");
-      return;
-    }
-
-    // Show loading
-    lookupBtn.disabled = true;
-    lookupBtn.innerHTML = '<i class="bi bi-hourglass-split"></i><span> Searching...</span>';
-
-    fetch(`${productLookupUrl}?product_code=${encodeURIComponent(code)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === "success") {
-          // Update Product Name
-          if (nameDisplay) {
-            nameDisplay.innerHTML = `
-              <div>
-                <p class="display-value">${data.product_name}</p>
-                <p class="display-label">${data.product_code}</p>
-              </div>
-            `;
-            nameDisplay.classList.add('has-content');
-          }
-
-          // Update Selling Price
-          if (priceDisplay) {
-            const price = parseFloat(data.selling_price).toFixed(2);
-            priceDisplay.innerHTML = `
-              <div>
-                <p class="display-value">KSH ${price}</p>
-                <p class="display-label">Current price</p>
-              </div>
-            `;
-            priceDisplay.classList.add('has-content');
-          }
-
-          showToast("Product found!", "success");
-
-        } else {
-          showToast(data.message || "Product not found", "error");
-          resetDisplays();
+    for (let i = 0; i < productSelect.options.length; i++) {
+        const option = productSelect.options[i];
+        const sku = option.dataset.sku || '';
+        const barcode = option.dataset.barcode || '';
+        
+        if (sku.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            barcode.toLowerCase().includes(searchTerm.toLowerCase())) {
+            productSelect.selectedIndex = i;
+            loadProductDetails();
+            found = true;
+            break;
         }
-      })
-      .catch(err => {
-        console.error("Product lookup error:", err);
-        showToast("Error connecting to server", "error");
-        resetDisplays();
-      })
-      .finally(() => {
-        lookupBtn.disabled = false;
-        lookupBtn.innerHTML = '<i class="bi bi-search"></i><span> Lookup Product</span>';
-      });
-  }
-
-  // Button click
-  if (lookupBtn) {
-    lookupBtn.addEventListener("click", lookupProduct);
-  }
-
-  // Enter key support
-  if (productCodeInput) {
-    productCodeInput.addEventListener("keypress", function(e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        lookupProduct();
-      }
-    });
-  }
-
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ================================
-//  RECORD SALE SECTION - LIVE SEARCH
-// ================================
-document.addEventListener('DOMContentLoaded', function() {
-  const skuInput = document.getElementById('skuValue');
-  const clientNameInput = document.getElementById('clientName');
-  const idNumberInput = document.getElementById('idNumber');
-  const phoneNumberInput = document.getElementById('phoneNumber');
-  const nokNameInput = document.getElementById('nokName');
-  const nokPhoneInput = document.getElementById('nokPhone');
-  
-  const skuSearchResults = document.getElementById('skuSearchResults');
-  const emptyDisplayState = document.getElementById('emptyDisplayState');
-  const productDisplaySection = document.getElementById('productDisplaySection');
-  
-  const displayProductName = document.getElementById('displayProductName');
-  const displaySkuValue = document.getElementById('displaySkuValue');
-  const editSellingPrice = document.getElementById('editSellingPrice');
-  
-  const editClientName = document.getElementById('editClientName');
-  const editIdNumber = document.getElementById('editIdNumber');
-  const editPhoneNumber = document.getElementById('editPhoneNumber');
-  const editNokName = document.getElementById('editNokName');
-  const editNokPhone = document.getElementById('editNokPhone');
-  
-  const saleForm = document.getElementById('simpleSaleForm');
-  const saleStatusMessage = document.getElementById('saleStatusMessage');
-
-  let debounceTimer;
-  let currentProduct = null;
-
-  // ============================================
-  // LIVE SKU SEARCH - TRIGGERS ON EVERY KEYSTROKE
-  // ============================================
-  skuInput.addEventListener('input', function() {
-    clearTimeout(debounceTimer);
-    const searchTerm = this.value.trim();
-    
-    // Search starts from the first digit entered
-    if (searchTerm.length === 0) {
-      hideSearchResults();
-      showEmptyState();
-      return;
     }
     
-    // Debounce the search slightly (200ms) to avoid too many requests
-    debounceTimer = setTimeout(() => searchProducts(searchTerm), 200);
-  });
-
-  // ============================================
-  // SEARCH PRODUCTS IN DATABASE
-  // ============================================
-  async function searchProducts(searchTerm) {
-    try {
-      showSearchLoading();
-      
-      // Call Django backend with search term
-      // This endpoint should return ALL products containing the search term
-      const response = await fetch(`/sales/product-search/?q=${encodeURIComponent(searchTerm)}`);
-      const data = await response.json();
-      
-      if (data.success && data.products && data.products.length > 0) {
-        displaySearchResults(data.products);
-      } else {
-        showNoResults(searchTerm);
-      }
-      
-    } catch (error) {
-      console.error('Search error:', error);
-      showSearchError();
+    if (!found) {
+        alert('Product not found with this IMEI/Serial/Barcode');
     }
-  }
+}
 
-  // ============================================
-  // DISPLAY SEARCH RESULTS
-  // ============================================
-  function displaySearchResults(products) {
-    skuSearchResults.innerHTML = '';
-    skuSearchResults.style.display = 'block';
+function loadProductDetails() {
+    const productSelect = document.getElementById('product');
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    const detailsPanel = document.getElementById('productDetailsPanel');
+    const imeiInput = document.getElementById('imei');
     
-    products.forEach(product => {
-      const resultItem = document.createElement('a');
-      resultItem.href = '#';
-      resultItem.className = 'list-group-item list-group-item-action';
-      
-      resultItem.innerHTML = `
-        <div class="d-flex w-100 justify-content-between align-items-center">
-          <div>
-            <h6 class="mb-1">${escapeHtml(product.name)}</h6>
-            <small class="product-sku">
-              <i class="bi bi-upc-scan"></i> ${escapeHtml(product.sku_code || product.product_code)}
-            </small>
-          </div>
-          <span class="product-price">
-            KSH ${formatPrice(product.unit_price || product.selling_price)}
-          </span>
-        </div>
-      `;
-      
-      // Click handler to select product
-      resultItem.addEventListener('click', function(e) {
-        e.preventDefault();
-        selectProduct(product);
-      });
-      
-      skuSearchResults.appendChild(resultItem);
-    });
-  }
-
-  // ============================================
-  // SELECT PRODUCT FROM SEARCH RESULTS
-  // ============================================
-  function selectProduct(product) {
-    currentProduct = product;
-    
-    // Update SKU input with selected product's SKU
-    skuInput.value = product.sku_code || product.product_code;
-    
-    // Hide search results
-    hideSearchResults();
-    
-    // Display product details
-    displayProductDetails(product);
-    
-    // Focus on next input (client name)
-    clientNameInput.focus();
-  }
-
-  // ============================================
-  // DISPLAY PRODUCT DETAILS IN COLUMN B
-  // ============================================
-  function displayProductDetails(product) {
-    emptyDisplayState.style.display = 'none';
-    productDisplaySection.style.display = 'block';
-    
-    displayProductName.textContent = product.name || '---';
-    displaySkuValue.textContent = product.sku_code || product.product_code || '---';
-    editSellingPrice.value = product.unit_price || product.selling_price || '';
-  }
-
-  // ============================================
-  // SEARCH RESULT STATES
-  // ============================================
-  function showSearchLoading() {
-    skuSearchResults.innerHTML = '<div class="search-loading"><i class="bi bi-hourglass-split"></i> Searching database...</div>';
-    skuSearchResults.style.display = 'block';
-  }
-
-  function showNoResults(searchTerm) {
-    skuSearchResults.innerHTML = `
-      <div class="no-results">
-        <i class="bi bi-search"></i> 
-        No products found matching "${escapeHtml(searchTerm)}"
-      </div>
-    `;
-    skuSearchResults.style.display = 'block';
-  }
-
-  function showSearchError() {
-    skuSearchResults.innerHTML = `
-      <div class="no-results">
-        <i class="bi bi-exclamation-triangle"></i> 
-        Error searching database
-      </div>
-    `;
-    skuSearchResults.style.display = 'block';
-  }
-
-  function hideSearchResults() {
-    skuSearchResults.style.display = 'none';
-    skuSearchResults.innerHTML = '';
-  }
-
-  // ============================================
-  // SYNC CLIENT DETAILS TO COLUMN B
-  // ============================================
-  clientNameInput.addEventListener('input', function() {
-    editClientName.value = this.value;
-  });
-
-  idNumberInput.addEventListener('input', function() {
-    editIdNumber.value = this.value;
-  });
-
-  phoneNumberInput.addEventListener('input', function() {
-    editPhoneNumber.value = this.value;
-  });
-
-  nokNameInput.addEventListener('input', function() {
-    editNokName.value = this.value;
-  });
-
-  nokPhoneInput.addEventListener('input', function() {
-    editNokPhone.value = this.value;
-  });
-
-  // ============================================
-  // ENABLE EDIT FOR READONLY FIELDS
-  // ============================================
-  window.enableEdit = function(fieldId) {
-    const field = document.getElementById(fieldId);
-    if (field) {
-      field.removeAttribute('readonly');
-      field.focus();
-      field.classList.add('border-primary');
+    if (!selectedOption.value) {
+        detailsPanel.style.display = 'none';
+        return;
     }
-  };
-
-  // ============================================
-  // UPDATE PRICE BUTTON
-  // ============================================
-  document.getElementById('updatePriceBtn').addEventListener('click', function() {
-    const newPrice = editSellingPrice.value;
-    if (newPrice && parseFloat(newPrice) > 0) {
-      showMessage('Price updated successfully!', 'success');
+    
+    detailsPanel.style.display = 'block';
+    
+    // Get data attributes
+    const productCode = selectedOption.dataset.code || '---';
+    const sku = selectedOption.dataset.sku || '---';
+    const brand = selectedOption.dataset.brand || '';
+    const model = selectedOption.dataset.model || '';
+    const category = selectedOption.dataset.category || '---';
+    const price = parseFloat(selectedOption.dataset.price || 0);
+    const quantity = parseInt(selectedOption.dataset.quantity || 0);
+    const status = selectedOption.dataset.status || 'unknown';
+    const condition = selectedOption.dataset.condition || '---';
+    const warranty = selectedOption.dataset.warranty || '0';
+    const specs = selectedOption.dataset.specs ? JSON.parse(selectedOption.dataset.specs) : {};
+    
+    // Update details panel
+    document.getElementById('detail_product_code').textContent = productCode;
+    document.getElementById('detail_brand_model').textContent = brand && model ? `${brand} ${model}` : (brand || model || '---');
+    document.getElementById('detail_category').textContent = category;
+    document.getElementById('detail_sku').textContent = sku;
+    document.getElementById('detail_barcode').textContent = selectedOption.dataset.barcode || '---';
+    document.getElementById('detail_price').textContent = `KSH ${price.toLocaleString()}`;
+    document.getElementById('detail_condition').textContent = condition.replace(/_/g, ' ').toUpperCase();
+    document.getElementById('detail_warranty').textContent = warranty + ' months';
+    
+    // Set IMEI field
+    imeiInput.value = sku !== '---' ? sku : '';
+    
+    // Display specifications
+    const specsEl = document.getElementById('detail_specs');
+    specsEl.innerHTML = '';
+    if (specs && Object.keys(specs).length > 0) {
+        Object.entries(specs).forEach(([key, value]) => {
+            const badge = document.createElement('span');
+            badge.className = 'specs-badge';
+            badge.textContent = `${key}: ${value}`;
+            specsEl.appendChild(badge);
+        });
     } else {
-      showMessage('Please enter a valid price', 'warning');
+        specsEl.textContent = 'No specifications';
     }
-  });
-
-  // ============================================
-  // FORM SUBMISSION
-  // ============================================
-// ============================================
-// FORM SUBMISSION - FIXED WITH REDIRECT
-// ============================================
-saleForm.addEventListener('submit', async function(e) {
-  e.preventDefault();
-  
-  if (!currentProduct) {
-    showMessage('Please select a valid product first', 'danger');
-    return;
-  }
-  
-  // Validate all required fields
-  const clientName = editClientName.value.trim();
-  const idNumber = editIdNumber.value.trim();
-  const phoneNumber = editPhoneNumber.value.trim();
-  const nokName = editNokName.value.trim();
-  const nokPhone = editNokPhone.value.trim();
-  const sellingPrice = editSellingPrice.value.trim();
-  
-  if (!clientName || !idNumber || !phoneNumber || !nokName || !nokPhone) {
-    showMessage('❌ Please fill in all required fields', 'danger');
-    return;
-  }
-  
-  if (!sellingPrice || parseFloat(sellingPrice) <= 0) {
-    showMessage('❌ Please enter a valid selling price', 'danger');
-    return;
-  }
-  
-  const saleData = {
-    product_code: currentProduct.sku_code || currentProduct.product_code,
-    quantity: 1,  // Always 1 for single items from this form
-    unit_price: sellingPrice,
-    buyer_name: clientName,
-    buyer_phone: phoneNumber,
-    buyer_id_number: idNumber,
-    nok_name: nokName,
-    nok_phone: nokPhone
-  };
-  
-  try {
-    showMessage('Processing sale...', 'info');
     
-    // Disable submit button
-    const submitBtn = document.getElementById('submitSaleBtn');
-    const originalText = submitBtn.innerHTML;
+    // Check availability
+    const availabilityEl = document.getElementById('availabilityStatus');
+    const submitBtn = document.getElementById('submitTransactionBtn');
+    
+    if (status !== 'available') {
+        availabilityEl.className = 'product-availability availability-unavailable';
+        availabilityEl.innerHTML = `<i class="bi bi-exclamation-triangle"></i> Product is ${status.replace('_', ' ').toUpperCase()}. Cannot create transaction.`;
+        submitBtn.disabled = true;
+    } else if (quantity < 1) {
+        availabilityEl.className = 'product-availability availability-unavailable';
+        availabilityEl.innerHTML = `<i class="bi bi-exclamation-triangle"></i> Product is out of stock. Cannot create transaction.`;
+        submitBtn.disabled = true;
+    } else {
+        availabilityEl.className = 'product-availability availability-available';
+        availabilityEl.innerHTML = `<i class="bi bi-check-circle"></i> Product is AVAILABLE (Stock: ${quantity})`;
+        submitBtn.disabled = false;
+    }
+}
+
+// ========================================
+// FORM HANDLING
+// ========================================
+function validateAndSubmit(event, form) {
+    event.preventDefault();
+    
+    const submitBtn = document.getElementById('submitTransactionBtn');
+    
+    // Check if product is available
+    if (submitBtn.disabled) {
+        alert('Selected product is not available for credit transaction.');
+        return false;
+    }
+    
+    // Disable button
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
     
-    // Submit to Django backend
-    const response = await fetch('/sales/create/', {  // ✅ Correct endpoint
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCsrfToken()
-      },
-      body: JSON.stringify(saleData)
-    });
+    const formData = new FormData(form);
     
-    const result = await response.json();
-    
-    if (result.status === 'success') {
-      showMessage('✅ Sale recorded successfully!', 'success');
-      
-      // ✅ REDIRECT TO RECEIPT PAGE
-      setTimeout(() => {
-        window.location.href = `/sales/receipt/${result.sale_id}/`;
-      }, 1000);  // 1 second delay to show success message
-      
-    } else {
-      // Re-enable button on error
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = originalText;
-      showMessage('❌ Error: ' + (result.message || 'Failed to record sale'), 'danger');
-    }
-    
-  } catch (error) {
-    console.error('Submission error:', error);
-    // Re-enable button on error
-    const submitBtn = document.getElementById('submitSaleBtn');
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Submit Sale';
-    showMessage('❌ Error submitting sale', 'danger');
-  }
-});
-
-  // ============================================
-  // UTILITY FUNCTIONS
-  // ============================================
-  function showEmptyState() {
-    emptyDisplayState.style.display = 'block';
-    productDisplaySection.style.display = 'none';
-  }
-
-  function showMessage(message, type = 'info') {
-    const alertClass = `alert alert-${type}`;
-    saleStatusMessage.innerHTML = `<div class="${alertClass}">${message}</div>`;
-    
-    if (type === 'success') {
-      setTimeout(() => {
-        saleStatusMessage.innerHTML = '';
-      }, 5000);
-    }
-  }
-
-  function formatPrice(price) {
-    return parseFloat(price).toLocaleString('en-KE', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  }
-
-  function escapeHtml(text) {
-    const map = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;'
-    };
-    return String(text).replace(/[&<>"']/g, m => map[m]);
-  }
-
-  function getCsrfToken() {
-    const name = 'csrftoken';
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
         }
-      }
-    }
-    return cookieValue;
-  }
-
-  // ============================================
-  // KEYBOARD NAVIGATION FOR SEARCH RESULTS
-  // ============================================
-  let selectedResultIndex = -1;
-  
-  skuInput.addEventListener('keydown', function(e) {
-    const results = skuSearchResults.querySelectorAll('.list-group-item');
-    
-    if (results.length === 0) return;
-    
-    // Arrow Down
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      selectedResultIndex = Math.min(selectedResultIndex + 1, results.length - 1);
-      highlightResult(results);
-    }
-    
-    // Arrow Up
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      selectedResultIndex = Math.max(selectedResultIndex - 1, 0);
-      highlightResult(results);
-    }
-    
-    // Enter - Select highlighted result
-    if (e.key === 'Enter' && selectedResultIndex >= 0) {
-      e.preventDefault();
-      results[selectedResultIndex].click();
-    }
-    
-    // Escape - Close results
-    if (e.key === 'Escape') {
-      hideSearchResults();
-      selectedResultIndex = -1;
-    }
-  });
-  
-  function highlightResult(results) {
-    results.forEach((result, index) => {
-      if (index === selectedResultIndex) {
-        result.classList.add('active');
-        result.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      } else {
-        result.classList.remove('active');
-      }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close transaction modal
+            closeModal('newTransactionModal');
+            
+            // Generate and show receipt
+            displayReceipt(data.transaction);
+            openModal('etrModal');
+            
+            // Refresh page after 2 seconds to update recent activity
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            alert(data.error || 'Error creating transaction');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Create Transaction';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating transaction. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Create Transaction';
     });
-  }
-});
+    
+    return false;
+}
 
+function handleCustomerSubmit(event, form) {
+    event.preventDefault();
+    
+    const formData = new FormData(form);
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Customer added successfully!');
+            closeModal('addCustomerModal');
+            openModal('newTransactionModal');
+            // Refresh page to update customer dropdown
+            location.reload();
+        } else {
+            alert(data.error || 'Error adding customer');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error adding customer. Please try again.');
+    });
+    
+    return false;
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-// ================================
-//  ETR TRIGGER + FISCAL RECEIPT
-// ================================
-document.querySelectorAll('.action-btn-success').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const url = this.href;
-
-        // Step 1: Trigger ETR
-        fetch(url)
+// ========================================
+// VIEW RECEIPT FOR EXISTING TRANSACTION
+// ========================================
+function viewReceipt(transactionId) {
+    // Show loading in receipt modal
+    document.getElementById('receiptContent').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading receipt...</p>
+        </div>
+    `;
+    
+    // Fetch transaction data from server
+    fetch(`/credit/api/receipt/${transactionId}/`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-
-                const etrNumber = data.data.receiptNumber;
-                const saleId = data.data.saleId;
-
-                // Step 2: Trigger Fiscal Receipt
-                fetch('/sales/fiscal/receipt/', {   // <--- FIXED URL
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ sale_id: saleId })
-                })
-                .then(resp => resp.json())
-                .then(fiscalData => {
-                    if (fiscalData.status === 'success') {
-                        const fiscalReceiptNumber = fiscalData.receipt_number;
-                        alert(
-`ETR sent successfully!
-Receipt No: ${etrNumber}
-Fiscal Receipt No: ${fiscalReceiptNumber}`
-                        );
-                    } else {
-                        alert(
-`ETR sent: ${etrNumber}
-Fiscal receipt failed: ${fiscalData.message}`
-                        );
-                    }
-                })
-                .catch(err => {
-                    alert(
-`ETR sent: ${etrNumber}
-Fiscal receipt error: ${err}`
-                    );
-                });
-
+                // Create transaction object from API response
+                const transaction = data.data;
+                displayReceipt(transaction);
+                openModal('etrModal');
             } else {
-                alert('ETR failed: ' + (data.error || 'Unknown error'));
+                alert('Error loading receipt: ' + (data.error || 'Unknown error'));
             }
         })
-        .catch(err => console.error('ETR error:', err));
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading receipt. Please try again.');
+        });
+}
+
+
+// ========================================
+// RECEIPT FUNCTIONS - UPDATED WITH ETR NUMBER
+// ========================================
+function displayReceipt(transaction) {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-KE');
+    const timeStr = now.toLocaleTimeString('en-KE');
+    
+    // Use ETR number from transaction (now comes from the same sequence as sales)
+    const etrNumber = transaction.etr_number || '0000';
+    
+    const receiptHtml = `
+        <div class="receipt-container">
+            <div class="receipt">
+                <!-- Header -->
+                <div class="receipt-header">
+                    <div class="receipt-company">FIELDMAX SUPPLIERS</div>
+                    <div class="company-details">
+                        Nairobi,  KENYA<br>
+                        TEL: +254 722 558 544<br>
+                        EMAIL: fieldmaxsuppliers@gmail.com<br>
+                        PIN: ----------
+                    </div>
+                </div>
+
+                <!-- Receipt Info -->
+                <div class="receipt-info">
+                    <div class="receipt-info-row">
+                        <span><strong>RECEIPT NO:</strong> ${etrNumber}</span>
+                        <span><strong>DATE:</strong> ${dateStr}</span>
+                    </div>
+                    <div class="receipt-info-row">
+                        <span><strong>SERVED BY:</strong> ${transaction.dealer_name || 'Agent'}</span>
+                        <span><strong>TIME:</strong> ${timeStr}</span>
+                    </div>
+                    <div class="receipt-info-row">
+                        <span><strong>SALE ID:</strong> ${transaction.transaction_id}</span>
+                    </div>
+                </div>
+
+                <!-- Customer Info -->
+                <div class="receipt-customer">
+                    <div><strong>CUSTOMER:</strong> ${transaction.customer_name}</div>
+                    <div><strong>PHONE:</strong> ${transaction.customer_phone}</div>
+                    <div><strong>ID NO:</strong> ${transaction.customer_id_number}</div>
+                    ${transaction.customer_nok_name ? `<div><strong>NOK:</strong> ${transaction.customer_nok_name}</div>` : ''}
+                    ${transaction.customer_nok_phone ? `<div><strong>NOK PHONE:</strong> ${transaction.customer_nok_phone}</div>` : ''}
+                </div>
+
+                <!-- Items -->
+                <div class="receipt-items">
+                    <div class="receipt-items-header">
+                        <div>DESCRIPTION</div>
+                        <div class="text-right">QTY</div>
+                        <div class="text-right">PRICE</div>
+                        <div class="text-right">TOTAL</div>
+                    </div>
+                    
+                    <div class="receipt-item">
+                        <div>
+                            ${transaction.product_name}<br>
+                            <span style="font-size:7px;color:#666;">IMEI: ${transaction.imei || transaction.product_sku}</span>
+                        </div>
+                        <div class="text-right">1</div>
+                        <div class="text-right">${parseFloat(transaction.ceiling_price).toFixed(2)}</div>
+                        <div class="text-right"><strong>${parseFloat(transaction.ceiling_price).toFixed(2)}</strong></div>
+                    </div>
+                </div>
+
+                <!-- Totals -->
+                <div class="receipt-totals">
+                    <div class="receipt-total-row">
+                        <span>SUBTOTAL:</span>
+                        <span>KSH ${parseFloat(transaction.ceiling_price).toFixed(2)}</span>
+                    </div>
+                    <!-- Tax calculation (16% VAT included) -->
+                    <div class="receipt-total-row">
+                        <span>VAT (16%):</span>
+                        <span>KSH ${(parseFloat(transaction.ceiling_price) * 0.16).toFixed(2)}</span>
+                    </div>
+                    <div class="receipt-total-row receipt-grand-total">
+                        <span>GRAND TOTAL:</span>
+                        <span>KSH ${parseFloat(transaction.ceiling_price).toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="receipt-footer">
+                    <div class="receipt-barcode">*${etrNumber}*</div>
+                    <div>Thank you for your business!</div>
+                    <div>Goods once sold cannot be returned</div>
+                    <div style="font-size:8px; margin-top:5px;">ETR: ${etrNumber} | Credit Sale</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('receiptContent').innerHTML = receiptHtml;
+}
+
+
+
+// ========================================
+// VIEW RECEIPT FOR EXISTING TRANSACTION - FIXED ENCODING
+// ========================================
+function viewReceipt(transactionId) {
+    console.log('Viewing receipt for transaction:', transactionId);
+    
+    // Show loading in receipt modal
+    document.getElementById('receiptContent').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading receipt for ${transactionId}...</p>
+        </div>
+    `;
+    
+    // Open modal immediately to show loading
+    openModal('etrModal');
+    
+    // CRITICAL: Properly encode the transaction ID for URL
+    // The # symbol needs to be encoded as %23
+    const encodedId = encodeURIComponent(transactionId);
+    
+    // Construct URL manually
+    const url = `/credit/api/receipt/${encodedId}/`;
+    
+    console.log('Fetching from URL:', url);
+    
+    // Fetch transaction data from server
+    fetch(url)
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error(`Receipt not found for transaction ${transactionId}`);
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Receipt data received:', data);
+            if (data.success) {
+                displayReceipt(data.data);
+            } else {
+                throw new Error(data.error || 'Unknown error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('receiptContent').innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bi bi-exclamation-triangle" style="font-size: 3rem; color: #dc3545;"></i>
+                    <h5 class="mt-3 text-danger">Error Loading Receipt</h5>
+                    <p class="text-muted">${error.message}</p>
+                    <p class="text-muted small">Transaction ID: ${transactionId}</p>
+                    <p class="text-muted small">URL: ${url}</p>
+                    <button class="btn-action btn-primary mt-3" onclick="closeModal('etrModal')">
+                        <i class="bi bi-x-circle"></i> Close
+                    </button>
+                </div>
+            `;
+        });
+}
+
+
+function printReceipt() {
+    const receiptContent = document.getElementById('receiptContent').innerHTML;
+    const printWindow = window.open('', '_blank');
+    
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>ETR Receipt</title>
+            <style>
+                body {
+                    font-family: 'Courier New', monospace;
+                    margin: 0;
+                    padding: 20px;
+                    background: white;
+                }
+                .receipt-container {
+                    max-width: 302px;
+                    margin: 0 auto;
+                }
+                .text-right {
+                    text-align: right;
+                }
+                @media print {
+                    body {
+                        padding: 0;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            ${receiptContent}
+            <script>
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                        setTimeout(function() {
+                            window.close();
+                        }, 60000);
+                    }, 60000);
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+}
+
+function downloadReceipt() {
+    const receiptContent = document.getElementById('receiptContent').innerHTML;
+    const receiptNumber = document.querySelector('#etrModal .receipt .receipt-info-row span:first-child').textContent.split(':')[1].trim();
+    
+    const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Receipt ${receiptNumber}</title>
+            <style>
+                body {
+                    font-family: 'Courier New', monospace;
+                    margin: 0;
+                    padding: 20px;
+                }
+                .receipt-container {
+                    max-width: 302px;
+                    margin: 0 auto;
+                }
+                .text-right {
+                    text-align: right;
+                }
+            </style>
+        </head>
+        <body>
+            ${receiptContent}
+        </body>
+        </html>
+    `;
+    
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `receipt_${receiptNumber}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// ========================================
+// INITIALIZATION
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listeners for product and company selection
+    const companySelect = document.getElementById('credit_company');
+    const customerSelect = document.getElementById('customer');
+    const productSelect = document.getElementById('product');
+    const ceilingPriceInput = document.getElementById('ceiling_price');
+    
+    if (productSelect) {
+        productSelect.addEventListener('change', loadProductDetails);
+    }
+    
+    // Auto-dismiss alerts after 5 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            alert.style.display = 'none';
+        }, 30000);
     });
 });
 
-
-
-
-
+// Global functions
+function editCompany(id) {
+    window.location.href = `/credit/companies/${id}/edit/`;
+}
 </script>
-
 {% endblock %}

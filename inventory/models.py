@@ -467,6 +467,26 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.product_code}) - SKU: {self.sku_value}"
+    
+    def can_be_used_for_credit(self):
+        """
+        Check if this product can be used for a new credit transaction
+        """
+        if self.status != 'available':
+            return False, f"Product is {self.get_status_display()}"
+        
+        if self.quantity < 1:
+            return False, "Product is out of stock"
+        
+        # Check if there's any pending transaction for this product
+        if hasattr(self, 'credit_transactions'):
+            pending_exists = self.credit_transactions.filter(
+                payment_status='pending'
+            ).exists()
+            if pending_exists:
+                return False, "Product already has a pending credit transaction"
+        
+        return True, "Product is available"
 
     @property
     def can_restock(self):

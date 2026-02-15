@@ -1,0 +1,1915 @@
+{% extends "website/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Credit Financing - Fieldmax{% endblock %}
+
+{% block content %}
+<style>
+/* ========================================
+   CREDIT FINANCE DASHBOARD STYLES
+   ======================================== */
+.dashboard-wrapper {
+  display: flex;
+  min-height: calc(100vh - 160px);
+  background-color: #f8fafc;
+  position: relative;
+}
+
+/* ========================================
+   SIDEBAR NAVIGATION
+   ======================================== */
+.dashboard-sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, #1a1f2e 0%, #2d3748 100%);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1rem;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #0dcaf0 0%, #3b82f6 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 12px rgba(13, 202, 240, 0.3);
+}
+
+.logo-text {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.store-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(16, 185, 129, 0.15);
+  border-radius: 20px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.store-status span {
+  color: #10b981;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.sidebar-nav {
+  padding: 0 1rem 2rem;
+}
+
+.menu-section {
+  margin-bottom: 1.5rem;
+}
+
+.menu-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 1rem 0.75rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.875rem 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+  margin-bottom: 4px;
+}
+
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  transform: translateX(4px);
+}
+
+.menu-item.active {
+  background: linear-gradient(90deg, rgba(13, 202, 240, 0.2) 0%, rgba(13, 202, 240, 0.1) 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(13, 202, 240, 0.2);
+}
+
+.menu-icon {
+  font-size: 1.25rem;
+  width: 24px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.menu-item:hover .menu-icon,
+.menu-item.active .menu-icon {
+  color: #0dcaf0;
+  transform: scale(1.1);
+}
+
+.menu-badge {
+  margin-left: auto;
+  background: linear-gradient(135deg, #0dcaf0 0%, #3b82f6 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* ========================================
+   MAIN CONTENT AREA
+   ======================================== */
+.dashboard-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-x: hidden;
+  background: #f8fafc;
+}
+
+.content-section {
+  display: none;
+}
+
+.content-section.active {
+  display: block;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 500;
+  color: #1a1f2e;
+  margin: 0;
+}
+
+.page-title i {
+  color: #0dcaf0;
+  margin-right: 0.5rem;
+}
+
+/* ========================================
+   MOBILE SIDEBAR TOGGLE
+   ======================================== */
+.mobile-sidebar-toggle {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1000;
+  background: linear-gradient(135deg, #0dcaf0 0%, #3b82f6 100%);
+  color: white;
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(13, 202, 240, 0.3);
+}
+
+/* ========================================
+   CARDS & FORMS
+   ======================================== */
+.data-card {
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.25rem 1.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.card-header h5 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1f2e;
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.required::after {
+  content: " *";
+  color: #dc3545;
+}
+
+.form-control, .form-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  outline: none;
+  border-color: #0dcaf0;
+  box-shadow: 0 0 0 3px rgba(13, 202, 240, 0.1);
+}
+
+.form-control-lg, .form-select-lg {
+  padding: 1rem;
+  font-size: 1.1rem;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+}
+
+.input-group .form-control {
+  flex: 1;
+}
+
+.input-group-text {
+  padding: 0.75rem 1rem;
+  background: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  border-right: none;
+  border-radius: 0.5rem 0 0 0.5rem;
+  color: #6c757d;
+  font-weight: 600;
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0dcaf0 0%, #0ab4d6 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(13, 202, 240, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(13, 202, 240, 0.4);
+  color: #ffffff;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
+  color: #ffffff;
+}
+
+.btn-info {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.btn-info:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+  color: #ffffff;
+}
+
+.btn-outline-secondary {
+  background: white;
+  border: 2px solid #e5e7eb;
+  color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #1a1f2e;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ========================================
+   TABLE STYLES
+   ======================================== */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  font-weight: 700;
+  color: #1a1f2e;
+  border-bottom: 2px solid #e5e7eb;
+  background: #f8f9fa;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.data-table td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.data-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.375rem 0.875rem;
+  border-radius: 30px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status-badge.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.status-paid {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.status-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.table-action-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: white;
+  color: #6c757d;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.table-action-btn:hover {
+  background: #0dcaf0;
+  color: white;
+  border-color: #0dcaf0;
+}
+
+/* ========================================
+   PRODUCT SEARCH & DETAILS
+   ======================================== */
+.product-search-section {
+  margin-bottom: 1rem;
+}
+
+.search-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.product-details-panel {
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-top: 1rem;
+  border: 2px solid #e5e7eb;
+}
+
+.product-detail-row {
+  display: flex;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px dashed #e5e7eb;
+}
+
+.product-detail-label {
+  width: 120px;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.product-detail-value {
+  flex: 1;
+  color: #1a1f2e;
+}
+
+.product-availability {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.availability-available {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.availability-unavailable {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.availability-warning {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+.specs-badge {
+  display: inline-block;
+  background: #e9ecef;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-right: 0.25rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+}
+
+/* ========================================
+   MESSAGES/ALERTS
+   ======================================== */
+.messages-container {
+  margin-bottom: 20px;
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.alert-success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.alert-error, .alert-danger {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.alert-warning {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+.alert-info {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+</style>
+
+<div class="dashboard-wrapper">
+
+<!-- Mobile Sidebar Toggle -->
+<button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
+  <i class="bi bi-list"></i>
+</button>
+
+<!-- Sidebar Overlay for Mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 99;"></div>
+
+<!-- ======================================== -->
+<!-- SIDEBAR NAVIGATION -->
+<!-- ======================================== -->
+<aside class="dashboard-sidebar" id="dashboardSidebar">
+    <div class="sidebar-header">
+        <div class="logo-container">
+            <div class="logo-text">FINANCE PANEL</div>
+        </div>
+        <div class="store-status">
+            <div class="status-dot"></div>
+            <span>Welcome {{ user.first_name|default:user.username }}!</span>
+        </div>
+    </div>
+    
+    <div class="sidebar-nav">
+        <div class="menu-section">
+            <div class="menu-label">Main Navigation</div>
+            <a href="#dashboard" class="menu-item active" data-section="dashboard">
+                <i class="menu-icon bi bi-speedometer2"></i>
+                <span>Dashboard Overview</span>
+            </a>
+            <a href="#transactions" class="menu-item" data-section="transactions">
+                <i class="menu-icon bi bi-receipt"></i>
+                <span>All Transactions</span>
+                <span class="menu-badge">{{ stats.total_transactions|default:"0" }}</span>
+            </a>
+            <a href="#new-transaction" class="menu-item" data-section="new-transaction">
+                <i class="menu-icon bi bi-plus-circle"></i>
+                <span>New Transaction</span>
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="menu-label">Transaction Status</div>
+            <a href="#pending" class="menu-item" data-section="pending">
+                <i class="menu-icon bi bi-clock-history"></i>
+                <span>Pending</span>
+                <span class="menu-badge">{{ stats.pending_count|default:"0" }}</span>
+            </a>
+            <a href="#paid" class="menu-item" data-section="paid">
+                <i class="menu-icon bi bi-check-circle"></i>
+                <span>Paid</span>
+                <span class="menu-badge">{{ stats.paid_count|default:"0" }}</span>
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="menu-label">Companies</div>
+            <a href="#companies" class="menu-item" data-section="companies">
+                <i class="menu-icon bi bi-building"></i>
+                <span>All Companies</span>
+                <span class="menu-badge">{{ companies|length|default:"0" }}</span>
+            </a>
+            <a href="#add-company" class="menu-item" data-section="add-company">
+                <i class="menu-icon bi bi-plus-circle"></i>
+                <span>Add Company</span>
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="menu-label">Customers</div>
+            <a href="#customers" class="menu-item" data-section="customers">
+                <i class="menu-icon bi bi-people"></i>
+                <span>All Customers</span>
+                <span class="menu-badge">{{ customers|length|default:"0" }}</span>
+            </a>
+            <a href="#add-customer" class="menu-item" data-section="add-customer">
+                <i class="menu-icon bi bi-person-plus"></i>
+                <span>Add Customer</span>
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="menu-label">Payments</div>
+            <a href="#payments" class="menu-item" data-section="payments">
+                <i class="menu-icon bi bi-cash-stack"></i>
+                <span>Company Payments</span>
+                <span class="menu-badge">{{ payments|length|default:"0" }}</span>
+            </a>
+            <a href="#reports" class="menu-item" data-section="reports">
+                <i class="menu-icon bi bi-bar-chart"></i>
+                <span>Reports</span>
+            </a>
+        </div>
+    </div>
+</aside>
+
+<!-- ======================================== -->
+<!-- MAIN CONTENT - ALL SECTIONS -->
+<!-- ======================================== -->
+<main class="dashboard-content">
+    
+    <!-- Display Django messages -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- SECTION 1: DASHBOARD OVERVIEW -->
+    <div id="dashboard" class="content-section active">
+        <div class="content-header">
+            <h1 class="page-title">
+                <i class="bi bi-credit-card-2-front"></i>
+                Credit Financing Dashboard
+            </h1>
+            <a href="#new-transaction" class="btn-action btn-primary" data-section="new-transaction">
+                <i class="bi bi-plus-circle"></i>
+                <span>New Transaction</span>
+            </a>
+        </div>
+
+        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="stat-card" style="display: flex; align-items: center; gap: 1.25rem; padding: 1.5rem; background: #ffffff; border-radius: 0.75rem; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); cursor: pointer;" data-section="transactions">
+                <div class="stat-icon" style="width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border-radius: 0.75rem; font-size: 2rem; background: linear-gradient(135deg, rgba(13, 202, 240, 0.15) 0%, rgba(13, 202, 240, 0.05) 100%); color: #0dcaf0;">
+                    <i class="bi bi-receipt"></i>
+                </div>
+                <div class="stat-content" style="flex: 1;">
+                    <span class="stat-label" style="display: block; font-size: 0.875rem; color: #6c757d; font-weight: 600; margin-bottom: 0.25rem;">Total Transactions</span>
+                    <h3 class="stat-value" style="font-size: 1.5rem; font-weight: 600; color: #1a1f2e; margin: 0;" id="dashboardTotalTransactions">{{ stats.total_transactions|default:"0" }}</h3>
+                </div>
+            </div>
+
+            <div class="stat-card" style="display: flex; align-items: center; gap: 1.25rem; padding: 1.5rem; background: #ffffff; border-radius: 0.75rem; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); cursor: pointer;" data-section="pending">
+                <div class="stat-icon" style="width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border-radius: 0.75rem; font-size: 2rem; background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%); color: #f59e0b;">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div class="stat-content" style="flex: 1;">
+                    <span class="stat-label" style="display: block; font-size: 0.875rem; color: #6c757d; font-weight: 600; margin-bottom: 0.25rem;">Pending Payment</span>
+                    <h3 class="stat-value" style="font-size: 1.5rem; font-weight: 600; color: #1a1f2e; margin: 0;">{{ stats.pending_count|default:"0" }}</h3>
+                </div>
+            </div>
+
+            <div class="stat-card" style="display: flex; align-items: center; gap: 1.25rem; padding: 1.5rem; background: #ffffff; border-radius: 0.75rem; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);">
+                <div class="stat-icon" style="width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border-radius: 0.75rem; font-size: 2rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%); color: #10b981;">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="stat-content" style="flex: 1;">
+                    <span class="stat-label" style="display: block; font-size: 0.875rem; color: #6c757d; font-weight: 600; margin-bottom: 0.25rem;">Total Credit Value</span>
+                    <h3 class="stat-value" style="font-size: 1.5rem; font-weight: 600; color: #1a1f2e; margin: 0;">KSH {{ stats.total_credit_value|default:0|floatformat:0|intcomma }}</h3>
+                </div>
+            </div>
+
+            <div class="stat-card" style="display: flex; align-items: center; gap: 1.25rem; padding: 1.5rem; background: #ffffff; border-radius: 0.75rem; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);">
+                <div class="stat-icon" style="width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border-radius: 0.75rem; font-size: 2rem; background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%); color: #3b82f6;">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div class="stat-content" style="flex: 1;">
+                    <span class="stat-label" style="display: block; font-size: 0.875rem; color: #6c757d; font-weight: 600; margin-bottom: 0.25rem;">Pending Amount</span>
+                    <h3 class="stat-value" style="font-size: 1.5rem; font-weight: 600; color: #1a1f2e; margin: 0;">KSH {{ stats.total_pending_amount|default:0|floatformat:0|intcomma }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="data-card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h5>Recent Transactions</h5>
+                <a href="#transactions" class="btn-action btn-primary" data-section="transactions" style="width: auto; padding: 0.5rem 1rem;">
+                    <span>View All</span>
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Transaction ID</th>
+                                <th>Customer</th>
+                                <th>Company</th>
+                                <th>Product</th>
+                                <th>Ceiling Price</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in recent_transactions %}
+                            <tr>
+                                <td><strong>{{ transaction.transaction_id }}</strong></td>
+                                <td>{{ transaction.customer.full_name }}</td>
+                                <td>{{ transaction.credit_company.name }}</td>
+                                <td>{{ transaction.product_name }}</td>
+                                <td>KSH {{ transaction.ceiling_price|floatformat:0|intcomma }}</td>
+                                <td>
+                                    {% if transaction.payment_status == 'pending' %}
+                                    <span class="status-badge status-pending">PENDING</span>
+                                    {% elif transaction.payment_status == 'paid' %}
+                                    <span class="status-badge status-paid">PAID</span>
+                                    {% elif transaction.payment_status == 'cancelled' %}
+                                    <span class="status-badge status-cancelled">CANCELLED</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ transaction.transaction_date|date:"d M Y" }}</td>
+                                <td>
+                                    <a href="{% url 'credit:transaction_detail' transaction.pk %}" class="table-action-btn" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="empty-state" style="text-align: center; padding: 3rem;">
+                                    <i class="bi bi-clock-history" style="font-size: 3rem; color: #d1d5db;"></i>
+                                    <h4 style="margin-top: 1rem;">No Recent Transactions</h4>
+                                    <p>Your recent transactions will appear here</p>
+                                    <a href="#new-transaction" class="btn-action btn-primary" data-section="new-transaction" style="width: auto; padding: 0.5rem 1rem; display: inline-flex;">
+                                        <i class="bi bi-plus-circle"></i>
+                                        <span>Create Transaction</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: ALL TRANSACTIONS -->
+    <div id="transactions" class="content-section">
+        <div class="content-header">
+            <h1 class="page-title">
+                <i class="bi bi-receipt"></i> All Transactions
+            </h1>
+            <a href="#new-transaction" class="btn-action btn-primary" data-section="new-transaction">
+                <i class="bi bi-plus-circle"></i>
+                <span>New Transaction</span>
+            </a>
+        </div>
+        
+        <div class="data-card">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Customer</th>
+                            <th>Company</th>
+                            <th>Product</th>
+                            <th>Ceiling Price</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in transactions %}
+                        <tr>
+                            <td><strong>{{ transaction.transaction_id }}</strong></td>
+                            <td>{{ transaction.customer.full_name }}</td>
+                            <td>{{ transaction.credit_company.name }}</td>
+                            <td>{{ transaction.product_name }}</td>
+                            <td>KSH {{ transaction.ceiling_price|floatformat:0|intcomma }}</td>
+                            <td>
+                                {% if transaction.payment_status == 'pending' %}
+                                <span class="status-badge status-pending">PENDING</span>
+                                {% elif transaction.payment_status == 'paid' %}
+                                <span class="status-badge status-paid">PAID</span>
+                                {% elif transaction.payment_status == 'cancelled' %}
+                                <span class="status-badge status-cancelled">CANCELLED</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ transaction.transaction_date|date:"d M Y" }}</td>
+                            <td>
+                                <a href="{% url 'credit:transaction_detail' transaction.pk %}" class="table-action-btn" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="empty-state" style="text-align: center; padding: 3rem;">
+                                <i class="bi bi-inbox" style="font-size: 3rem; color: #d1d5db;"></i>
+                                <h4>No Transactions Found</h4>
+                                <p>Click the button above to create your first transaction</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3: NEW TRANSACTION -->
+    <div id="new-transaction" class="content-section">
+        <div class="content-header">
+            <h1 class="page-title">
+                <i class="bi bi-plus-circle"></i> Create New Credit Transaction
+            </h1>
+            <a href="#dashboard" class="btn-action btn-outline-secondary" data-section="dashboard">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="data-card">
+                    <div class="card-header">
+                        <h5>
+                            <i class="bi bi-pencil-square me-2" style="color: #0dcaf0;"></i>
+                            Credit Transaction Form
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="creditTransactionForm" method="POST" action="{% url 'credit:create_transaction' %}" onsubmit="return validateForm()">
+                            {% csrf_token %}
+                            
+                            <div class="mb-4">
+                                <label for="credit_company" class="form-label required">
+                                    <i class="bi bi-building"></i> Credit Company
+                                </label>
+                                <select id="credit_company" name="credit_company" class="form-select form-select-lg" required>
+                                    <option value="">-- Select Company --</option>
+                                    {% for company in companies %}
+                                    <option value="{{ company.id }}">{{ company.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="customer" class="form-label required">
+                                    <i class="bi bi-person"></i> Customer
+                                </label>
+                                <select id="customer" name="customer" class="form-select form-select-lg" required>
+                                    <option value="">-- Select Customer --</option>
+                                    {% for customer in customers %}
+                                    <option value="{{ customer.id }}">{{ customer.full_name }} ({{ customer.id_number }})</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Can't find customer? <a href="#add-customer" data-section="add-customer">Add new customer</a></small>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="product_search" class="form-label">
+                                    <i class="bi bi-search"></i> Search Product by IMEI/Serial/Barcode
+                                </label>
+                                <div class="search-input-group">
+                                    <input type="text" 
+                                           id="product_search" 
+                                           class="form-control form-control-lg" 
+                                           placeholder="Scan or enter IMEI, Serial Number, or Barcode"
+                                           oninput="searchProduct()">
+                                    <button type="button" class="btn-action btn-primary" onclick="searchProduct()">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted">Scan barcode or enter IMEI/serial number to auto-fill product</small>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="product" class="form-label required">
+                                    <i class="bi bi-phone"></i> Select Product
+                                </label>
+                                <select id="product" name="product" class="form-select form-select-lg" required onchange="loadProductDetails()">
+                                    <option value="">-- Select Product --</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}" 
+                                            data-price="{{ product.selling_price }}"
+                                            data-name="{{ product.name }}"
+                                            data-code="{{ product.product_code }}"
+                                            data-sku="{{ product.sku_value }}"
+                                            data-barcode="{{ product.barcode }}"
+                                            data-brand="{{ product.brand }}"
+                                            data-model="{{ product.model }}"
+                                            data-category="{{ product.category.name }}"
+                                            data-quantity="{{ product.quantity }}"
+                                            data-status="{{ product.status }}"
+                                            data-specs='{{ product.specifications|safe }}'
+                                            data-condition="{{ product.condition }}"
+                                            data-warranty="{{ product.warranty_months }}">
+                                        {{ product.display_name|default:product.name }} - {{ product.product_code }}
+                                        {% if product.brand %} - {{ product.brand }}{% endif %}
+                                        {% if product.model %} {{ product.model }}{% endif %}
+                                        (Stock: {{ product.quantity }})
+                                        {% if product.status != 'available' %} - [{{ product.get_status_display }}]{% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Or select from dropdown</small>
+                            </div>
+
+                            <!-- Product Details Panel -->
+                            <div id="productDetailsPanel" class="product-details-panel" style="display: none;">
+                                <h6 class="mb-3"><i class="bi bi-info-circle"></i> Product Details</h6>
+                                <div class="product-detail-row">
+                                    <span class="product-detail-label">Product Code:</span>
+                                    <span class="product-detail-value" id="detail_product_code">---</span>
+                                </div>
+                                <div class="product-detail-row">
+                                    <span class="product-detail-label">Brand/Model:</span>
+                                    <span class="product-detail-value" id="detail_brand_model">---</span>
+                                </div>
+                                <div class="product-detail-row">
+                                    <span class="product-detail-label">Category:</span>
+                                    <span class="product-detail-value" id="detail_category">---</span>
+                                </div>
+                                <div class="product-detail-row">
+                                    <span class="product-detail-label">IMEI/Serial:</span>
+                                    <span class="product-detail-value" id="detail_sku">---</span>
+                                </div>
+                                <div class="product-detail-row">
+                                    <span class="product-detail-label">Barcode:</span>
+                                    <span class="product-detail-value" id="detail_barcode">---</span>
+                                </div>
+                                <div class="product-detail-row">
+                                    <span class="product-detail-label">Selling Price:</span>
+                                    <span class="product-detail-value" id="detail_price">KSH 0.00</span>
+                                </div>
+                                <div class="product-detail-row">
+                                    <span class="product-detail-label">Condition:</span>
+                                    <span class="product-detail-value" id="detail_condition">---</span>
+                                </div>
+                                <div class="product-detail-row">
+                                    <span class="product-detail-label">Warranty:</span>
+                                    <span class="product-detail-value" id="detail_warranty">--- months</span>
+                                </div>
+                                <div class="product-detail-row">
+                                    <span class="product-detail-label">Specifications:</span>
+                                    <span class="product-detail-value" id="detail_specs"></span>
+                                </div>
+                                
+                                <!-- Availability Status -->
+                                <div id="availabilityStatus" class="product-availability mt-3">
+                                    Checking availability...
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="imei" class="form-label">
+                                    <i class="bi bi-upc-scan"></i> IMEI / Serial Number (Confirm)
+                                </label>
+                                <input type="text" 
+                                       id="imei" 
+                                       name="imei" 
+                                       class="form-control form-control-lg"
+                                       placeholder="Enter or confirm IMEI/Serial number"
+                                       readonly>
+                                <small class="text-muted">Auto-filled from product selection</small>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="ceiling_price" class="form-label required">
+                                    <i class="bi bi-cash-stack"></i> Ceiling Price (KSH)
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">KSH</span>
+                                    <input type="number" 
+                                           id="ceiling_price" 
+                                           name="ceiling_price" 
+                                           class="form-control form-control-lg"
+                                           step="0.01"
+                                           min="0"
+                                           placeholder="Enter amount company will pay you"
+                                           required>
+                                </div>
+                                <small class="text-muted">This is the amount the credit company will pay you</small>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="company_reference" class="form-label">
+                                    <i class="bi bi-tag"></i> Company Reference
+                                </label>
+                                <input type="text" 
+                                       id="company_reference" 
+                                       name="company_reference" 
+                                       class="form-control form-control-lg"
+                                       placeholder="Reference from company (optional)">
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="notes" class="form-label">
+                                    <i class="bi bi-pencil"></i> Notes
+                                </label>
+                                <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="Any additional notes..."></textarea>
+                            </div>
+
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" id="submitTransactionBtn" class="btn-action btn-success btn-lg">
+                                    <i class="bi bi-check-circle"></i> Create Credit Transaction
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="data-card">
+                    <div class="card-header">
+                        <h5>
+                            <i class="bi bi-display me-2" style="color: #0dcaf0;"></i>
+                            Transaction Preview
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="emptyDisplayState" class="text-center py-5">
+                            <i class="bi bi-credit-card-2-front" style="font-size: 5rem; color: #cbd5e1;"></i>
+                            <h5 class="text-muted mt-3">No Product Selected</h5>
+                            <p class="text-muted">
+                                Select a company, customer, and product to create transaction
+                            </p>
+                        </div>
+
+                        <div id="productDisplaySection" style="display: none;">
+                            <div class="mb-4 p-3" style="background: #f8fafc; border-radius: 8px;">
+                                <h5 class="mb-3" style="color: #10b981; font-weight: 700;">
+                                    <i class="bi bi-box"></i> Transaction Summary
+                                </h5>
+                                <div class="mb-2">
+                                    <label class="text-muted small">Company</label>
+                                    <div class="fw-bold" id="displayCompanyName">---</div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="text-muted small">Customer</label>
+                                    <div class="fw-bold" id="displayCustomerName">---</div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="text-muted small">Product</label>
+                                    <div class="fw-bold" id="displayProductName">---</div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="text-muted small">Product Code</label>
+                                    <div class="fw-bold" id="displayProductCode">---</div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="text-muted small">IMEI/Serial</label>
+                                    <div class="fw-bold" id="displayIMEI">---</div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="text-muted small">Selling Price</label>
+                                    <div class="fw-bold text-success" id="displaySellingPrice">KSH 0.00</div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="text-muted small">Ceiling Price</label>
+                                    <div class="fw-bold text-primary" id="displayCeilingPrice">KSH 0.00</div>
+                                </div>
+                                <div id="availabilityPreview" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 4: PENDING TRANSACTIONS -->
+    <div id="pending" class="content-section">
+        <div class="content-header">
+            <h1 class="page-title">
+                <i class="bi bi-clock-history"></i> Pending Transactions
+            </h1>
+        </div>
+        
+        <div class="data-card">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Customer</th>
+                            <th>Company</th>
+                            <th>Product</th>
+                            <th>Ceiling Price</th>
+                            <th>Date Given</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in pending_transactions %}
+                        <tr>
+                            <td><strong>{{ transaction.transaction_id }}</strong></td>
+                            <td>{{ transaction.customer.full_name }}</td>
+                            <td>{{ transaction.credit_company.name }}</td>
+                            <td>{{ transaction.product_name }}</td>
+                            <td>KSH {{ transaction.ceiling_price|floatformat:0|intcomma }}</td>
+                            <td>{{ transaction.transaction_date|date:"d M Y" }}</td>
+                            <td>
+                                <a href="{% url 'credit:transaction_detail' transaction.pk %}" class="table-action-btn" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="empty-state" style="text-align: center; padding: 3rem;">
+                                <i class="bi bi-check-circle" style="font-size: 3rem; color: #d1d5db;"></i>
+                                <h4>No Pending Transactions</h4>
+                                <p>All transactions have been paid</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 5: PAID TRANSACTIONS -->
+    <div id="paid" class="content-section">
+        <div class="content-header">
+            <h1 class="page-title">
+                <i class="bi bi-check-circle"></i> Paid Transactions
+            </h1>
+        </div>
+        
+        <div class="data-card">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Customer</th>
+                            <th>Company</th>
+                            <th>Product</th>
+                            <th>Ceiling Price</th>
+                            <th>Paid Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in paid_transactions %}
+                        <tr>
+                            <td><strong>{{ transaction.transaction_id }}</strong></td>
+                            <td>{{ transaction.customer.full_name }}</td>
+                            <td>{{ transaction.credit_company.name }}</td>
+                            <td>{{ transaction.product_name }}</td>
+                            <td>KSH {{ transaction.ceiling_price|floatformat:0|intcomma }}</td>
+                            <td>{{ transaction.paid_date|date:"d M Y" }}</td>
+                            <td>
+                                <a href="{% url 'credit:transaction_detail' transaction.pk %}" class="table-action-btn" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="empty-state" style="text-align: center; padding: 3rem;">
+                                <i class="bi bi-check-circle" style="font-size: 3rem; color: #d1d5db;"></i>
+                                <h4>No Paid Transactions</h4>
+                                <p>Paid transactions will appear here</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 6: COMPANIES LIST -->
+    <div id="companies" class="content-section">
+        <div class="content-header">
+            <h1 class="page-title">
+                <i class="bi bi-building"></i> Credit Companies
+            </h1>
+            <a href="#add-company" class="btn-action btn-primary" data-section="add-company">
+                <i class="bi bi-plus-circle"></i>
+                <span>Add Company</span>
+            </a>
+        </div>
+        
+        <div class="data-card">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Company Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Contact Person</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for company in companies %}
+                        <tr>
+                            <td><strong>{{ company.name }}</strong></td>
+                            <td>{{ company.email }}</td>
+                            <td>{{ company.phone|default:"-" }}</td>
+                            <td>{{ company.contact_person|default:"-" }}</td>
+                            <td>
+                                {% if company.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="table-action-btn" onclick="editCompany('{{ company.id }}')" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="empty-state" style="text-align: center; padding: 3rem;">
+                                <i class="bi bi-building" style="font-size: 3rem; color: #d1d5db;"></i>
+                                <h4>No Companies Yet</h4>
+                                <p>Add your first credit company to get started</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 7: ADD COMPANY -->
+    <div id="add-company" class="content-section">
+        <div class="content-header">
+            <h1 class="page-title">
+                <i class="bi bi-plus-circle"></i> Add New Company
+            </h1>
+            <a href="#companies" class="btn-action btn-outline-secondary" data-section="companies">
+                <i class="bi bi-arrow-left"></i>
+                <span>Back to Companies</span>
+            </a>
+        </div>
+        
+        <div class="data-card">
+            <div class="card-body" style="padding: 2rem;">
+                <form method="POST" action="{% url 'credit:add_company' %}">
+                    {% csrf_token %}
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label required">Company Name</label>
+                            <input type="text" class="form-control form-control-lg" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label required">Email Address</label>
+                            <input type="email" class="form-control form-control-lg" id="email" name="email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="text" class="form-control form-control-lg" id="phone" name="phone">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="contact_person" class="form-label">Contact Person</label>
+                            <input type="text" class="form-control form-control-lg" id="contact_person" name="contact_person">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="payment_terms" class="form-label">Payment Terms</label>
+                        <input type="text" class="form-control form-control-lg" id="payment_terms" name="payment_terms" placeholder="e.g., Net 30, Net 45">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end mt-5">
+                        <button type="submit" class="btn-action btn-success" style="width: auto; padding: 0.75rem 2.5rem;">
+                            <i class="bi bi-check-circle"></i>
+                            <span>Save Company</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 8: CUSTOMERS -->
+    <div id="customers" class="content-section">
+        <div class="content-header">
+            <h1 class="page-title">
+                <i class="bi bi-people"></i> All Customers
+            </h1>
+            <a href="#add-customer" class="btn-action btn-primary" data-section="add-customer">
+                <i class="bi bi-person-plus"></i>
+                <span>Add Customer</span>
+            </a>
+        </div>
+        
+        <div class="data-card">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Customer Name</th>
+                            <th>ID Number</th>
+                            <th>Phone</th>
+                            <th>Next of Kin</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td><strong>{{ customer.full_name }}</strong></td>
+                            <td>{{ customer.id_number }}</td>
+                            <td>{{ customer.phone_number }}</td>
+                            <td>{{ customer.nok_name|default:"-" }}</td>
+                            <td>
+                                {% if customer.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'credit:customer_detail' customer.pk %}" class="table-action-btn" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="empty-state" style="text-align: center; padding: 3rem;">
+                                <i class="bi bi-people" style="font-size: 3rem; color: #d1d5db;"></i>
+                                <h4>No Customers Yet</h4>
+                                <p>Add your first customer to get started</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 9: ADD CUSTOMER -->
+    <div id="add-customer" class="content-section">
+        <div class="content-header">
+            <h1 class="page-title">
+                <i class="bi bi-person-plus"></i> Add New Customer
+            </h1>
+            <a href="#customers" class="btn-action btn-outline-secondary" data-section="customers">
+                <i class="bi bi-arrow-left"></i>
+                <span>Back to Customers</span>
+            </a>
+        </div>
+        
+        <div class="data-card">
+            <div class="card-body" style="padding: 2rem;">
+                <form method="POST" action="{% url 'credit:add_customer' %}">
+                    {% csrf_token %}
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label for="full_name" class="form-label required">Full Name</label>
+                            <input type="text" class="form-control form-control-lg" id="full_name" name="full_name" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_number" class="form-label required">ID Number</label>
+                            <input type="text" class="form-control form-control-lg" id="id_number" name="id_number" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="phone_number" class="form-label required">Phone Number</label>
+                            <input type="tel" class="form-control form-control-lg" id="phone_number" name="phone_number" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label for="nok_name" class="form-label">Next of Kin Name</label>
+                            <input type="text" class="form-control form-control-lg" id="nok_name" name="nok_name">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nok_phone" class="form-label">Next of Kin Phone</label>
+                            <input type="tel" class="form-control form-control-lg" id="nok_phone" name="nok_phone">
+                        </div>
+                    </div>
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-4">
+                            <label for="county" class="form-label">County</label>
+                            <input type="text" class="form-control form-control-lg" id="county" name="county">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="town" class="form-label">Town</label>
+                            <input type="text" class="form-control form-control-lg" id="town" name="town">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control form-control-lg" id="email" name="email">
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end mt-5">
+                        <button type="submit" class="btn-action btn-success" style="width: auto; padding: 0.75rem 2.5rem;">
+                            <i class="bi bi-check-circle"></i>
+                            <span>Save Customer</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 10: PAYMENTS -->
+    <div id="payments" class="content-section">
+        <div class="content-header">
+            <h1 class="page-title">
+                <i class="bi bi-cash-stack"></i> Company Payments
+            </h1>
+            <a href="#create-payment" class="btn-action btn-primary" data-section="create-payment">
+                <i class="bi bi-plus-circle"></i>
+                <span>Record Payment</span>
+            </a>
+        </div>
+        
+        <div class="data-card">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Payment ID</th>
+                            <th>Company</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Reference</th>
+                            <th>Payment Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td><strong>{{ payment.payment_id }}</strong></td>
+                            <td>{{ payment.credit_company.name }}</td>
+                            <td>KSH {{ payment.amount|floatformat:0|intcomma }}</td>
+                            <td>{{ payment.get_payment_method_display }}</td>
+                            <td>{{ payment.payment_reference }}</td>
+                            <td>{{ payment.payment_date|date:"d M Y" }}</td>
+                            <td>
+                                <a href="{% url 'credit:payment_detail' payment.pk %}" class="table-action-btn" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="empty-state" style="text-align: center; padding: 3rem;">
+                                <i class="bi bi-cash-stack" style="font-size: 3rem; color: #d1d5db;"></i>
+                                <h4>No Payments Recorded</h4>
+                                <p>Record your first company payment</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 11: CREATE PAYMENT -->
+    <div id="create-payment" class="content-section">
+        <div class="content-header">
+            <h1 class="page-title">
+                <i class="bi bi-plus-circle"></i> Record Company Payment
+            </h1>
+            <a href="#payments" class="btn-action btn-outline-secondary" data-section="payments">
+                <i class="bi bi-arrow-left"></i>
+                <span>Back to Payments</span>
+            </a>
+        </div>
+        
+        <div class="data-card">
+            <div class="card-body" style="padding: 2rem;">
+                <form method="POST" action="{% url 'credit:create_payment' %}">
+                    {% csrf_token %}
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label for="payment_company" class="form-label required">Select Company</label>
+                            <select class="form-select form-select-lg" id="payment_company" name="credit_company" required>
+                                <option value="">-- Select Company --</option>
+                                {% for company in companies %}
+                                <option value="{{ company.id }}">{{ company.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="payment_date" class="form-label required">Payment Date</label>
+                            <input type="date" class="form-control form-control-lg" id="payment_date" name="payment_date" value="{% now 'Y-m-d' %}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-4">
+                            <label for="payment_method" class="form-label required">Payment Method</label>
+                            <select class="form-select form-select-lg" id="payment_method" name="payment_method" required>
+                                <option value="">-- Select --</option>
+                                <option value="mpesa">M-Pesa</option>
+                                <option value="bank">Bank Transfer</option>
+                                <option value="cheque">Cheque</option>
+                                <option value="cash">Cash</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="payment_reference" class="form-label required">Payment Reference</label>
+                            <input type="text" class="form-control form-control-lg" id="payment_reference" name="payment_reference" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="payment_amount" class="form-label required">Amount</label>
+                            <input type="number" class="form-control form-control-lg" id="payment_amount" name="amount" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="payment_notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="payment_notes" name="notes" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end mt-5">
+                        <button type="submit" class="btn-action btn-success" style="width: auto; padding: 0.75rem 2.5rem;">
+                            <i class="bi bi-check-circle"></i>
+                            <span>Record Payment</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 12: REPORTS -->
+    <div id="reports" class="content-section">
+        <div class="content-header">
+            <h1 class="page-title">
+                <i class="bi bi-bar-chart"></i> Reports & Analytics
+            </h1>
+        </div>
+        
+        <div class="data-card">
+            <div class="card-body">
+                <p class="text-center text-muted py-5">
+                    <i class="bi bi-bar-chart" style="font-size: 3rem;"></i><br>
+                    Reports feature coming soon
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+</div>
+
+<script>
+// ========================================
+// MOBILE SIDEBAR TOGGLE
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('dashboardSidebar');
+    const mobileToggle = document.getElementById('mobileSidebarToggle');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    if (mobileToggle) {
+        mobileToggle.addEventListener('click', function() {
+            sidebar.style.display = sidebar.style.display === 'block' ? 'none' : 'block';
+            overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
+        });
+    }
+    
+    if (overlay) {
+        overlay.addEventListener('click', function() {
+            sidebar.style.display = 'none';
+            overlay.style.display = 'none';
+        });
+    }
+    
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 992) {
+            sidebar.style.display = 'block';
+            overlay.style.display = 'none';
+        } else {
+            sidebar.style.display = 'none';
+        }
+    });
+    
+    // ========================================
+    // SECTION NAVIGATION
+    // ========================================
+    function showSection(sectionId) {
+        document.querySelectorAll('.content-section').forEach(section => {
+            section.classList.remove('active');
+        });
+        
+        const targetSection = document.getElementById(sectionId);
+        if (targetSection) {
+            targetSection.classList.add('active');
+        }
+        
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.section === sectionId) {
+                item.classList.add('active');
+            }
+        });
+        
+        window.location.hash = sectionId;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        if (window.innerWidth <= 992) {
+            sidebar.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+    }
+    
+    document.querySelectorAll('[data-section]').forEach(el => {
+        el.addEventListener('click', (e) => {
+            e.preventDefault();
+            const sectionId = el.getAttribute('data-section');
+            if (sectionId) {
+                showSection(sectionId);
+            }
+        });
+    });
+    
+    window.addEventListener('popstate', () => {
+        const hash = window.location.hash.substring(1);
+        if (hash && document.getElementById(hash)) {
+            showSection(hash);
+        } else {
+            showSection('dashboard');
+        }
+    });
+    
+    const hash = window.location.hash.substring(1);
+    if (hash && document.getElementById(hash)) {
+        showSection(hash);
+    } else {
+        showSection('dashboard');
+    }
+    
+    // Initialize form preview
+    updatePreview();
+});
+
+// ========================================
+// PRODUCT SEARCH & DETAILS
+// ========================================
+function searchProduct() {
+    const searchTerm = document.getElementById('product_search').value.trim();
+    if (!searchTerm) return;
+    
+    // Find product by sku_value or barcode
+    const productSelect = document.getElementById('product');
+    let found = false;
+    
+    for (let i = 0; i < productSelect.options.length; i++) {
+        const option = productSelect.options[i];
+        const sku = option.dataset.sku || '';
+        const barcode = option.dataset.barcode || '';
+        
+        if (sku.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            barcode.toLowerCase().includes(searchTerm.toLowerCase())) {
+            productSelect.selectedIndex = i;
+            loadProductDetails();
+            found = true;
+            break;
+        }
+    }
+    
+    if (!found) {
+        alert('Product not found with this IMEI/Serial/Barcode');
+    }
+}
+
+function loadProductDetails() {
+    const productSelect = document.getElementById('product');
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    const detailsPanel = document.getElementById('productDetailsPanel');
+    const imeiInput = document.getElementById('imei');
+    
+    if (!selectedOption.value) {
+        detailsPanel.style.display = 'none';
+        return;
+    }
+    
+    // Show details panel
+    detailsPanel.style.display = 'block';
+    
+    // Get data attributes
+    const productCode = selectedOption.dataset.code || '---';
+    const productName = selectedOption.dataset.name || '---';
+    const sku = selectedOption.dataset.sku || '---';
+    const barcode = selectedOption.dataset.barcode || '---';
+    const brand = selectedOption.dataset.brand || '';
+    const model = selectedOption.dataset.model || '';
+    const category = selectedOption.dataset.category || '---';
+    const price = parseFloat(selectedOption.dataset.price || 0);
+    const quantity = parseInt(selectedOption.dataset.quantity || 0);
+    const status = selectedOption.dataset.status || 'unknown';
+    const condition = selectedOption.dataset.condition || '---';
+    const warranty = selectedOption.dataset.warranty || '0';
+    const specs = selectedOption.dataset.specs ? JSON.parse(selectedOption.dataset.specs) : {};
+    
+    // Update details panel
+    document.getElementById('detail_product_code').textContent = productCode;
+    document.getElementById('detail_brand_model').textContent = brand && model ? `${brand} ${model}` : (brand || model || '---');
+    document.getElementById('detail_category').textContent = category;
+    document.getElementById('detail_sku').textContent = sku;
+    document.getElementById('detail_barcode').textContent = barcode;
+    document.getElementById('detail_price').textContent = `KSH ${price.toLocaleString()}`;
+    document.getElementById('detail_condition').textContent = condition.replace(/_/g, ' ').toUpperCase();
+    document.getElementById('detail_warranty').textContent = warranty + ' months';
+    
+    // Set IMEI field
+    imeiInput.value = sku !== '---' ? sku : '';
+    
+    // Display specifications
+    const specsEl = document.getElementById('detail_specs');
+    specsEl.innerHTML = '';
+    if (specs && Object.keys(specs).length > 0) {
+        Object.entries(specs).forEach(([key, value]) => {
+            const badge = document.createElement('span');
+            badge.className = 'specs-badge';
+            badge.textContent = `${key}: ${value}`;
+            specsEl.appendChild(badge);
+        });
+    } else {
+        specsEl.textContent = 'No specifications';
+    }
+    
+    // Check availability
+    const availabilityEl = document.getElementById('availabilityStatus');
+    const submitBtn = document.getElementById('submitTransactionBtn');
+    
+    if (status !== 'available') {
+        availabilityEl.className = 'product-availability availability-unavailable';
+        availabilityEl.innerHTML = `<i class="bi bi-exclamation-triangle"></i> Product is ${status.replace('_', ' ').toUpperCase()}. Cannot create transaction.`;
+        submitBtn.disabled = true;
+    } else if (quantity < 1) {
+        availabilityEl.className = 'product-availability availability-unavailable';
+        availabilityEl.innerHTML = `<i class="bi bi-exclamation-triangle"></i> Product is out of stock. Cannot create transaction.`;
+        submitBtn.disabled = true;
+    } else {
+        availabilityEl.className = 'product-availability availability-available';
+        availabilityEl.innerHTML = `<i class="bi bi-check-circle"></i> Product is AVAILABLE (Stock: ${quantity})`;
+        submitBtn.disabled = false;
+    }
+    
+    // Update preview
+    updatePreview();
+}
+
+function validateForm() {
+    const submitBtn = document.getElementById('submitTransactionBtn');
+    if (submitBtn.disabled) {
+        alert('Selected product is not available for credit transaction.');
+        return false;
+    }
+    
+    // Disable button to prevent double submission
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+    return true;
+}
+
+// ========================================
+// TRANSACTION PREVIEW
+// ========================================
+function updatePreview() {
+    const companySelect = document.getElementById('credit_company');
+    const customerSelect = document.getElementById('customer');
+    const productSelect = document.getElementById('product');
+    const ceilingPriceInput = document.getElementById('ceiling_price');
+    
+    const displayCompanyName = document.getElementById('displayCompanyName');
+    const displayCustomerName = document.getElementById('displayCustomerName');
+    const displayProductName = document.getElementById('displayProductName');
+    const displayProductCode = document.getElementById('displayProductCode');
+    const displayIMEI = document.getElementById('displayIMEI');
+    const displaySellingPrice = document.getElementById('displaySellingPrice');
+    const displayCeilingPrice = document.getElementById('displayCeilingPrice');
+    const availabilityPreview = document.getElementById('availabilityPreview');
+    const emptyDisplayState = document.getElementById('emptyDisplayState');
+    const productDisplaySection = document.getElementById('productDisplaySection');
+    
+    const company = companySelect?.options[companySelect.selectedIndex];
+    const customer = customerSelect?.options[customerSelect.selectedIndex];
+    const product = productSelect?.options[productSelect.selectedIndex];
+    const ceilingPrice = ceilingPriceInput?.value;
+    
+    if (company && customer && product && company.value && customer.value && product.value) {
+        if (displayCompanyName) displayCompanyName.textContent = company.text;
+        if (displayCustomerName) displayCustomerName.textContent = customer.text.split(' (')[0];
+        if (displayProductName) displayProductName.textContent = product.dataset.name || '---';
+        if (displayProductCode) displayProductCode.textContent = product.dataset.code || '---';
+        if (displayIMEI) displayIMEI.textContent = product.dataset.sku || '---';
+        if (displaySellingPrice) displaySellingPrice.textContent = 'KSH ' + (parseFloat(product.dataset.price) || 0).toLocaleString();
+        
+        if (ceilingPrice && displayCeilingPrice) {
+            displayCeilingPrice.textContent = 'KSH ' + parseFloat(ceilingPrice).toLocaleString();
+        }
+        
+        // Show availability warning if needed
+        const status = product.dataset.status;
+        const quantity = parseInt(product.dataset.quantity || 0);
+        
+        if (status !== 'available' || quantity < 1) {
+            availabilityPreview.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Warning: This product is not available for credit!</div>';
+        } else {
+            availabilityPreview.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle"></i> Product is available</div>';
+        }
+        
+        emptyDisplayState.style.display = 'none';
+        productDisplaySection.style.display = 'block';
+    } else {
+        emptyDisplayState.style.display = 'block';
+        productDisplaySection.style.display = 'none';
+    }
+}
+
+// ========================================
+// GLOBAL FUNCTIONS
+// ========================================
+function editCompany(id) {
+    window.location.href = `/credit/companies/${id}/edit/`;
+}
+
+// Event listeners for preview updates
+document.getElementById('credit_company')?.addEventListener('change', updatePreview);
+document.getElementById('customer')?.addEventListener('change', updatePreview);
+document.getElementById('product')?.addEventListener('change', function() {
+    loadProductDetails();
+    updatePreview();
+});
+document.getElementById('ceiling_price')?.addEventListener('input', updatePreview);
+</script>
+{% endblock %}
